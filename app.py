@@ -849,4 +849,16 @@ else:
                     {subject}
                 </div>
                 """,
+                unsafe_allow_html=True
+            )
+
+            st.info(
+                "Бұл пәннің тесттері келесі кезеңде қосылады."
+            )
+
+
+        st.markdown(
+            '<div class="footer">© 2026 KASYM EDU</div>',
+            unsafe_allow_html=True
+        )
 ```
