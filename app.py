@@ -14,6 +14,9 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+
 
 # ==========================================
 # DESIGN
@@ -53,7 +56,9 @@ header {
 }
 
 
-/* LOGIN */
+/* ==========================================
+   LOGIN
+========================================== */
 
 .login-title {
     text-align: center;
@@ -76,7 +81,9 @@ header {
 }
 
 
-/* INPUT */
+/* ==========================================
+   INPUT
+========================================== */
 
 .stTextInput label {
     color: rgba(255,255,255,0.75) !important;
@@ -92,7 +99,9 @@ header {
 }
 
 
-/* BUTTON */
+/* ==========================================
+   BUTTON
+========================================== */
 
 .stButton button {
     height: 50px !important;
@@ -108,10 +117,18 @@ header {
     color: white !important;
 
     font-weight: 700 !important;
+
+    transition: 0.2s;
+}
+
+.stButton button:hover {
+    transform: translateY(-2px);
 }
 
 
-/* HOME */
+/* ==========================================
+   HOME
+========================================== */
 
 .home-logo {
     color: white;
@@ -139,13 +156,23 @@ header {
     line-height: 1.6;
 }
 
-.subject-title {
+
+/* ==========================================
+   SECTION TITLE
+========================================== */
+
+.section-title {
     color: white;
     font-size: 26px;
     font-weight: 700;
     margin-top: 70px;
     margin-bottom: 25px;
 }
+
+
+/* ==========================================
+   SUBJECT
+========================================== */
 
 .subject-number {
     color: #39bfff;
@@ -165,6 +192,24 @@ header {
     font-size: 12px;
     margin-top: 5px;
 }
+
+
+/* ==========================================
+   COMMON SECTION
+========================================== */
+
+.common-title {
+    color: rgba(255,255,255,0.60);
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 55px;
+    margin-bottom: 20px;
+}
+
+
+/* ==========================================
+   FOOTER
+========================================== */
 
 .footer {
     color: rgba(255,255,255,0.22);
@@ -216,6 +261,8 @@ if not st.session_state.logged_in:
             if login and password:
 
                 st.session_state.logged_in = True
+                st.session_state.page = "home"
+
                 st.rerun()
 
             else:
@@ -231,7 +278,9 @@ if not st.session_state.logged_in:
 
 else:
 
-    # Жоғарғы бөлік
+    # --------------------------------------
+    # HEADER
+    # --------------------------------------
 
     col1, col2 = st.columns([5, 1])
 
@@ -250,222 +299,273 @@ else:
         ):
 
             st.session_state.logged_in = False
+            st.session_state.page = "home"
+
             st.rerun()
 
 
-    # Негізгі тақырып
-
-    st.markdown(
-        """
-        <div class="home-title">
-            Бүгінгі дайындық —<br>
-            ертеңгі грант.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-        <div class="home-description">
-            ҰБТ-ға дайындал. Біліміңді тексер.
-            Қателеріңді талда. Нәтижеңді жақсарт.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    # Пәндер
-
-    st.markdown(
-        '<div class="subject-title">Пәндер</div>',
-        unsafe_allow_html=True
-    )
-
-
     # ======================================
-    # МАТЕМАТИКА
+    # HOME PAGE
     # ======================================
 
-    col1, col2 = st.columns([5, 1])
+    if st.session_state.page == "home":
 
-    with col1:
-
-        st.write("01")
-
-        st.subheader("📐 Математика")
-
-        st.caption(
-            "ҰБТ есептері • Тесттер • Қателерді талдау"
+        st.markdown(
+            """
+            <div class="home-title">
+                Бүгінгі дайындық —<br>
+                ертеңгі грант.
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-    with col2:
-
-        if st.button(
-            "→",
-            key="math",
-            use_container_width=True
-        ):
-
-            st.session_state.page = "math"
-
-
-    st.divider()
-
-
-    # ======================================
-    # ИНФОРМАТИКА
-    # ======================================
-
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-
-        st.write("02")
-
-        st.subheader("💻 Информатика")
-
-        st.caption(
-            "Python • Теория • ҰБТ тесттері"
+        st.markdown(
+            """
+            <div class="home-description">
+                ҰБТ-ға дайындал. Біліміңді тексер.
+                Қателеріңді талда. Нәтижеңді жақсарт.
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-    with col2:
 
-        if st.button(
-            "→",
-            key="informatics",
-            use_container_width=True
-        ):
+        # ==================================
+        # НЕГІЗГІ ПӘНДЕР
+        # ==================================
 
-            st.session_state.page = "informatics"
-
-
-    st.divider()
-
-
-    # ======================================
-    # ҚАЗАҚСТАН ТАРИХЫ
-    # ======================================
-
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-
-        st.write("03")
-
-        st.subheader("🇰🇿 Қазақстан тарихы")
-
-        st.caption(
-            "Даталар • Оқиғалар • Тесттер"
+        st.markdown(
+            '<div class="section-title">Негізгі пәндер</div>',
+            unsafe_allow_html=True
         )
 
-    with col2:
 
-        if st.button(
-            "→",
-            key="history",
-            use_container_width=True
-        ):
+        # ----------------------------------
+        # ИНФОРМАТИКА + МАТЕМАТИКА
+        # ----------------------------------
 
-            st.session_state.page = "history"
+        col1, col2 = st.columns([5, 1])
+
+        with col1:
+
+            st.write("01")
+
+            st.subheader(
+                "💻 Информатика  +  📐 Математика"
+            )
+
+            st.caption(
+                "Информатика • Математика • ҰБТ тесттері"
+            )
+
+        with col2:
+
+            if st.button(
+                "→",
+                key="main_subjects",
+                use_container_width=True
+            ):
+
+                st.session_state.page = "main_subjects"
+
+        st.divider()
 
 
-    st.divider()
+        # ==================================
+        # ОРТАҚ МІНДЕТТІ ПӘНДЕР
+        # ==================================
 
-
-    # ======================================
-    # ОҚУ САУАТТЫЛЫҒЫ
-    # ======================================
-
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-
-        st.write("04")
-
-        st.subheader("📖 Оқу сауаттылығы")
-
-        st.caption(
-            "Мәтіндер • Талдау • Тесттер"
+        st.markdown(
+            '<div class="common-title">Барлық негізгі пәндерге ортақ</div>',
+            unsafe_allow_html=True
         )
 
-    with col2:
 
-        if st.button(
-            "→",
-            key="reading",
-            use_container_width=True
-        ):
+        # ----------------------------------
+        # МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ
+        # ----------------------------------
 
-            st.session_state.page = "reading"
+        col1, col2 = st.columns([5, 1])
+
+        with col1:
+
+            st.write("02")
+
+            st.subheader(
+                "🧠 Математикалық сауаттылық"
+            )
+
+            st.caption(
+                "Логика • Формулалар • Есептер"
+            )
+
+        with col2:
+
+            st.button(
+                "→",
+                key="math_lit"
+            )
+
+        st.divider()
 
 
-    st.divider()
+        # ----------------------------------
+        # ОҚУ САУАТТЫЛЫҒЫ
+        # ----------------------------------
+
+        col1, col2 = st.columns([5, 1])
+
+        with col1:
+
+            st.write("03")
+
+            st.subheader(
+                "📖 Оқу сауаттылығы"
+            )
+
+            st.caption(
+                "Мәтіндер • Талдау • Тесттер"
+            )
+
+        with col2:
+
+            st.button(
+                "→",
+                key="reading"
+            )
+
+        st.divider()
 
 
-    # ======================================
-    # МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ
-    # ======================================
+        # ----------------------------------
+        # ҚАЗАҚСТАН ТАРИХЫ
+        # ----------------------------------
 
-    col1, col2 = st.columns([5, 1])
+        col1, col2 = st.columns([5, 1])
 
-    with col1:
+        with col1:
 
-        st.write("05")
+            st.write("04")
 
-        st.subheader("🧠 Математикалық сауаттылық")
+            st.subheader(
+                "🇰🇿 Қазақстан тарихы"
+            )
 
-        st.caption(
-            "Логика • Формулалар • Есептер"
+            st.caption(
+                "Даталар • Оқиғалар • Тесттер"
+            )
+
+        with col2:
+
+            st.button(
+                "→",
+                key="history"
+            )
+
+
+        # ==================================
+        # НӘТИЖЕЛЕР
+        # ==================================
+
+        st.markdown(
+            '<div class="section-title">Нәтижелер</div>',
+            unsafe_allow_html=True
         )
 
-    with col2:
+        col1, col2 = st.columns([5, 1])
 
-        if st.button(
-            "→",
-            key="math_literacy",
-            use_container_width=True
-        ):
+        with col1:
 
-            st.session_state.page = "math_literacy"
+            st.write("05")
+
+            st.subheader(
+                "🎯 Менің нәтижелерім"
+            )
+
+            st.caption(
+                "Дұрыс жауаптар • Қате сұрақтар • Прогресс"
+            )
+
+        with col2:
+
+            st.button(
+                "→",
+                key="results"
+            )
 
 
-    st.divider()
-
-
-    # ======================================
-    # НӘТИЖЕЛЕР
-    # ======================================
-
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-
-        st.write("06")
-
-        st.subheader("🎯 Менің нәтижелерім")
-
-        st.caption(
-            "Дұрыс жауаптар • Қате сұрақтар • Прогресс"
+        st.markdown(
+            '<div class="footer">© 2026 KASYM EDU</div>',
+            unsafe_allow_html=True
         )
 
-    with col2:
-
-        if st.button(
-            "→",
-            key="results",
-            use_container_width=True
-        ):
-
-            st.session_state.page = "results"
-
 
     # ======================================
-    # FOOTER
+    # MAIN SUBJECTS PAGE
     # ======================================
 
-    st.markdown(
-        '<div class="footer">© 2026 KASYM EDU</div>',
-        unsafe_allow_html=True
-    )
+    elif st.session_state.page == "main_subjects":
+
+        st.markdown(
+            """
+            <div class="home-title">
+                Информатика<br>
+                <span>+ Математика</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div class="home-description">
+                Негізгі пәндер бойынша ҰБТ дайындығы.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.write("")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.subheader("💻 Информатика")
+
+            st.caption(
+                "Python • Алгоритмдер • Ақпараттық технологиялар"
+            )
+
+            if st.button(
+                "Информатиканы бастау →",
+                key="start_info",
+                use_container_width=True
+            ):
+                st.info("Информатика тесттері келесі қадамда қосылады.")
+
+
+        with col2:
+
+            st.subheader("📐 Математика")
+
+            st.caption(
+                "Алгебра • Геометрия • ҰБТ есептері"
+            )
+
+            if st.button(
+                "Математиканы бастау →",
+                key="start_math",
+                use_container_width=True
+            ):
+                st.info("Математика тесттері келесі қадамда қосылады.")
+
+
+        st.write("")
+
+        if st.button("← Артқа"):
+
+            st.session_state.page = "home"
+
+            st.rerun()
