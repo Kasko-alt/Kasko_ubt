@@ -33,28 +33,15 @@ if "current_question" not in st.session_state:
 # ==========================================
 
 combinations = [
-
-    ("🧬⚗️", "Биология + Химия",
-     "Биология • Химия"),
-
-    ("⚡📐", "Физика + Математика",
-     "Физика • Математика"),
-
-    ("💻📐", "Информатика + Математика",
-     "Информатика • Математика"),
-
+    ("🧬⚗️", "Биология + Химия", "Биология • Химия"),
+    ("⚡📐", "Физика + Математика", "Физика • Математика"),
+    ("💻📐", "Информатика + Математика", "Информатика • Математика"),
     ("🌍🇬🇧", "Дүниежүзі тарихы + Ағылшын тілі",
      "Дүниежүзі тарихы • Ағылшын тілі"),
-
-    ("🧬🌍", "Биология + География",
-     "Биология • География"),
-
-    ("🌍📐", "География + Математика",
-     "География • Математика"),
-
+    ("🧬🌍", "Биология + География", "Биология • География"),
+    ("🌍📐", "География + Математика", "География • Математика"),
     ("🌍⚖️", "Дүниежүзі тарихы + Құқық",
      "Дүниежүзі тарихы • Құқық"),
-
 ]
 
 
@@ -74,9 +61,7 @@ common_subjects = [
 # ==========================================
 
 questions = {
-
     "Информатика": [
-
         {
             "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
             "answers": [
@@ -87,7 +72,6 @@ questions = {
             ],
             "correct": 1
         },
-
         {
             "question": "Python-да пайдаланушыдан мәлімет енгізу үшін қай функция қолданылады?",
             "answers": [
@@ -98,7 +82,6 @@ questions = {
             ],
             "correct": 1
         },
-
         {
             "question": "Python-да бүтін санның типі қалай жазылады?",
             "answers": [
@@ -109,7 +92,6 @@ questions = {
             ],
             "correct": 2
         },
-
         {
             "question": "Тізімнің элементтер санын анықтайтын функция:",
             "answers": [
@@ -120,7 +102,6 @@ questions = {
             ],
             "correct": 2
         },
-
         {
             "question": "Python-да қалдықты табу операторы:",
             "answers": [
@@ -131,7 +112,6 @@ questions = {
             ],
             "correct": 2
         },
-
     ]
 }
 
@@ -404,10 +384,6 @@ header {
     margin-top: 25px;
 }
 
-.test-back {
-    margin-top: 25px;
-}
-
 
 /* ==========================================
    FOOTER
@@ -549,7 +525,7 @@ else:
 
 
         # ==================================
-        # 7 КОМБИНАЦИЯ
+        # КОМБИНАЦИЯЛАР
         # ==================================
 
         for i, (icon, name, info) in enumerate(combinations):
@@ -669,7 +645,6 @@ else:
 
                     st.session_state.selected_subject = subject
                     st.session_state.current_question = 0
-
                     st.session_state.page = "test"
 
                     st.rerun()
@@ -720,7 +695,6 @@ else:
 
                     st.session_state.selected_subject = subject
                     st.session_state.current_question = 0
-
                     st.session_state.page = "test"
 
                     st.rerun()
@@ -732,10 +706,7 @@ else:
         # BACK
         # ==================================
 
-        if st.button(
-            "← Пәндерге қайту",
-            use_container_width=False
-        ):
+        if st.button("← Пәндерге қайту"):
 
             st.session_state.page = "home"
             st.session_state.selected_combination = None
@@ -769,32 +740,22 @@ else:
 
 
         # ----------------------------------
-        # ТЕК ҚАЗІР ИНФОРМАТИКА ТЕСТІ
+        # ТЕСТ БАР ПӘН
         # ----------------------------------
 
-        if subject not in questions:
-
-            st.markdown(
-                f"""
-                <div class="test-title">
-                    {subject}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.info(
-                "Бұл пәннің тесттері келесі кезеңде қосылады."
-            )
-
-        else:
+        if subject in questions:
 
             test_questions = questions[subject]
 
             question_number = st.session_state.current_question
 
+            q = test_questions[
+                question_number % len(test_questions)
+            ]
+
+
             # ----------------------------------
-            # TEST HEADER
+            # HEADER
             # ----------------------------------
 
             st.markdown(
@@ -815,11 +776,77 @@ else:
             # QUESTION
             # ----------------------------------
 
-            q = test_questions[
-                question_number % len(test_questions)
-            ]
+            st.markdown(
+                f"""
+                <div class="question-box">
+
+                    <div class="question-text">
+                        {q["question"]}
+                    </div>
+
+                    <div class="answer-label">
+                        Бір дұрыс жауапты таңдаңыз
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            # ----------------------------------
+            # ANSWERS
+            # ----------------------------------
+
+            answer = st.radio(
+                "Жауап:",
+                q["answers"],
+                index=None,
+                key=f"answer_{question_number}"
+            )
+
+
+            st.write("")
+
+
+            # ----------------------------------
+            # NEXT
+            # ----------------------------------
+
+            if st.button(
+                "Келесі →",
+                use_container_width=True
+            ):
+
+                if answer is None:
+
+                    st.warning(
+                        "Алдымен жауапты таңдаңыз."
+                    )
+
+                else:
+
+                    st.session_state.current_question += 1
+
+                    if st.session_state.current_question >= 20:
+
+                        st.session_state.current_question = 0
+
+                        st.success(
+                            "🎯 Тест аяқталды!"
+                        )
+
+                    else:
+
+                        st.rerun()
+
+
+        else:
 
             st.markdown(
                 f"""
-                <div class="que
+                <div class="test-title">
+                    {subject}
+                </div>
+                """,
 ```
