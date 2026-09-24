@@ -16,7 +16,7 @@ if "logged_in" not in st.session_state:
 
 
 # ==========================================
-# CSS
+# DESIGN
 # ==========================================
 
 st.markdown("""
@@ -29,9 +29,6 @@ st.markdown("""
 }
 
 .stApp {
-
-    min-height: 100vh;
-
     background:
         radial-gradient(
             circle at 15% 20%,
@@ -44,365 +41,136 @@ st.markdown("""
             transparent 30%
         ),
         #020817;
-
 }
-
-
-/* ==========================================
-   STREAMLIT
-========================================== */
 
 header {
     background: transparent !important;
 }
 
 .block-container {
-    max-width: 1200px !important;
-    padding-top: 25px !important;
+    max-width: 1150px !important;
+    padding-top: 35px !important;
 }
 
 
-/* ==========================================
-   LOGIN
-========================================== */
+/* LOGIN */
 
-.login-page {
-
-    min-height: 90vh;
-
-    display: flex;
-
-    flex-direction: column;
-
-    justify-content: center;
-
-    align-items: center;
-
+.login-title {
     text-align: center;
-
-}
-
-
-/* ==========================================
-   LOGO
-========================================== */
-
-.login-logo {
-
-    font-size: 46px;
-
-    font-weight: 800;
-
-    letter-spacing: -2px;
-
     color: white;
-
-    margin-bottom: 8px;
-
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-top: 130px;
 }
 
-.login-logo span {
-
+.login-title span {
     color: #39bfff;
-
 }
 
-
-/* ==========================================
-   SLOGAN
-========================================== */
-
-.login-slogan {
-
-    color: rgba(255,255,255,0.48);
-
+.login-text {
+    text-align: center;
+    color: rgba(255,255,255,0.50);
     font-size: 14px;
-
-    font-weight: 500;
-
     margin-bottom: 35px;
-
 }
 
 
-/* ==========================================
-   INPUTS
-========================================== */
-
-.stTextInput {
-
-    margin-bottom: 5px;
-
-}
+/* INPUT */
 
 .stTextInput label {
-
-    color: rgba(255,255,255,0.70) !important;
-
-    font-size: 13px !important;
-
+    color: rgba(255,255,255,0.75) !important;
     font-weight: 600 !important;
-
 }
 
-.stTextInput > div > div > input {
-
-    height: 52px !important;
-
-    background: rgba(255,255,255,0.045) !important;
-
-    border: 1px solid rgba(255,255,255,0.13) !important;
-
-    border-radius: 13px !important;
-
+.stTextInput input {
+    height: 50px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    border-radius: 12px !important;
     color: white !important;
-
-    font-family: 'Manrope', sans-serif !important;
-
-    font-size: 14px !important;
-
-}
-
-.stTextInput > div > div > input:focus {
-
-    border-color: #39bfff !important;
-
-    box-shadow:
-        0 0 0 2px rgba(57,191,255,0.10) !important;
-
 }
 
 
-/* ==========================================
-   LOGIN BUTTON
-========================================== */
+/* BUTTON */
 
-.stButton {
-
-    margin-top: 17px;
-
-}
-
-.stButton > button {
-
-    height: 52px !important;
-
-    border-radius: 13px !important;
-
+.stButton button {
+    height: 50px !important;
+    border-radius: 12px !important;
     border: none !important;
 
-    background:
-        linear-gradient(
-            135deg,
-            #39bfff,
-            #1677ff
-        ) !important;
+    background: linear-gradient(
+        135deg,
+        #39bfff,
+        #1677ff
+    ) !important;
 
     color: white !important;
 
-    font-family: 'Manrope', sans-serif !important;
-
-    font-size: 14px !important;
-
     font-weight: 700 !important;
-
-    transition: 0.25s;
-
-}
-
-.stButton > button:hover {
-
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(22,119,255,0.30);
-
 }
 
 
-/* ==========================================
-   HOME
-========================================== */
-
-.home-top {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    padding-top: 10px;
-
-}
-
+/* HOME */
 
 .home-logo {
-
-    font-size: 27px;
-
-    font-weight: 800;
-
-    letter-spacing: -1px;
-
     color: white;
-
+    font-size: 28px;
+    font-weight: 800;
 }
 
 .home-logo span {
-
     color: #39bfff;
-
 }
-
-
-/* ==========================================
-   HOME TITLE
-========================================== */
 
 .home-title {
-
-    margin-top: 100px;
-
-    font-size: clamp(45px, 6vw, 76px);
-
-    line-height: 1.05;
-
-    font-weight: 800;
-
-    letter-spacing: -3px;
-
     color: white;
-
+    font-size: 58px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -3px;
+    margin-top: 100px;
 }
-
-.home-title span {
-
-    color: #39bfff;
-
-}
-
 
 .home-description {
-
-    margin-top: 20px;
-
     color: rgba(255,255,255,0.48);
-
     font-size: 15px;
-
-    max-width: 600px;
-
-    line-height: 1.7;
-
+    margin-top: 20px;
+    line-height: 1.6;
 }
 
-
-/* ==========================================
-   SUBJECTS
-========================================== */
-
-.subject-section {
-
-    margin-top: 75px;
-
-}
-
-
-.subject-heading {
-
+.subject-title {
     color: white;
-
-    font-size: 24px;
-
+    font-size: 26px;
     font-weight: 700;
-
+    margin-top: 70px;
     margin-bottom: 25px;
-
 }
-
-
-.subject {
-
-    padding: 20px 0;
-
-    border-bottom:
-        1px solid rgba(255,255,255,0.09);
-
-    cursor: pointer;
-
-    transition: 0.25s;
-
-}
-
-
-.subject:hover {
-
-    padding-left: 12px;
-
-}
-
 
 .subject-number {
-
     color: #39bfff;
-
     font-size: 13px;
-
     font-weight: 700;
-
 }
-
 
 .subject-name {
-
     color: white;
-
-    font-size: 20px;
-
-    font-weight: 600;
-
-    margin-top: 4px;
-
+    font-size: 21px;
+    font-weight: 700;
+    margin-top: 5px;
 }
-
 
 .subject-info {
-
-    color: rgba(255,255,255,0.35);
-
+    color: rgba(255,255,255,0.38);
     font-size: 12px;
-
-    margin-top: 4px;
-
+    margin-top: 5px;
 }
-
-
-/* ==========================================
-   FOOTER
-========================================== */
 
 .footer {
-
-    margin-top: 100px;
-
-    padding-bottom: 30px;
-
     color: rgba(255,255,255,0.22);
-
+    text-align: center;
     font-size: 10px;
-
-}
-
-
-/* ==========================================
-   ALERT
-========================================== */
-
-.stAlert {
-
-    border-radius: 10px !important;
-
+    margin-top: 80px;
 }
 
 </style>
@@ -410,27 +178,21 @@ header {
 
 
 # ==========================================
-# LOGIN PAGE
+# LOGIN
 # ==========================================
 
 if not st.session_state.logged_in:
 
-    st.markdown("""
-    <div class="login-page">
+    st.markdown(
+        '<div class="login-title">KASYM<span>•</span>EDU</div>',
+        unsafe_allow_html=True
+    )
 
-        <div class="login-logo">
-            KASYM<span>•</span>EDU
-        </div>
+    st.markdown(
+        '<div class="login-text">Бүгінгі дайындық — ертеңгі грант</div>',
+        unsafe_allow_html=True
+    )
 
-        <div class="login-slogan">
-            Бүгінгі дайындық — ертеңгі грант
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
-
-
-    # Input ортасында
     left, center, right = st.columns([1.2, 1, 1.2])
 
     with center:
@@ -447,14 +209,13 @@ if not st.session_state.logged_in:
         )
 
         if st.button(
-            "Кіру  →",
+            "Кіру →",
             use_container_width=True
         ):
 
             if login and password:
 
                 st.session_state.logged_in = True
-
                 st.rerun()
 
             else:
@@ -465,29 +226,21 @@ if not st.session_state.logged_in:
 
 
 # ==========================================
-# HOME PAGE
+# HOME
 # ==========================================
 
 else:
 
-    # --------------------------------------
-    # TOP
-    # --------------------------------------
+    # Жоғарғы бөлік
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="home-top">
-
-            <div class="home-logo">
-                KASYM<span>•</span>EDU
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(
+            '<div class="home-logo">KASYM<span>•</span>EDU</div>',
+            unsafe_allow_html=True
+        )
 
     with col2:
 
@@ -497,269 +250,222 @@ else:
         ):
 
             st.session_state.logged_in = False
-
             st.rerun()
 
 
-    # --------------------------------------
-    # MAIN TITLE
-    # --------------------------------------
+    # Негізгі тақырып
 
-    st.markdown("""
-    <div class="home-title">
-        Бүгінгі дайындық —<br>
-        <span>ертеңгі грант.</span>
-    </div>
-
-    <div class="home-description">
-        ҰБТ-ға дайындал. Біліміңді тексер.
-        Қателеріңді талда. Нәтижеңді жақсарт.
-    </div>
-    """, unsafe_allow_html=True)
-
-
-    # --------------------------------------
-    # SUBJECTS
-    # --------------------------------------
-
-    st.markdown("""
-    <div class="subject-section">
-
-        <div class="subject-heading">
-            Пәндер
+    st.markdown(
+        """
+        <div class="home-title">
+            Бүгінгі дайындық —<br>
+            ертеңгі грант.
         </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="home-description">
+            ҰБТ-ға дайындал. Біліміңді тексер.
+            Қателеріңді талда. Нәтижеңді жақсарт.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
-    # --------------------------------------
-    # SUBJECT 1
-    # --------------------------------------
+    # Пәндер
+
+    st.markdown(
+        '<div class="subject-title">Пәндер</div>',
+        unsafe_allow_html=True
+    )
+
+
+    # ======================================
+    # МАТЕМАТИКА
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("01")
 
-            <div class="subject-number">
-                01
-            </div>
+        st.subheader("📐 Математика")
 
-            <div class="subject-name">
-                📐 Математика
-            </div>
-
-            <div class="subject-info">
-                ҰБТ есептері • Тесттер • Қателерді талдау
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "ҰБТ есептері • Тесттер • Қателерді талдау"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="math",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "math"
 
 
-    # --------------------------------------
-    # SUBJECT 2
-    # --------------------------------------
+    st.divider()
+
+
+    # ======================================
+    # ИНФОРМАТИКА
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("02")
 
-            <div class="subject-number">
-                02
-            </div>
+        st.subheader("💻 Информатика")
 
-            <div class="subject-name">
-                💻 Информатика
-            </div>
-
-            <div class="subject-info">
-                Python • Теория • ҰБТ тесттері
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "Python • Теория • ҰБТ тесттері"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="informatics",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "informatics"
 
 
-    # --------------------------------------
-    # SUBJECT 3
-    # --------------------------------------
+    st.divider()
+
+
+    # ======================================
+    # ҚАЗАҚСТАН ТАРИХЫ
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("03")
 
-            <div class="subject-number">
-                03
-            </div>
+        st.subheader("🇰🇿 Қазақстан тарихы")
 
-            <div class="subject-name">
-                🇰🇿 Қазақстан тарихы
-            </div>
-
-            <div class="subject-info">
-                Даталар • Оқиғалар • Тесттер
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "Даталар • Оқиғалар • Тесттер"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="history",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "history"
 
 
-    # --------------------------------------
-    # SUBJECT 4
-    # --------------------------------------
+    st.divider()
+
+
+    # ======================================
+    # ОҚУ САУАТТЫЛЫҒЫ
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("04")
 
-            <div class="subject-number">
-                04
-            </div>
+        st.subheader("📖 Оқу сауаттылығы")
 
-            <div class="subject-name">
-                📖 Оқу сауаттылығы
-            </div>
-
-            <div class="subject-info">
-                Мәтіндер • Талдау • Тесттер
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "Мәтіндер • Талдау • Тесттер"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="reading",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "reading"
 
 
-    # --------------------------------------
-    # SUBJECT 5
-    # --------------------------------------
+    st.divider()
+
+
+    # ======================================
+    # МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("05")
 
-            <div class="subject-number">
-                05
-            </div>
+        st.subheader("🧠 Математикалық сауаттылық")
 
-            <div class="subject-name">
-                🧠 Математикалық сауаттылық
-            </div>
-
-            <div class="subject-info">
-                Логика • Формулалар • Есептер
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "Логика • Формулалар • Есептер"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="math_literacy",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "math_literacy"
 
 
-    # --------------------------------------
-    # RESULTS
-    # --------------------------------------
+    st.divider()
 
-    st.markdown("""
-    <div class="subject-section">
 
-        <div class="subject-heading">
-            Менің нәтижелерім
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
-
+    # ======================================
+    # НӘТИЖЕЛЕР
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
 
-        st.markdown("""
-        <div class="subject">
+        st.write("06")
 
-            <div class="subject-number">
-                06
-            </div>
+        st.subheader("🎯 Менің нәтижелерім")
 
-            <div class="subject-name">
-                🎯 Нәтижелер мен қателер
-            </div>
-
-            <div class="subject-info">
-                Дұрыс жауаптар • Қате сұрақтар • Прогресс
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(
+            "Дұрыс жауаптар • Қате сұрақтар • Прогресс"
+        )
 
     with col2:
 
-        st.button(
+        if st.button(
             "→",
             key="results",
             use_container_width=True
-        )
+        ):
+
+            st.session_state.page = "results"
 
 
-    # --------------------------------------
+    # ======================================
     # FOOTER
-    # --------------------------------------
+    # ======================================
 
-    st.markdown("""
-    <div class="footer">
-        © 2026 KASYM EDU
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="footer">© 2026 KASYM EDU</div>',
+        unsafe_allow_html=True
+    )
