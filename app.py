@@ -1,72 +1,54 @@
 import streamlit as st
 
-# =========================
-# PAGE SETTINGS
-# =========================
-
 st.set_page_config(
-    page_title="Бүгінгі дайындық — ертеңгі грант",
+    page_title="KASYM EDU",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# =========================
-# CSS
-# =========================
-
 st.markdown("""
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 * {
     font-family: 'Montserrat', sans-serif;
 }
 
-html, body, [class*="css"] {
-    margin: 0;
-    padding: 0;
-}
-
 .stApp {
     min-height: 100vh;
-
     background:
         linear-gradient(
-            rgba(4, 13, 30, 0.72),
-            rgba(2, 8, 20, 0.88)
+            rgba(3, 12, 28, 0.72),
+            rgba(1, 7, 18, 0.94)
         ),
         radial-gradient(
             circle at 20% 20%,
-            rgba(0, 120, 255, 0.25),
+            rgba(0, 120, 255, 0.22),
             transparent 35%
         ),
         radial-gradient(
             circle at 80% 70%,
-            rgba(0, 210, 255, 0.15),
+            rgba(0, 210, 255, 0.14),
             transparent 35%
         ),
         #020817;
 }
 
-/* Streamlit header */
 header {
     background: transparent !important;
 }
 
-/* Main container */
 .block-container {
     max-width: 100% !important;
     padding: 0 !important;
 }
 
-/* Background slogan */
+/* Артқы үлкен мәтін */
 .background-title {
     position: fixed;
     top: 50%;
     left: 50%;
-
     transform: translate(-50%, -50%);
 
     width: 100%;
@@ -76,19 +58,17 @@ header {
     font-size: clamp(45px, 7vw, 110px);
     font-weight: 800;
 
-    color: rgba(255, 255, 255, 0.055);
+    color: rgba(255, 255, 255, 0.045);
 
     letter-spacing: -3px;
-
-    pointer-events: none;
-
     white-space: nowrap;
 
+    pointer-events: none;
     z-index: 0;
 }
 
-/* Login wrapper */
-.login-wrapper {
+/* Login орналасуы */
+.login-container {
     min-height: 100vh;
 
     display: flex;
@@ -96,35 +76,34 @@ header {
     align-items: center;
 
     position: relative;
-
     z-index: 2;
 }
 
-/* Login card */
+/* Login карточкасы */
 .login-card {
     width: 430px;
 
-    padding: 45px 42px;
+    padding: 42px;
 
     border-radius: 28px;
 
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.075);
 
     border: 1px solid rgba(255, 255, 255, 0.16);
 
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
 
     box-shadow:
-        0 30px 80px rgba(0, 0, 0, 0.45),
+        0 30px 80px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* Logo */
+/* Логотип */
 .logo {
     text-align: center;
 
-    font-size: 42px;
+    font-size: 40px;
     font-weight: 800;
 
     color: white;
@@ -136,18 +115,27 @@ header {
     color: #39bfff;
 }
 
-/* Subtitle */
+/* Слоган */
 .subtitle {
     text-align: center;
 
-    color: rgba(255, 255, 255, 0.62);
+    color: rgba(255, 255, 255, 0.58);
 
-    font-size: 14px;
+    font-size: 13px;
 
-    margin-bottom: 32px;
+    margin-bottom: 28px;
 }
 
-/* Inputs */
+/* Input */
+.stTextInput {
+    margin-bottom: 10px;
+}
+
+.stTextInput label {
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-weight: 500 !important;
+}
+
 .stTextInput > div > div > input {
     background: rgba(255, 255, 255, 0.07) !important;
 
@@ -163,20 +151,17 @@ header {
 }
 
 .stTextInput > div > div > input:focus {
-    border: 1px solid rgba(57, 191, 255, 0.8) !important;
+    border: 1px solid #39bfff !important;
 
     box-shadow:
         0 0 0 2px rgba(57, 191, 255, 0.12) !important;
 }
 
-/* Input labels */
-.stTextInput label {
-    color: rgba(255, 255, 255, 0.75) !important;
-
-    font-weight: 500 !important;
+/* Кіру батырмасы */
+.stButton {
+    margin-top: 18px;
 }
 
-/* Login button */
 .stButton > button {
     width: 100%;
 
@@ -205,47 +190,43 @@ header {
 }
 
 .stButton > button:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
 
     box-shadow:
-        0 15px 35px rgba(22, 119, 255, 0.45);
+        0 15px 40px rgba(22, 119, 255, 0.45);
 }
 
 /* Footer */
 .footer {
     text-align: center;
 
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.32);
 
     font-size: 11px;
 
-    margin-top: 25px;
+    margin-top: 22px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# =========================
-# LOGIN PAGE
-# =========================
-
-st.markdown("""
+# Артқы жазу
+st.markdown(
+    """
 <div class="background-title">
     Бүгінгі дайындық — ертеңгі грант
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True
+)
 
 
-# Center columns
-left, center, right = st.columns([1, 1.1, 1])
-
-
-with center:
-
-    st.markdown("""
+# Login контейнері
+st.markdown(
+    """
+<div class="login-container">
     <div class="login-card">
-
         <div class="logo">
             KASYM<span>•</span>EDU
         </div>
@@ -253,9 +234,17 @@ with center:
         <div class="subtitle">
             Бүгінгі дайындық — ертеңгі грант
         </div>
-
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""",
+    unsafe_allow_html=True
+)
+
+
+# Input орналасуы
+left, center, right = st.columns([1, 1.1, 1])
+
+with center:
 
     login = st.text_input(
         "Логин",
@@ -268,8 +257,6 @@ with center:
         placeholder="Құпиясөзіңізді енгізіңіз"
     )
 
-    st.write("")
-
     if st.button("Кіру  →"):
 
         if login and password:
@@ -277,8 +264,11 @@ with center:
         else:
             st.error("Логин мен құпиясөзді енгізіңіз.")
 
-    st.markdown("""
-    <div class="footer">
-        © 2026 KASYM EDU
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        """
+<div class="footer">
+    © 2026 KASYM EDU
+</div>
+""",
+        unsafe_allow_html=True
+    )
