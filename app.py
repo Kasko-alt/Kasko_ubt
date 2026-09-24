@@ -22,7 +22,7 @@ if "selected_combination" not in st.session_state:
 
 
 # ==========================================
-# ПӘН КОМБИНАЦИЯЛАРЫ
+# НЕГІЗГІ ПӘН КОМБИНАЦИЯЛАРЫ
 # ==========================================
 
 combinations = [
@@ -48,6 +48,17 @@ combinations = [
     ("🌍⚖️", "Дүниежүзі тарихы + Құқық",
      "Дүниежүзі тарихы • Құқық"),
 
+]
+
+
+# ==========================================
+# ОРТАҚ МІНДЕТТІ ПӘНДЕР
+# ==========================================
+
+common_subjects = [
+    ("🇰🇿", "Қазақстан тарихы"),
+    ("📖", "Оқу сауаттылығы"),
+    ("🧠", "Математикалық сауаттылық"),
 ]
 
 
@@ -173,7 +184,7 @@ header {
 
 
 /* ==========================================
-   HOME
+   LOGO
 ========================================== */
 
 .home-logo {
@@ -185,6 +196,11 @@ header {
 .home-logo span {
     color: #39bfff;
 }
+
+
+/* ==========================================
+   HOME TITLE
+========================================== */
 
 .home-title {
     color: white;
@@ -245,7 +261,7 @@ header {
 
 
 /* ==========================================
-   COMBINATION PAGE
+   COMBINATION TITLE
 ========================================== */
 
 .combo-title {
@@ -257,29 +273,23 @@ header {
     margin-top: 80px;
 }
 
-.combo-title span {
-    color: #39bfff;
+.combo-description {
+    color: rgba(255,255,255,0.48);
+    font-size: 15px;
+    margin-top: 18px;
 }
 
-.common-box {
-    margin-top: 35px;
-    padding: 25px;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-}
 
-.common-title {
-    color: white;
-    font-size: 17px;
+/* ==========================================
+   COMMON SUBJECT
+========================================== */
+
+.common-heading {
+    color: rgba(255,255,255,0.55);
+    font-size: 15px;
     font-weight: 700;
-    margin-bottom: 18px;
-}
-
-.common-item {
-    color: rgba(255,255,255,0.70);
-    font-size: 14px;
-    padding: 8px 0;
+    margin-top: 45px;
+    margin-bottom: 20px;
 }
 
 
@@ -391,7 +401,7 @@ else:
 
 
     # ======================================
-    # HOME PAGE
+    # HOME
     # ======================================
 
     if st.session_state.page == "home":
@@ -484,6 +494,10 @@ else:
 
         selected = st.session_state.selected_combination
 
+        # ----------------------------------
+        # TITLE
+        # ----------------------------------
+
         st.markdown(
             f"""
             <div class="combo-title">
@@ -495,7 +509,7 @@ else:
 
         st.markdown(
             """
-            <div class="home-description">
+            <div class="combo-description">
                 Осы бағыт бойынша ҰБТ дайындығы
             </div>
             """,
@@ -511,7 +525,6 @@ else:
             '<div class="section-title">Негізгі пәндер</div>',
             unsafe_allow_html=True
         )
-
 
         selected_parts = selected.split(" + ")
 
@@ -543,7 +556,7 @@ else:
 
                 if st.button(
                     "→",
-                    key=f"subject_{i}_{subject}",
+                    key=f"main_subject_{i}_{subject}",
                     use_container_width=True
                 ):
 
@@ -555,43 +568,61 @@ else:
 
 
         # ==================================
-        # ОРТАҚ МІНДЕТТІ ПӘНДЕР
+        # ОРТАҚ ПӘНДЕР
         # ==================================
 
         st.markdown(
-            """
-            <div class="common-box">
-
-                <div class="common-title">
-                    📌 Барлық пәндерге ортақ міндетті бөлім
-                </div>
-
-                <div class="common-item">
-                    🧠 Математикалық сауаттылық
-                </div>
-
-                <div class="common-item">
-                    📖 Оқу сауаттылығы
-                </div>
-
-                <div class="common-item">
-                    🇰🇿 Қазақстан тарихы
-                </div>
-
-            </div>
-            """,
+            '<div class="common-heading">Барлық комбинацияға ортақ міндетті пәндер</div>',
             unsafe_allow_html=True
         )
 
 
-        st.write("")
+        for i, (icon, subject) in enumerate(common_subjects):
+
+            col1, col2 = st.columns([5, 1])
+
+            with col1:
+
+                st.markdown(
+                    f"""
+                    <div class="subject-number">
+                        {i + 3:02d}
+                    </div>
+
+                    <div class="subject-name">
+                        {icon} {subject}
+                    </div>
+
+                    <div class="subject-info">
+                        ҰБТ тесттері • Тақырыптар • Қателерді талдау
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            with col2:
+
+                if st.button(
+                    "→",
+                    key=f"common_subject_{i}",
+                    use_container_width=True
+                ):
+
+                    st.info(
+                        f"{subject} тесттері келесі қадамда қосылады."
+                    )
+
+            st.divider()
 
 
         # ==================================
         # BACK
         # ==================================
 
-        if st.button("← Пәндерге қайту"):
+        if st.button(
+            "← Пәндерге қайту",
+            use_container_width=False
+        ):
 
             st.session_state.page = "home"
             st.session_state.selected_combination = None
