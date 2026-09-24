@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 
 st.set_page_config(
@@ -19,6 +20,12 @@ if "page" not in st.session_state:
 
 if "selected_combination" not in st.session_state:
     st.session_state.selected_combination = None
+
+if "selected_subject" not in st.session_state:
+    st.session_state.selected_subject = None
+
+if "current_question" not in st.session_state:
+    st.session_state.current_question = 0
 
 
 # ==========================================
@@ -60,6 +67,73 @@ common_subjects = [
     ("📖", "Оқу сауаттылығы"),
     ("🧠", "Математикалық сауаттылық"),
 ]
+
+
+# ==========================================
+# ТЕСТ СҰРАҚТАРЫ
+# ==========================================
+
+questions = {
+
+    "Информатика": [
+
+        {
+            "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
+            "answers": [
+                "input()",
+                "print()",
+                "len()",
+                "type()"
+            ],
+            "correct": 1
+        },
+
+        {
+            "question": "Python-да пайдаланушыдан мәлімет енгізу үшін қай функция қолданылады?",
+            "answers": [
+                "print()",
+                "input()",
+                "len()",
+                "str()"
+            ],
+            "correct": 1
+        },
+
+        {
+            "question": "Python-да бүтін санның типі қалай жазылады?",
+            "answers": [
+                "float",
+                "str",
+                "int",
+                "bool"
+            ],
+            "correct": 2
+        },
+
+        {
+            "question": "Тізімнің элементтер санын анықтайтын функция:",
+            "answers": [
+                "sum()",
+                "type()",
+                "len()",
+                "input()"
+            ],
+            "correct": 2
+        },
+
+        {
+            "question": "Python-да қалдықты табу операторы:",
+            "answers": [
+                "/",
+                "//",
+                "%",
+                "**"
+            ],
+            "correct": 2
+        },
+
+    ]
+}
 
 
 # ==========================================
@@ -151,13 +225,9 @@ header {
     height: 50px !important;
     border-radius: 12px !important;
     border: 1px solid rgba(255,255,255,0.08) !important;
-
     background: rgba(255,255,255,0.05) !important;
-
     color: white !important;
-
     font-weight: 700 !important;
-
     transition: 0.2s;
 }
 
@@ -294,6 +364,52 @@ header {
 
 
 /* ==========================================
+   TEST
+========================================== */
+
+.test-title {
+    color: white;
+    font-size: 42px;
+    font-weight: 800;
+    margin-top: 60px;
+}
+
+.test-progress {
+    color: #39bfff;
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 12px;
+}
+
+.question-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px;
+    padding: 35px;
+    margin-top: 30px;
+    margin-bottom: 25px;
+}
+
+.question-text {
+    color: white;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.answer-label {
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 25px;
+}
+
+.test-back {
+    margin-top: 25px;
+}
+
+
+/* ==========================================
    FOOTER
 ========================================== */
 
@@ -426,11 +542,6 @@ else:
             unsafe_allow_html=True
         )
 
-
-        # ==================================
-        # ПӘНДЕР
-        # ==================================
-
         st.markdown(
             '<div class="section-title">📚 Пәндер</div>',
             unsafe_allow_html=True
@@ -494,10 +605,6 @@ else:
 
         selected = st.session_state.selected_combination
 
-        # ----------------------------------
-        # TITLE
-        # ----------------------------------
-
         st.markdown(
             f"""
             <div class="combo-title">
@@ -560,9 +667,12 @@ else:
                     use_container_width=True
                 ):
 
-                    st.info(
-                        f"{subject} тесттері келесі қадамда қосылады."
-                    )
+                    st.session_state.selected_subject = subject
+                    st.session_state.current_question = 0
+
+                    st.session_state.page = "test"
+
+                    st.rerun()
 
             st.divider()
 
@@ -608,9 +718,12 @@ else:
                     use_container_width=True
                 ):
 
-                    st.info(
-                        f"{subject} тесттері келесі қадамда қосылады."
-                    )
+                    st.session_state.selected_subject = subject
+                    st.session_state.current_question = 0
+
+                    st.session_state.page = "test"
+
+                    st.rerun()
 
             st.divider()
 
@@ -634,3 +747,79 @@ else:
             '<div class="footer">© 2026 KASYM EDU</div>',
             unsafe_allow_html=True
         )
+
+
+    # ======================================
+    # TEST PAGE
+    # ======================================
+
+    elif st.session_state.page == "test":
+
+        subject = st.session_state.selected_subject
+
+        # ----------------------------------
+        # BACK
+        # ----------------------------------
+
+        if st.button("← Пәнге қайту"):
+
+            st.session_state.page = "combination"
+
+            st.rerun()
+
+
+        # ----------------------------------
+        # ТЕК ҚАЗІР ИНФОРМАТИКА ТЕСТІ
+        # ----------------------------------
+
+        if subject not in questions:
+
+            st.markdown(
+                f"""
+                <div class="test-title">
+                    {subject}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            st.info(
+                "Бұл пәннің тесттері келесі кезеңде қосылады."
+            )
+
+        else:
+
+            test_questions = questions[subject]
+
+            question_number = st.session_state.current_question
+
+            # ----------------------------------
+            # TEST HEADER
+            # ----------------------------------
+
+            st.markdown(
+                f"""
+                <div class="test-title">
+                    💻 {subject}
+                </div>
+
+                <div class="test-progress">
+                    ҰБТ тесті • Сұрақ {question_number + 1} / 20
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            # ----------------------------------
+            # QUESTION
+            # ----------------------------------
+
+            q = test_questions[
+                question_number % len(test_questions)
+            ]
+
+            st.markdown(
+                f"""
+                <div class="que
+```
