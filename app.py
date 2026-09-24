@@ -9,6 +9,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 * {
@@ -17,19 +18,20 @@ st.markdown("""
 
 .stApp {
     min-height: 100vh;
+
     background:
         linear-gradient(
-            rgba(3, 12, 28, 0.72),
-            rgba(1, 7, 18, 0.94)
+            rgba(2, 10, 25, 0.78),
+            rgba(1, 6, 18, 0.96)
         ),
         radial-gradient(
             circle at 20% 20%,
-            rgba(0, 120, 255, 0.22),
+            rgba(0, 120, 255, 0.25),
             transparent 35%
         ),
         radial-gradient(
-            circle at 80% 70%,
-            rgba(0, 210, 255, 0.14),
+            circle at 80% 75%,
+            rgba(0, 200, 255, 0.15),
             transparent 35%
         ),
         #020817;
@@ -44,125 +46,193 @@ header {
     padding: 0 !important;
 }
 
-/* Артқы үлкен мәтін */
+/* =========================
+   АРТҚЫ ЖАЗУ
+========================= */
+
 .background-title {
     position: fixed;
+
     top: 50%;
     left: 50%;
+
     transform: translate(-50%, -50%);
 
     width: 100%;
 
     text-align: center;
 
-    font-size: clamp(45px, 7vw, 110px);
+    font-size: clamp(40px, 7vw, 105px);
+
     font-weight: 800;
+
+    letter-spacing: -3px;
 
     color: rgba(255, 255, 255, 0.045);
 
-    letter-spacing: -3px;
     white-space: nowrap;
 
     pointer-events: none;
+
     z-index: 0;
 }
 
-/* Login орналасуы */
-.login-container {
+/* =========================
+   НЕГІЗГІ ОРТАЛЫҚ
+========================= */
+
+.login-page {
+
     min-height: 100vh;
 
     display: flex;
+
     justify-content: center;
+
     align-items: center;
 
     position: relative;
+
     z-index: 2;
 }
 
-/* Login карточкасы */
+/* =========================
+   GLASS CARD
+========================= */
+
 .login-card {
+
     width: 430px;
 
-    padding: 42px;
+    padding: 42px 40px 34px 40px;
 
     border-radius: 28px;
 
-    background: rgba(255, 255, 255, 0.075);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.11),
+            rgba(255,255,255,0.045)
+        );
 
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255,255,255,0.16);
 
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(25px);
+
+    -webkit-backdrop-filter: blur(25px);
 
     box-shadow:
-        0 30px 80px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+        0 30px 90px rgba(0,0,0,0.55),
+
+        inset 0 1px 0 rgba(255,255,255,0.12);
+
 }
 
-/* Логотип */
+/* =========================
+   ЛОГО
+========================= */
+
 .logo {
+
     text-align: center;
 
-    font-size: 40px;
+    font-size: 38px;
+
     font-weight: 800;
 
     color: white;
 
-    margin-bottom: 8px;
+    letter-spacing: -1px;
+
+    margin-bottom: 7px;
 }
 
 .logo span {
+
     color: #39bfff;
+
 }
 
-/* Слоган */
+/* =========================
+   СЛОГАН
+========================= */
+
 .subtitle {
+
     text-align: center;
 
-    color: rgba(255, 255, 255, 0.58);
+    color: rgba(255,255,255,0.55);
 
-    font-size: 13px;
+    font-size: 12px;
 
     margin-bottom: 28px;
+
 }
 
-/* Input */
-.stTextInput {
-    margin-bottom: 10px;
-}
+/* =========================
+   INPUT LABEL
+========================= */
 
 .stTextInput label {
-    color: rgba(255, 255, 255, 0.78) !important;
-    font-weight: 500 !important;
+
+    color: rgba(255,255,255,0.78) !important;
+
+    font-size: 13px !important;
+
+    font-weight: 600 !important;
+
 }
 
-.stTextInput > div > div > input {
-    background: rgba(255, 255, 255, 0.07) !important;
+/* =========================
+   INPUT
+========================= */
 
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+.stTextInput > div > div > input {
+
+    height: 52px !important;
+
+    background: rgba(255,255,255,0.055) !important;
+
+    border: 1px solid rgba(255,255,255,0.14) !important;
 
     border-radius: 14px !important;
 
     color: white !important;
 
-    height: 52px !important;
-
     padding-left: 16px !important;
+
+    font-size: 14px !important;
+
+}
+
+.stTextInput > div > div > input::placeholder {
+
+    color: rgba(255,255,255,0.30) !important;
+
 }
 
 .stTextInput > div > div > input:focus {
+
     border: 1px solid #39bfff !important;
 
     box-shadow:
-        0 0 0 2px rgba(57, 191, 255, 0.12) !important;
+        0 0 0 2px rgba(57,191,255,0.12) !important;
+
 }
 
-/* Кіру батырмасы */
+/* =========================
+   КІРУ БАТЫРМАСЫ
+========================= */
+
 .stButton {
+
     margin-top: 18px;
+
 }
 
 .stButton > button {
+
     width: 100%;
 
     height: 54px;
@@ -171,62 +241,87 @@ header {
 
     border: none;
 
-    background: linear-gradient(
-        135deg,
-        #39bfff,
-        #1677ff
-    );
+    background:
+        linear-gradient(
+            135deg,
+            #39bfff,
+            #1677ff
+        );
 
     color: white;
 
-    font-size: 16px;
+    font-size: 15px;
 
     font-weight: 700;
 
-    transition: all 0.25s ease;
+    transition: 0.25s;
 
     box-shadow:
-        0 10px 30px rgba(22, 119, 255, 0.28);
+        0 10px 30px rgba(22,119,255,0.28);
+
 }
 
 .stButton > button:hover {
+
     transform: translateY(-3px);
 
     box-shadow:
-        0 15px 40px rgba(22, 119, 255, 0.45);
+        0 15px 40px rgba(22,119,255,0.45);
+
 }
 
-/* Footer */
+/* =========================
+   FOOTER
+========================= */
+
 .footer {
+
     text-align: center;
 
-    color: rgba(255, 255, 255, 0.32);
+    color: rgba(255,255,255,0.25);
 
-    font-size: 11px;
+    font-size: 10px;
 
-    margin-top: 22px;
+    margin-top: 25px;
+
+}
+
+/* =========================
+   SUCCESS / ERROR
+========================= */
+
+.stAlert {
+
+    border-radius: 12px !important;
+
+    margin-top: 15px !important;
+
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# Артқы жазу
-st.markdown(
-    """
+# =========================
+# АРТҚЫ ЖАЗУ
+# =========================
+
+st.markdown("""
 <div class="background-title">
     Бүгінгі дайындық — ертеңгі грант
 </div>
-""",
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 
-# Login контейнері
-st.markdown(
-    """
-<div class="login-container">
+# =========================
+# LOGIN БЕТІНІҢ ЖОҒАРҒЫ БӨЛІГІ
+# =========================
+
+st.markdown("""
+<div class="login-page">
+
     <div class="login-card">
+
         <div class="logo">
             KASYM<span>•</span>EDU
         </div>
@@ -234,41 +329,49 @@ st.markdown(
         <div class="subtitle">
             Бүгінгі дайындық — ертеңгі грант
         </div>
+
     </div>
+
 </div>
-""",
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 
-# Input орналасуы
+# =========================
+# INPUT-ТАРДЫ КАРТОЧКАҒА
+# ЖАҚЫН ОРНАЛАСТЫРУ
+# =========================
+
 left, center, right = st.columns([1, 1.1, 1])
 
 with center:
 
     login = st.text_input(
         "Логин",
-        placeholder="Логиніңізді енгізіңіз"
+        placeholder="Логиніңізді енгізіңіз",
+        key="login"
     )
 
     password = st.text_input(
         "Құпиясөз",
         type="password",
-        placeholder="Құпиясөзіңізді енгізіңіз"
+        placeholder="Құпиясөзіңізді енгізіңіз",
+        key="password"
     )
 
-    if st.button("Кіру  →"):
+    if st.button("Кіру  →", use_container_width=True):
 
         if login and password:
-            st.success("Кіру сәтті орындалды!")
-        else:
-            st.error("Логин мен құпиясөзді енгізіңіз.")
 
-    st.markdown(
-        """
-<div class="footer">
-    © 2026 KASYM EDU
-</div>
-""",
-        unsafe_allow_html=True
-    )
+            st.success("Кіру сәтті орындалды! 🎉")
+
+        else:
+
+            st.error(
+                "Логин мен құпиясөзді енгізіңіз."
+            )
+
+    st.markdown("""
+    <div class="footer">
+        © 2026 KASYM EDU
+    </div>
+    """, unsafe_allow_html=True)
