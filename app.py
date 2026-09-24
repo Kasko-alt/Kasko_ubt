@@ -17,6 +17,46 @@ if "logged_in" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
+if "selected_combination" not in st.session_state:
+    st.session_state.selected_combination = None
+
+
+# ==========================================
+# ПӘН КОМБИНАЦИЯЛАРЫ
+# ==========================================
+
+combinations = [
+    ("💻📐", "Информатика + Математика",
+     "Информатика • Математика"),
+
+    ("🧬⚗️", "Биология + Химия",
+     "Биология • Химия"),
+
+    ("🌍⚖️", "Дүниежүзі тарихы + Құқық",
+     "Дүниежүзі тарихы • Құқық"),
+
+    ("🌍🇬🇧", "Дүниежүзі тарихы + Ағылшын тілі",
+     "Дүниежүзі тарихы • Ағылшын тілі"),
+
+    ("📐⚗️", "Математика + Химия",
+     "Математика • Химия"),
+
+    ("📐🧬", "Математика + Биология",
+     "Математика • Биология"),
+
+    ("📐🌍", "Математика + География",
+     "Математика • География"),
+
+    ("🧬🌍", "Биология + География",
+     "Биология • География"),
+
+    ("🇰🇿🌍", "Қазақстан тарихы + Дүниежүзі тарихы",
+     "Қазақстан тарихы • Дүниежүзі тарихы"),
+
+    ("🇬🇧🌍", "Ағылшын тілі + География",
+     "Ағылшын тілі • География"),
+]
+
 
 # ==========================================
 # DESIGN
@@ -106,13 +146,9 @@ header {
 .stButton button {
     height: 50px !important;
     border-radius: 12px !important;
-    border: none !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
 
-    background: linear-gradient(
-        135deg,
-        #39bfff,
-        #1677ff
-    ) !important;
+    background: rgba(255,255,255,0.05) !important;
 
     color: white !important;
 
@@ -122,7 +158,24 @@ header {
 }
 
 .stButton button:hover {
+    background: rgba(57,191,255,0.12) !important;
+    border-color: rgba(57,191,255,0.35) !important;
     transform: translateY(-2px);
+}
+
+
+/* ==========================================
+   LOGIN BUTTON
+========================================== */
+
+.login-button button {
+    background: linear-gradient(
+        135deg,
+        #39bfff,
+        #1677ff
+    ) !important;
+
+    border: none !important;
 }
 
 
@@ -149,6 +202,10 @@ header {
     margin-top: 100px;
 }
 
+.home-title span {
+    color: #39bfff;
+}
+
 .home-description {
     color: rgba(255,255,255,0.48);
     font-size: 15px;
@@ -158,15 +215,15 @@ header {
 
 
 /* ==========================================
-   SECTION TITLE
+   SECTION
 ========================================== */
 
 .section-title {
     color: white;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     margin-top: 70px;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
 }
 
 
@@ -195,15 +252,41 @@ header {
 
 
 /* ==========================================
-   COMMON SECTION
+   COMBINATION PAGE
 ========================================== */
 
+.combo-title {
+    color: white;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-top: 80px;
+}
+
+.combo-title span {
+    color: #39bfff;
+}
+
+.common-box {
+    margin-top: 35px;
+    padding: 25px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
 .common-title {
-    color: rgba(255,255,255,0.60);
+    color: white;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.common-item {
+    color: rgba(255,255,255,0.70);
     font-size: 14px;
-    font-weight: 600;
-    margin-top: 55px;
-    margin-bottom: 20px;
+    padding: 8px 0;
 }
 
 
@@ -253,6 +336,11 @@ if not st.session_state.logged_in:
             placeholder="Құпиясөзіңізді енгізіңіз"
         )
 
+        st.markdown(
+            '<div class="login-button">',
+            unsafe_allow_html=True
+        )
+
         if st.button(
             "Кіру →",
             use_container_width=True
@@ -271,16 +359,21 @@ if not st.session_state.logged_in:
                     "Логин мен құпиясөзді енгізіңіз."
                 )
 
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
+
 
 # ==========================================
-# HOME
+# MAIN SITE
 # ==========================================
 
 else:
 
-    # --------------------------------------
+    # ======================================
     # HEADER
-    # --------------------------------------
+    # ======================================
 
     col1, col2 = st.columns([5, 1])
 
@@ -314,7 +407,7 @@ else:
             """
             <div class="home-title">
                 Бүгінгі дайындық —<br>
-                ертеңгі грант.
+                <span>ертеңгі грант.</span>
             </div>
             """,
             unsafe_allow_html=True
@@ -332,167 +425,56 @@ else:
 
 
         # ==================================
-        # НЕГІЗГІ ПӘНДЕР
+        # ПӘНДЕР
         # ==================================
 
         st.markdown(
-            '<div class="section-title">Негізгі пәндер</div>',
+            '<div class="section-title">📚 Пәндер</div>',
             unsafe_allow_html=True
         )
 
 
-        # ----------------------------------
-        # ИНФОРМАТИКА + МАТЕМАТИКА
-        # ----------------------------------
-
-        col1, col2 = st.columns([5, 1])
-
-        with col1:
-
-            st.write("01")
-
-            st.subheader(
-                "💻 Информатика  +  📐 Математика"
-            )
-
-            st.caption(
-                "Информатика • Математика • ҰБТ тесттері"
-            )
-
-        with col2:
-
-            if st.button(
-                "→",
-                key="main_subjects",
-                use_container_width=True
-            ):
-
-                st.session_state.page = "main_subjects"
-
-        st.divider()
-
-
         # ==================================
-        # ОРТАҚ МІНДЕТТІ ПӘНДЕР
+        # КОМБИНАЦИЯЛАР
         # ==================================
 
-        st.markdown(
-            '<div class="common-title">Барлық негізгі пәндерге ортақ</div>',
-            unsafe_allow_html=True
-        )
+        for i, (icon, name, info) in enumerate(combinations):
 
+            col1, col2 = st.columns([5, 1])
 
-        # ----------------------------------
-        # МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ
-        # ----------------------------------
+            with col1:
 
-        col1, col2 = st.columns([5, 1])
+                st.markdown(
+                    f"""
+                    <div class="subject-number">
+                        {i + 1:02d}
+                    </div>
 
-        with col1:
+                    <div class="subject-name">
+                        {icon} {name}
+                    </div>
 
-            st.write("02")
+                    <div class="subject-info">
+                        {info}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-            st.subheader(
-                "🧠 Математикалық сауаттылық"
-            )
+            with col2:
 
-            st.caption(
-                "Логика • Формулалар • Есептер"
-            )
+                if st.button(
+                    "→",
+                    key=f"combo_{i}",
+                    use_container_width=True
+                ):
 
-        with col2:
+                    st.session_state.selected_combination = name
+                    st.session_state.page = "combination"
 
-            st.button(
-                "→",
-                key="math_lit"
-            )
+                    st.rerun()
 
-        st.divider()
-
-
-        # ----------------------------------
-        # ОҚУ САУАТТЫЛЫҒЫ
-        # ----------------------------------
-
-        col1, col2 = st.columns([5, 1])
-
-        with col1:
-
-            st.write("03")
-
-            st.subheader(
-                "📖 Оқу сауаттылығы"
-            )
-
-            st.caption(
-                "Мәтіндер • Талдау • Тесттер"
-            )
-
-        with col2:
-
-            st.button(
-                "→",
-                key="reading"
-            )
-
-        st.divider()
-
-
-        # ----------------------------------
-        # ҚАЗАҚСТАН ТАРИХЫ
-        # ----------------------------------
-
-        col1, col2 = st.columns([5, 1])
-
-        with col1:
-
-            st.write("04")
-
-            st.subheader(
-                "🇰🇿 Қазақстан тарихы"
-            )
-
-            st.caption(
-                "Даталар • Оқиғалар • Тесттер"
-            )
-
-        with col2:
-
-            st.button(
-                "→",
-                key="history"
-            )
-
-
-        # ==================================
-        # НӘТИЖЕЛЕР
-        # ==================================
-
-        st.markdown(
-            '<div class="section-title">Нәтижелер</div>',
-            unsafe_allow_html=True
-        )
-
-        col1, col2 = st.columns([5, 1])
-
-        with col1:
-
-            st.write("05")
-
-            st.subheader(
-                "🎯 Менің нәтижелерім"
-            )
-
-            st.caption(
-                "Дұрыс жауаптар • Қате сұрақтар • Прогресс"
-            )
-
-        with col2:
-
-            st.button(
-                "→",
-                key="results"
-            )
+            st.divider()
 
 
         st.markdown(
@@ -502,16 +484,17 @@ else:
 
 
     # ======================================
-    # MAIN SUBJECTS PAGE
+    # COMBINATION PAGE
     # ======================================
 
-    elif st.session_state.page == "main_subjects":
+    elif st.session_state.page == "combination":
+
+        selected = st.session_state.selected_combination
 
         st.markdown(
-            """
-            <div class="home-title">
-                Информатика<br>
-                <span>+ Математика</span>
+            f"""
+            <div class="combo-title">
+                {selected}
             </div>
             """,
             unsafe_allow_html=True
@@ -520,52 +503,111 @@ else:
         st.markdown(
             """
             <div class="home-description">
-                Негізгі пәндер бойынша ҰБТ дайындығы.
+                Осы бағыт бойынша ҰБТ дайындығы
             </div>
             """,
             unsafe_allow_html=True
         )
 
+
+        # ==================================
+        # НЕГІЗГІ ПӘНДЕР
+        # ==================================
+
+        st.markdown(
+            '<div class="section-title">Негізгі пәндер</div>',
+            unsafe_allow_html=True
+        )
+
+
+        # Таңдалған комбинацияны бөлу
+        selected_parts = selected.split(" + ")
+
+
+        for i, subject in enumerate(selected_parts):
+
+            col1, col2 = st.columns([5, 1])
+
+            with col1:
+
+                st.markdown(
+                    f"""
+                    <div class="subject-number">
+                        {i + 1:02d}
+                    </div>
+
+                    <div class="subject-name">
+                        📚 {subject}
+                    </div>
+
+                    <div class="subject-info">
+                        ҰБТ тесттері • Тақырыптар • Қателерді талдау
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            with col2:
+
+                if st.button(
+                    "→",
+                    key=f"subject_{i}_{subject}",
+                    use_container_width=True
+                ):
+
+                    st.info(
+                        f"{subject} тесттері келесі қадамда қосылады."
+                    )
+
+            st.divider()
+
+
+        # ==================================
+        # ОРТАҚ МІНДЕТТІ БӨЛІМ
+        # ==================================
+
+        st.markdown(
+            """
+            <div class="common-box">
+
+                <div class="common-title">
+                    📌 Барлық пәндерге ортақ міндетті бөлім
+                </div>
+
+                <div class="common-item">
+                    🧠 Математикалық сауаттылық
+                </div>
+
+                <div class="common-item">
+                    📖 Оқу сауаттылығы
+                </div>
+
+                <div class="common-item">
+                    🇰🇿 Қазақстан тарихы
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
         st.write("")
 
-        col1, col2 = st.columns(2)
 
-        with col1:
+        # ==================================
+        # BACK
+        # ==================================
 
-            st.subheader("💻 Информатика")
-
-            st.caption(
-                "Python • Алгоритмдер • Ақпараттық технологиялар"
-            )
-
-            if st.button(
-                "Информатиканы бастау →",
-                key="start_info",
-                use_container_width=True
-            ):
-                st.info("Информатика тесттері келесі қадамда қосылады.")
-
-
-        with col2:
-
-            st.subheader("📐 Математика")
-
-            st.caption(
-                "Алгебра • Геометрия • ҰБТ есептері"
-            )
-
-            if st.button(
-                "Математиканы бастау →",
-                key="start_math",
-                use_container_width=True
-            ):
-                st.info("Математика тесттері келесі қадамда қосылады.")
-
-
-        st.write("")
-
-        if st.button("← Артқа"):
+        if st.button("← Пәндерге қайту"):
 
             st.session_state.page = "home"
+            st.session_state.selected_combination = None
 
             st.rerun()
+
+
+        st.markdown(
+            '<div class="footer">© 2026 KASYM EDU</div>',
+            unsafe_allow_html=True
+        )
