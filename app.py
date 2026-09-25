@@ -273,8 +273,18 @@ h1, h2, h3 {
     margin: 10px 0;
 }
 
+.subject-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
 .small-text {
     color: #9db6d8;
+    font-size: 16px;
+    margin: 0;
 }
 
 .success-box {
@@ -391,19 +401,11 @@ def login_page():
         use_container_width=True
     ):
 
-        # =================================================
-        # PRESIDENT
-        # =================================================
-
         if username == "kas01" and password == "kasko100228550357":
             st.session_state.logged_in = True
             st.session_state.role = "president"
             st.session_state.page = "admin"
             st.rerun()
-
-        # =================================================
-        # USER
-        # =================================================
 
         elif username != "" and password != "":
             st.session_state.logged_in = True
@@ -487,13 +489,10 @@ def admin_page():
         st.markdown(
             f"""
             <div class="subject-card">
-
                 <h3>{subject}</h3>
-
                 <p class="small-text">
                     Сұрақ саны: {count}
                 </p>
-
             </div>
             """,
             unsafe_allow_html=True
@@ -812,7 +811,7 @@ def combination_page():
 
 
 # =========================================================
-# TEST (КЕЗДЕЙСОҚ АРАЛАСТЫРУ ФУНКЦИЯСЫМЕН)
+# TEST
 # =========================================================
 
 def test_page():
@@ -855,8 +854,6 @@ def test_page():
 
         return
 
-    # Бұл бөлімде сұрақтар мен жауаптар оқушы тестті бастаған сәтте
-    # жеке араластырылып, сессия соңына дейін сақталады.
     if st.session_state.current_question == 0 and not st.session_state.active_questions:
         prepared = []
         shuffled_list = random.sample(raw_questions, len(raw_questions))
@@ -865,10 +862,8 @@ def test_page():
             answers_copy = item["answers"].copy()
             correct_text = answers_copy[item["correct"]]
 
-            # Жауаптарды кездейсоқ араластыру
             random.shuffle(answers_copy)
 
-            # Жаңа орынға байланысты дұрыс жауаптың индексін жаңарту
             new_correct_index = answers_copy.index(correct_text)
 
             prepared.append({
@@ -903,11 +898,9 @@ def test_page():
     st.markdown(
         f"""
         <div class="card">
-
             <h3>
                 {question["question"]}
             </h3>
-
         </div>
         """,
         unsafe_allow_html=True
@@ -1016,24 +1009,19 @@ def result_page():
     st.markdown(
         f"""
         <div class="card">
-
             <h2>
                 Дұрыс жауап:
                 {correct_count} / {total}
             </h2>
-
             <h2>
                 Нәтиже: {percent}%
             </h2>
-
             <p>
                 ✅ Дұрыс: {correct_count}
             </p>
-
             <p>
                 ❌ Қате: {wrong_count}
             </p>
-
         </div>
         """,
         unsafe_allow_html=True
@@ -1105,27 +1093,22 @@ def result_page():
             st.markdown(
                 f"""
                 <div class="error-box">
-
                     <h3>
                         ❌ Сұрақ {index + 1}
                     </h3>
-
                     <p>
                         <b>
                             {question["question"]}
                         </b>
                     </p>
-
                     <p>
                         🔴 Сенің жауабың:
                         {user_text}
                     </p>
-
                     <p>
                         🟢 Дұрыс жауап:
                         {correct_text}
                     </p>
-
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -1176,10 +1159,6 @@ if not st.session_state.logged_in:
     login_page()
 
 else:
-    # =====================================================
-    # PRESIDENT
-    # =====================================================
-
     if st.session_state.role == "president":
         if st.session_state.page == "admin":
             admin_page()
@@ -1201,10 +1180,6 @@ else:
 
         elif st.session_state.page == "result":
             result_page()
-
-    # =====================================================
-    # USER
-    # =====================================================
 
     else:
         if st.session_state.page == "home":
