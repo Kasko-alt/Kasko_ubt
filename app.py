@@ -135,6 +135,7 @@ def load_questions():
     if os.path.exists(QUESTIONS_FILE):
 
         try:
+
             with open(
                 QUESTIONS_FILE,
                 "r",
@@ -143,7 +144,7 @@ def load_questions():
 
                 data = json.load(file)
 
-            # Жетіспейтін пәндерді автоматты түрде қосамыз
+            # Жетіспейтін пәндерді автоматты түрде қосу
             for subject in all_subjects:
 
                 if subject not in data:
@@ -152,6 +153,7 @@ def load_questions():
             return data
 
         except Exception:
+
             return default_questions.copy()
 
     return default_questions.copy()
@@ -290,6 +292,27 @@ h1, h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
+
+# =========================================================
+# ЖАЛПЫ ШЫҒУ
+# =========================================================
+
+def logout():
+
+    st.session_state.logged_in = False
+    st.session_state.role = None
+
+    st.session_state.page = "login"
+
+    st.session_state.selected_combination = None
+    st.session_state.selected_subject = None
+
+    st.session_state.current_question = 0
+    st.session_state.user_answers = {}
+
+    st.rerun()
+
+
 # =========================================================
 # LOGIN
 # =========================================================
@@ -381,7 +404,7 @@ def admin_page():
         "Сен Президент режиміндесің."
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
 
@@ -414,6 +437,15 @@ def admin_page():
             st.session_state.page = "home"
             st.rerun()
 
+    with col4:
+
+        if st.button(
+            "🚪 Жалпы шығу",
+            use_container_width=True
+        ):
+
+            logout()
+
     st.markdown("---")
 
     st.markdown("## 📚 Пәндер базасы")
@@ -445,10 +477,26 @@ def add_question_page():
 
     st.title("➕ Жаңа сұрақ қосу")
 
-    if st.button("← Артқа"):
+    col1, col2 = st.columns(2)
 
-        st.session_state.page = "admin"
-        st.rerun()
+    with col1:
+
+        if st.button(
+            "← Артқа",
+            use_container_width=True
+        ):
+
+            st.session_state.page = "admin"
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "🚪 Жалпы шығу",
+            use_container_width=True
+        ):
+
+            logout()
 
     st.markdown("---")
 
@@ -536,10 +584,7 @@ def add_question_page():
             }
 
             # =================================================
-            # ЕҢ МАҢЫЗДЫ ЖЕР
-            #
-            # Қай комбинациядан қосқаның маңызды емес.
-            # Сұрақ ТЕК ПӘННІҢ өзіне сақталады.
+            # СҰРАҚ ТЕК ПӘННІҢ ЖАЛПЫ БАЗАСЫНА САҚТАЛАДЫ
             # =================================================
 
             if subject not in questions:
@@ -566,10 +611,26 @@ def question_list_page():
 
     st.title("📚 Пәндер базасы")
 
-    if st.button("← Артқа"):
+    col1, col2 = st.columns(2)
 
-        st.session_state.page = "admin"
-        st.rerun()
+    with col1:
+
+        if st.button(
+            "← Артқа",
+            use_container_width=True
+        ):
+
+            st.session_state.page = "admin"
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "🚪 Жалпы шығу",
+            use_container_width=True
+        ):
+
+            logout()
 
     st.markdown("---")
 
@@ -653,6 +714,16 @@ def home_page():
         unsafe_allow_html=True
     )
 
+    # Жалпы шығу
+    if st.button(
+        "🚪 Жалпы шығу",
+        use_container_width=True
+    ):
+
+        logout()
+
+    st.markdown("---")
+
     st.markdown(
         "## 📚 Пәндер комбинациясы"
     )
@@ -688,14 +759,37 @@ def combination_page():
         f"📚 {combination}"
     )
 
-    if st.button("← Артқа"):
+    # =====================================================
+    # АРТҚА + ЖАЛПЫ ШЫҒУ
+    # =====================================================
 
-        st.session_state.page = "home"
-        st.rerun()
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        if st.button(
+            "← Артқа",
+            use_container_width=True
+        ):
+
+            st.session_state.page = "home"
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "🚪 Жалпы шығу",
+            use_container_width=True
+        ):
+
+            logout()
 
     st.markdown("---")
 
-    # Негізгі екі пән
+    # =====================================================
+    # НЕГІЗГІ ЕКІ ПӘН
+    # =====================================================
+
     main_subjects = combination.split(" + ")
 
     st.markdown(
@@ -733,7 +827,10 @@ def combination_page():
 
     st.markdown("---")
 
-    # Ортақ пәндер
+    # =====================================================
+    # ОРТАҚ ПӘНДЕР
+    # =====================================================
+
     st.markdown(
         "## 📌 Барлық оқушыларға ортақ пәндер"
     )
@@ -784,12 +881,37 @@ def test_page():
         "ҰБТ тесті"
     )
 
-    if st.button("← Пәндерге қайту"):
+    # =====================================================
+    # АРТҚА + ЖАЛПЫ ШЫҒУ
+    # =====================================================
 
-        st.session_state.page = "combination"
-        st.rerun()
+    col1, col2 = st.columns(2)
 
-    # Сұрақ жоқ
+    with col1:
+
+        if st.button(
+            "← Пәндерге қайту",
+            use_container_width=True
+        ):
+
+            st.session_state.page = "combination"
+            st.rerun()
+
+    with col2:
+
+        if st.button(
+            "🚪 Жалпы шығу",
+            use_container_width=True
+        ):
+
+            logout()
+
+    st.markdown("---")
+
+    # =====================================================
+    # СҰРАҚ ЖОҚ
+    # =====================================================
+
     if len(subject_questions) == 0:
 
         st.warning(
@@ -802,7 +924,10 @@ def test_page():
 
         return
 
-    # Қазіргі сұрақ
+    # =====================================================
+    # ҚАЗІРГІ СҰРАҚ
+    # =====================================================
+
     current = (
         st.session_state.current_question
     )
@@ -928,6 +1053,19 @@ def result_page():
         f"## {subject}"
     )
 
+    # =====================================================
+    # ЖАЛПЫ ШЫҒУ
+    # =====================================================
+
+    if st.button(
+        "🚪 Жалпы шығу",
+        use_container_width=True
+    ):
+
+        logout()
+
+    st.markdown("---")
+
     st.markdown(
         f"""
         <div class="card">
@@ -1028,40 +1166,33 @@ def result_page():
 
     st.markdown("---")
 
-    if st.button(
-        "🔄 Қайта тапсыру",
-        use_container_width=True
-    ):
+    col1, col2 = st.columns(2)
 
-        st.session_state.current_question = 0
-        st.session_state.user_answers = {}
-        st.session_state.page = "test"
+    with col1:
 
-        st.rerun()
+        if st.button(
+            "🔄 Қайта тапсыру",
+            use_container_width=True
+        ):
 
-    if st.button(
-        "📚 Пәндерге қайту",
-        use_container_width=True
-    ):
+            st.session_state.current_question = 0
+            st.session_state.user_answers = {}
+            st.session_state.page = "test"
 
-        st.session_state.current_question = 0
-        st.session_state.user_answers = {}
-        st.session_state.page = "combination"
+            st.rerun()
 
-        st.rerun()
+    with col2:
 
+        if st.button(
+            "📚 Пәндерге қайту",
+            use_container_width=True
+        ):
 
-# =========================================================
-# LOGOUT
-# =========================================================
+            st.session_state.current_question = 0
+            st.session_state.user_answers = {}
+            st.session_state.page = "combination"
 
-def logout():
-
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.session_state.page = "login"
-
-    st.rerun()
+            st.rerun()
 
 
 # =========================================================
@@ -1074,7 +1205,10 @@ if not st.session_state.logged_in:
 
 else:
 
-    # Президент
+    # =====================================================
+    # PRESIDENT
+    # =====================================================
+
     if st.session_state.role == "president":
 
         if st.session_state.page == "admin":
@@ -1105,7 +1239,10 @@ else:
 
             result_page()
 
-    # Оқушы
+    # =====================================================
+    # USER
+    # =====================================================
+
     else:
 
         if st.session_state.page == "home":
