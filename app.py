@@ -1,5 +1,8 @@
-python
 import streamlit as st
+
+# =========================
+# PAGE SETTINGS
+# =========================
 
 st.set_page_config(
     page_title="KASYM EDU",
@@ -8,59 +11,53 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ==========================================
-# SESSION
-# ==========================================
+# =========================
+# SESSION STATE
+# =========================
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if "page" not in st.session_state:
-    st.session_state.page = "home"
+    st.session_state.page = "login"
 
 if "selected_combination" not in st.session_state:
-    st.session_state.selected_combination = None
+    st.session_state.selected_combination = ""
 
 if "selected_subject" not in st.session_state:
-    st.session_state.selected_subject = None
+    st.session_state.selected_subject = ""
 
 if "current_question" not in st.session_state:
     st.session_state.current_question = 0
 
 
-# ==========================================
-# НЕГІЗГІ ПӘН КОМБИНАЦИЯЛАРЫ
-# ==========================================
+# =========================
+# DATA
+# =========================
 
 combinations = [
-    ("🧬⚗️", "Биология + Химия", "Биология • Химия"),
-    ("⚡📐", "Физика + Математика", "Физика • Математика"),
-    ("💻📐", "Информатика + Математика", "Информатика • Математика"),
-    ("🌍🇬🇧", "Дүниежүзі тарихы + Ағылшын тілі",
-     "Дүниежүзі тарихы • Ағылшын тілі"),
-    ("🧬🌍", "Биология + География", "Биология • География"),
-    ("🌍📐", "География + Математика", "География • Математика"),
-    ("🌍⚖️", "Дүниежүзі тарихы + Құқық",
-     "Дүниежүзі тарихы • Құқық"),
+    "Биология + Химия",
+    "Физика + Математика",
+    "Информатика + Математика",
+    "Дүниежүзі тарихы + Ағылшын тілі",
+    "Биология + География",
+    "География + Математика",
+    "Дүниежүзі тарихы + Құқық"
 ]
-
-
-# ==========================================
-# ОРТАҚ МІНДЕТТІ ПӘНДЕР
-# ==========================================
 
 common_subjects = [
-    ("🇰🇿", "Қазақстан тарихы"),
-    ("📖", "Оқу сауаттылығы"),
-    ("🧠", "Математикалық сауаттылық"),
+    "Қазақстан тарихы",
+    "Оқу сауаттылығы",
+    "Математикалық сауаттылық"
 ]
 
 
-# ==========================================
-# ТЕСТ СҰРАҚТАРЫ
-# ==========================================
+# =========================
+# QUESTIONS
+# =========================
 
 questions = {
+
     "Информатика": [
         {
             "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
@@ -70,55 +67,59 @@ questions = {
                 "len()",
                 "type()"
             ],
-            "correct": 1
+            "correct": "print()"
         },
+
         {
-            "question": "Python-да пайдаланушыдан мәлімет енгізу үшін қай функция қолданылады?",
+            "question": "Python тілінде пайдаланушыдан мәлімет енгізу үшін қай функция қолданылады?",
             "answers": [
                 "print()",
                 "input()",
-                "len()",
+                "int()",
                 "str()"
             ],
-            "correct": 1
+            "correct": "input()"
         },
+
         {
-            "question": "Python-да бүтін санның типі қалай жазылады?",
+            "question": "Python тілінде бүтін санның типі қалай аталады?",
             "answers": [
                 "float",
                 "str",
                 "int",
                 "bool"
             ],
-            "correct": 2
+            "correct": "int"
         },
+
         {
-            "question": "Тізімнің элементтер санын анықтайтын функция:",
+            "question": "Тізімдегі элементтердің санын анықтау үшін қай функция қолданылады?",
             "answers": [
                 "sum()",
                 "type()",
                 "len()",
-                "input()"
+                "print()"
             ],
-            "correct": 2
+            "correct": "len()"
         },
+
         {
-            "question": "Python-да қалдықты табу операторы:",
+            "question": "Python тілінде қалдықты табу операторы қайсы?",
             "answers": [
                 "/",
                 "//",
                 "%",
-                "**"
+                "*"
             ],
-            "correct": 2
-        },
+            "correct": "%"
+        }
     ]
 }
 
 
-# ==========================================
-# DESIGN
-# ==========================================
+# =========================
+# CSS
+# =========================
 
 st.markdown("""
 <style>
@@ -131,734 +132,492 @@ st.markdown("""
 
 .stApp {
     background:
-        radial-gradient(
-            circle at 15% 20%,
-            rgba(0, 130, 255, 0.18),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 85% 75%,
-            rgba(0, 200, 255, 0.10),
-            transparent 30%
-        ),
-        #020817;
-}
-
-header {
-    background: transparent !important;
+        radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.18), transparent 30%),
+        radial-gradient(circle at 80% 90%, rgba(59, 130, 246, 0.12), transparent 30%),
+        #07111f;
+    color: white;
 }
 
 .block-container {
-    max-width: 1150px !important;
-    padding-top: 35px !important;
+    max-width: 1200px;
+    padding-top: 35px;
+    padding-bottom: 50px;
 }
 
 
-/* ==========================================
+/* =========================
    LOGIN
-========================================== */
+   ========================= */
 
-.login-title {
+.login-container {
+    max-width: 520px;
+    margin: 90px auto 0 auto;
+    padding: 45px;
+    background: rgba(15, 31, 52, 0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+}
+
+.login-logo {
     text-align: center;
-    color: white;
-    font-size: 48px;
+    font-size: 38px;
     font-weight: 800;
-    letter-spacing: -2px;
-    margin-top: 130px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
 }
 
-.login-title span {
-    color: #39bfff;
-}
-
-.login-text {
+.login-slogan {
     text-align: center;
-    color: rgba(255,255,255,0.50);
-    font-size: 14px;
+    color: #9fb0c7;
+    font-size: 15px;
     margin-bottom: 35px;
 }
 
 
-/* ==========================================
-   INPUT
-========================================== */
+/* =========================
+   HEADER
+   ========================= */
 
-.stTextInput label {
-    color: rgba(255,255,255,0.75) !important;
-    font-weight: 600 !important;
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 45px;
 }
 
-.stTextInput input {
-    height: 50px !important;
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.14) !important;
-    border-radius: 12px !important;
-    color: white !important;
-}
-
-
-/* ==========================================
-   BUTTON
-========================================== */
-
-.stButton button {
-    height: 50px !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    background: rgba(255,255,255,0.05) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    transition: 0.2s;
-}
-
-.stButton button:hover {
-    background: rgba(57,191,255,0.12) !important;
-    border-color: rgba(57,191,255,0.35) !important;
-    transform: translateY(-2px);
-}
-
-
-/* ==========================================
-   LOGIN BUTTON
-========================================== */
-
-.login-button button {
-    background: linear-gradient(
-        135deg,
-        #39bfff,
-        #1677ff
-    ) !important;
-
-    border: none !important;
-}
-
-
-/* ==========================================
-   LOGO
-========================================== */
-
-.home-logo {
-    color: white;
-    font-size: 28px;
+.logo {
+    font-size: 25px;
     font-weight: 800;
+    letter-spacing: 1px;
 }
 
-.home-logo span {
-    color: #39bfff;
+.logo span {
+    color: #4f8cff;
+}
+
+.slogan {
+    color: #9fb0c7;
+    font-size: 13px;
 }
 
 
-/* ==========================================
-   HOME TITLE
-========================================== */
+/* =========================
+   HOME
+   ========================= */
 
-.home-title {
-    color: white;
-    font-size: 58px;
+.main-title {
+    font-size: 42px;
     font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -3px;
-    margin-top: 100px;
+    margin-bottom: 5px;
 }
 
-.home-title span {
-    color: #39bfff;
+.main-subtitle {
+    color: #8fa3bd;
+    font-size: 16px;
+    margin-bottom: 40px;
 }
-
-.home-description {
-    color: rgba(255,255,255,0.48);
-    font-size: 15px;
-    margin-top: 20px;
-    line-height: 1.6;
-}
-
-
-/* ==========================================
-   SECTION
-========================================== */
 
 .section-title {
-    color: white;
-    font-size: 28px;
+    font-size: 23px;
     font-weight: 700;
-    margin-top: 70px;
-    margin-bottom: 30px;
-}
-
-
-/* ==========================================
-   SUBJECT
-========================================== */
-
-.subject-number {
-    color: #39bfff;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.subject-name {
-    color: white;
-    font-size: 21px;
-    font-weight: 700;
-    margin-top: 5px;
-}
-
-.subject-info {
-    color: rgba(255,255,255,0.38);
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-
-/* ==========================================
-   COMBINATION TITLE
-========================================== */
-
-.combo-title {
-    color: white;
-    font-size: 48px;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -2px;
-    margin-top: 80px;
-}
-
-.combo-description {
-    color: rgba(255,255,255,0.48);
-    font-size: 15px;
-    margin-top: 18px;
-}
-
-
-/* ==========================================
-   COMMON SUBJECT
-========================================== */
-
-.common-heading {
-    color: rgba(255,255,255,0.55);
-    font-size: 15px;
-    font-weight: 700;
-    margin-top: 45px;
+    margin-top: 35px;
     margin-bottom: 20px;
 }
 
-
-/* ==========================================
-   TEST
-========================================== */
-
-.test-title {
-    color: white;
-    font-size: 42px;
-    font-weight: 800;
-    margin-top: 60px;
+.combo-title {
+    background: rgba(20, 40, 65, 0.85);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-size: 18px;
+    font-weight: 700;
 }
 
-.test-progress {
-    color: #39bfff;
+
+/* =========================
+   SUBJECT
+   ========================= */
+
+.subject-title {
+    font-size: 34px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.subject-subtitle {
+    color: #8fa3bd;
+    margin-bottom: 35px;
+}
+
+.test-card {
+    background: rgba(15, 31, 52, 0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 25px;
+    padding: 30px;
+    margin-top: 20px;
+}
+
+.question-number {
+    color: #5d9bff;
     font-size: 15px;
     font-weight: 700;
-    margin-top: 12px;
-}
-
-.question-box {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 20px;
-    padding: 35px;
-    margin-top: 30px;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 .question-text {
-    color: white;
     font-size: 23px;
     font-weight: 700;
-    line-height: 1.5;
+    line-height: 1.45;
+    margin-bottom: 25px;
 }
 
-.answer-label {
-    color: rgba(255,255,255,0.55);
-    font-size: 14px;
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+.stButton > button {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #12243b;
+    color: white;
     font-weight: 600;
-    margin-top: 25px;
+    min-height: 48px;
+    transition: 0.2s;
+}
+
+.stButton > button:hover {
+    background: #1b3556;
+    border-color: #4f8cff;
+}
+
+.login-button .stButton > button {
+    background: #2563eb;
+}
+
+.login-button .stButton > button:hover {
+    background: #3474f2;
 }
 
 
-/* ==========================================
-   FOOTER
-========================================== */
+/* =========================
+   INPUT
+   ========================= */
 
-.footer {
-    color: rgba(255,255,255,0.22);
-    text-align: center;
-    font-size: 10px;
-    margin-top: 80px;
+.stTextInput input {
+    background: #0c1b2d;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 13px;
+}
+
+.stTextInput label {
+    color: #b8c7da;
+}
+
+
+/* =========================
+   RADIO
+   ========================= */
+
+.stRadio label {
+    color: white !important;
+}
+
+.stRadio > div {
+    gap: 12px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# ==========================================
-# LOGIN
-# ==========================================
+# =========================
+# LOGIN PAGE
+# =========================
 
 if not st.session_state.logged_in:
 
+    st.markdown("""
+    <div class="login-container">
+
+        <div class="login-logo">
+            KASYM <span style="color:#4f8cff;">EDU</span>
+        </div>
+
+        <div class="login-slogan">
+            Бүгінгі дайындық — ертеңгі грант
+        </div>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    username = st.text_input("Логин")
+    password = st.text_input("Құпия сөз", type="password")
+
+    st.markdown('<div class="login-button">', unsafe_allow_html=True)
+
+    if st.button("Кіру →"):
+        if username.strip() and password.strip():
+            st.session_state.logged_in = True
+            st.session_state.page = "home"
+            st.rerun()
+        else:
+            st.error("Логин мен құпия сөзді енгізіңіз.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.stop()
+
+
+# =========================
+# HEADER
+# =========================
+
+col1, col2 = st.columns([5, 1])
+
+with col1:
+    st.markdown("""
+    <div class="header">
+        <div>
+            <div class="logo">
+                KASYM <span>EDU</span>
+            </div>
+            <div class="slogan">
+                Бүгінгі дайындық — ертеңгі грант
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    if st.button("Шығу"):
+        st.session_state.logged_in = False
+        st.session_state.page = "login"
+        st.rerun()
+
+
+# =========================
+# HOME PAGE
+# =========================
+
+if st.session_state.page == "home":
+
+    st.markdown("""
+    <div class="main-title">
+        ҰБТ-ға дайындық
+    </div>
+
+    <div class="main-subtitle">
+        Өз бағытыңды таңда да, дайындықты баста.
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown(
-        '<div class="login-title">KASYM<span>•</span>EDU</div>',
+        '<div class="section-title">📚 Пәндік комбинациялар</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="login-text">Бүгінгі дайындық — ертеңгі грант</div>',
-        unsafe_allow_html=True
-    )
+    for i, combination in enumerate(combinations):
 
-    left, center, right = st.columns([1.2, 1, 1.2])
+        col1, col2 = st.columns([6, 1])
 
-    with center:
+        with col1:
+            st.markdown(
+                f'<div class="combo-title">{combination}</div>',
+                unsafe_allow_html=True
+            )
 
-        login = st.text_input(
-            "Логин",
-            placeholder="Логиніңізді енгізіңіз"
-        )
+        with col2:
+            if st.button("→", key=f"combo_{i}"):
 
-        password = st.text_input(
-            "Құпиясөз",
-            type="password",
-            placeholder="Құпиясөзіңізді енгізіңіз"
-        )
-
-        st.markdown(
-            '<div class="login-button">',
-            unsafe_allow_html=True
-        )
-
-        if st.button(
-            "Кіру →",
-            use_container_width=True
-        ):
-
-            if login and password:
-
-                st.session_state.logged_in = True
-                st.session_state.page = "home"
+                st.session_state.selected_combination = combination
+                st.session_state.page = "combination"
 
                 st.rerun()
 
-            else:
 
-                st.error(
-                    "Логин мен құпиясөзді енгізіңіз."
-                )
+# =========================
+# COMBINATION PAGE
+# =========================
 
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
+elif st.session_state.page == "combination":
 
+    combination = st.session_state.selected_combination
 
-# ==========================================
-# MAIN SITE
-# ==========================================
+    st.markdown(
+        f'<div class="subject-title">{combination}</div>',
+        unsafe_allow_html=True
+    )
 
-else:
+    st.markdown(
+        '<div class="subject-subtitle">Пәнді таңдаңыз</div>',
+        unsafe_allow_html=True
+    )
 
-    # ======================================
-    # HEADER
-    # ======================================
+    # MAIN SUBJECTS
 
-    col1, col2 = st.columns([5, 1])
+    main_subjects = combination.split(" + ")
 
-    with col1:
+    st.markdown(
+        '<div class="section-title">🎯 Негізгі пәндер</div>',
+        unsafe_allow_html=True
+    )
 
-        st.markdown(
-            '<div class="home-logo">KASYM<span>•</span>EDU</div>',
-            unsafe_allow_html=True
-        )
+    for i, subject in enumerate(main_subjects):
 
-    with col2:
+        col1, col2 = st.columns([6, 1])
 
-        if st.button(
-            "Шығу",
-            use_container_width=True
-        ):
+        with col1:
+            st.markdown(
+                f'<div class="combo-title">{subject}</div>',
+                unsafe_allow_html=True
+            )
 
-            st.session_state.logged_in = False
-            st.session_state.page = "home"
+        with col2:
 
-            st.rerun()
+            if st.button(
+                "→",
+                key=f"main_subject_{i}_{subject}"
+            ):
 
+                st.session_state.selected_subject = subject
+                st.session_state.current_question = 0
+                st.session_state.page = "test"
 
-    # ======================================
-    # HOME
-    # ======================================
-
-    if st.session_state.page == "home":
-
-        st.markdown(
-            """
-            <div class="home-title">
-                Бүгінгі дайындық —<br>
-                <span>ертеңгі грант.</span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            """
-            <div class="home-description">
-                ҰБТ-ға дайындал. Біліміңді тексер.
-                Қателеріңді талда. Нәтижеңді жақсарт.
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            '<div class="section-title">📚 Пәндер</div>',
-            unsafe_allow_html=True
-        )
+                st.rerun()
 
 
-        # ==================================
-        # КОМБИНАЦИЯЛАР
-        # ==================================
+    # COMMON SUBJECTS
 
-        for i, (icon, name, info) in enumerate(combinations):
+    st.markdown(
+        '<div class="section-title">📖 Міндетті пәндер</div>',
+        unsafe_allow_html=True
+    )
 
-            col1, col2 = st.columns([5, 1])
+    for i, subject in enumerate(common_subjects):
 
-            with col1:
+        col1, col2 = st.columns([6, 1])
 
-                st.markdown(
-                    f"""
-                    <div class="subject-number">
-                        {i + 1:02d}
-                    </div>
+        with col1:
+            st.markdown(
+                f'<div class="combo-title">{subject}</div>',
+                unsafe_allow_html=True
+            )
 
-                    <div class="subject-name">
-                        {icon} {name}
-                    </div>
+        with col2:
 
-                    <div class="subject-info">
-                        {info}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            if st.button(
+                "→",
+                key=f"common_subject_{i}_{subject}"
+            ):
 
-            with col2:
+                st.session_state.selected_subject = subject
+                st.session_state.current_question = 0
+                st.session_state.page = "test"
 
-                if st.button(
-                    "→",
-                    key=f"combo_{i}",
-                    use_container_width=True
-                ):
-
-                    st.session_state.selected_combination = name
-                    st.session_state.page = "combination"
-
-                    st.rerun()
-
-            st.divider()
+                st.rerun()
 
 
-        st.markdown(
-            '<div class="footer">© 2026 KASYM EDU</div>',
-            unsafe_allow_html=True
-        )
+    st.write("")
+
+    if st.button("← Артқа"):
+
+        st.session_state.page = "home"
+        st.rerun()
 
 
-    # ======================================
-    # COMBINATION PAGE
-    # ======================================
+# =========================
+# TEST PAGE
+# =========================
 
-    elif st.session_state.page == "combination":
+elif st.session_state.page == "test":
 
-        selected = st.session_state.selected_combination
+    subject = st.session_state.selected_subject
+    question_index = st.session_state.current_question
+
+    st.markdown(
+        f'<div class="subject-title">💻 {subject}</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="subject-subtitle">ҰБТ тесті</div>',
+        unsafe_allow_html=True
+    )
+
+
+    # IF QUESTIONS EXIST
+
+    if subject in questions:
+
+        subject_questions = questions[subject]
+
+        # prevent index error
+        if question_index >= len(subject_questions):
+            question_index = 0
+            st.session_state.current_question = 0
+
+        current = subject_questions[question_index]
+
+        st.markdown('<div class="test-card">', unsafe_allow_html=True)
 
         st.markdown(
             f"""
-            <div class="combo-title">
-                {selected}
+            <div class="question-number">
+                Сұрақ {question_index + 1} / {len(subject_questions)}
+            </div>
+
+            <div class="question-text">
+                {current["question"]}
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        st.markdown(
-            """
-            <div class="combo-description">
-                Осы бағыт бойынша ҰБТ дайындығы
-            </div>
-            """,
-            unsafe_allow_html=True
+        answer = st.radio(
+            "Жауапты таңдаңыз:",
+            current["answers"],
+            key=f"answer_{subject}_{question_index}"
         )
 
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # ==================================
-        # НЕГІЗГІ ПӘНДЕР
-        # ==================================
+        st.write("")
 
-        st.markdown(
-            '<div class="section-title">Негізгі пәндер</div>',
-            unsafe_allow_html=True
-        )
+        col1, col2 = st.columns([5, 1])
 
-        selected_parts = selected.split(" + ")
+        with col2:
 
+            if st.button("Келесі →"):
 
-        for i, subject in enumerate(selected_parts):
+                if question_index < len(subject_questions) - 1:
 
-            col1, col2 = st.columns([5, 1])
-
-            with col1:
-
-                st.markdown(
-                    f"""
-                    <div class="subject-number">
-                        {i + 1:02d}
-                    </div>
-
-                    <div class="subject-name">
-                        📚 {subject}
-                    </div>
-
-                    <div class="subject-info">
-                        ҰБТ тесттері • Тақырыптар • Қателерді талдау
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            with col2:
-
-                if st.button(
-                    "→",
-                    key=f"main_subject_{i}_{subject}",
-                    use_container_width=True
-                ):
-
-                    st.session_state.selected_subject = subject
-                    st.session_state.current_question = 0
-                    st.session_state.page = "test"
-
+                    st.session_state.current_question += 1
                     st.rerun()
-
-            st.divider()
-
-
-        # ==================================
-        # ОРТАҚ ПӘНДЕР
-        # ==================================
-
-        st.markdown(
-            '<div class="common-heading">Барлық комбинацияға ортақ міндетті пәндер</div>',
-            unsafe_allow_html=True
-        )
-
-
-        for i, (icon, subject) in enumerate(common_subjects):
-
-            col1, col2 = st.columns([5, 1])
-
-            with col1:
-
-                st.markdown(
-                    f"""
-                    <div class="subject-number">
-                        {i + 3:02d}
-                    </div>
-
-                    <div class="subject-name">
-                        {icon} {subject}
-                    </div>
-
-                    <div class="subject-info">
-                        ҰБТ тесттері • Тақырыптар • Қателерді талдау
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            with col2:
-
-                if st.button(
-                    "→",
-                    key=f"common_subject_{i}",
-                    use_container_width=True
-                ):
-
-                    st.session_state.selected_subject = subject
-                    st.session_state.current_question = 0
-                    st.session_state.page = "test"
-
-                    st.rerun()
-
-            st.divider()
-
-
-        # ==================================
-        # BACK
-        # ==================================
-
-        if st.button("← Пәндерге қайту"):
-
-            st.session_state.page = "home"
-            st.session_state.selected_combination = None
-
-            st.rerun()
-
-
-        st.markdown(
-            '<div class="footer">© 2026 KASYM EDU</div>',
-            unsafe_allow_html=True
-        )
-
-
-    # ======================================
-    # TEST PAGE
-    # ======================================
-
-    elif st.session_state.page == "test":
-
-        subject = st.session_state.selected_subject
-
-        # ----------------------------------
-        # BACK
-        # ----------------------------------
-
-        if st.button("← Пәнге қайту"):
-
-            st.session_state.page = "combination"
-
-            st.rerun()
-
-
-        # ----------------------------------
-        # ТЕСТ БАР ПӘН
-        # ----------------------------------
-
-        if subject in questions:
-
-            test_questions = questions[subject]
-
-            question_number = st.session_state.current_question
-
-            q = test_questions[
-                question_number % len(test_questions)
-            ]
-
-
-            # ----------------------------------
-            # HEADER
-            # ----------------------------------
-
-            st.markdown(
-                f"""
-                <div class="test-title">
-                    💻 {subject}
-                </div>
-
-                <div class="test-progress">
-                    ҰБТ тесті • Сұрақ {question_number + 1} / 20
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-
-            # ----------------------------------
-            # QUESTION
-            # ----------------------------------
-
-            st.markdown(
-                f"""
-                <div class="question-box">
-
-                    <div class="question-text">
-                        {q["question"]}
-                    </div>
-
-                    <div class="answer-label">
-                        Бір дұрыс жауапты таңдаңыз
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-
-            # ----------------------------------
-            # ANSWERS
-            # ----------------------------------
-
-            answer = st.radio(
-                "Жауап:",
-                q["answers"],
-                index=None,
-                key=f"answer_{question_number}"
-            )
-
-
-            st.write("")
-
-
-            # ----------------------------------
-            # NEXT
-            # ----------------------------------
-
-            if st.button(
-                "Келесі →",
-                use_container_width=True
-            ):
-
-                if answer is None:
-
-                    st.warning(
-                        "Алдымен жауапты таңдаңыз."
-                    )
 
                 else:
 
-                    st.session_state.current_question += 1
+                    st.success("🎯 Тест аяқталды!")
 
-                    if st.session_state.current_question >= 20:
-
-                        st.session_state.current_question = 0
-
-                        st.success(
-                            "🎯 Тест аяқталды!"
-                        )
-
-                    else:
-
-                        st.rerun()
+                    st.info(
+                        "Нәтиже шығару жүйесін келесі кезеңде қосамыз."
+                    )
 
 
-        else:
+    else:
 
-            st.markdown(
-                f"""
-                <div class="test-title">
-                    {subject}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.info(
-                "Бұл пәннің тесттері келесі кезеңде қосылады."
-            )
-
-
-        st.markdown(
-            '<div class="footer">© 2026 KASYM EDU</div>',
-            unsafe_allow_html=True
+        st.info(
+            f"📚 {subject} пәніне сұрақтар әлі қосылған жоқ."
         )
-```
+
+        st.write("")
+
+        if st.button("← Пәндерге қайту"):
+
+            st.session_state.page = "combination"
+            st.rerun()
