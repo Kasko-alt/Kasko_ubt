@@ -57,7 +57,6 @@ common_subjects = [
 # =========================
 
 questions = {
-
     "Информатика": [
         {
             "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
@@ -69,7 +68,6 @@ questions = {
             ],
             "correct": "print()"
         },
-
         {
             "question": "Python тілінде пайдаланушыдан мәлімет енгізу үшін қай функция қолданылады?",
             "answers": [
@@ -80,7 +78,6 @@ questions = {
             ],
             "correct": "input()"
         },
-
         {
             "question": "Python тілінде бүтін санның типі қалай аталады?",
             "answers": [
@@ -91,7 +88,6 @@ questions = {
             ],
             "correct": "int"
         },
-
         {
             "question": "Тізімдегі элементтердің санын анықтау үшін қай функция қолданылады?",
             "answers": [
@@ -102,7 +98,6 @@ questions = {
             ],
             "correct": "len()"
         },
-
         {
             "question": "Python тілінде қалдықты табу операторы қайсы?",
             "answers": [
@@ -132,8 +127,16 @@ st.markdown("""
 
 .stApp {
     background:
-        radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.18), transparent 30%),
-        radial-gradient(circle at 80% 90%, rgba(59, 130, 246, 0.12), transparent 30%),
+        radial-gradient(
+            circle at 20% 10%,
+            rgba(37, 99, 235, 0.18),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 80% 90%,
+            rgba(59, 130, 246, 0.12),
+            transparent 30%
+        ),
         #07111f;
     color: white;
 }
@@ -146,32 +149,44 @@ st.markdown("""
 
 
 /* =========================
-   LOGIN
+   LOGIN LOGO
    ========================= */
-
-.login-container {
-    max-width: 520px;
-    margin: 90px auto 0 auto;
-    padding: 45px;
-    background: rgba(15, 31, 52, 0.85);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 28px;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.35);
-}
 
 .login-logo {
     text-align: center;
-    font-size: 38px;
+    font-size: 42px;
     font-weight: 800;
     letter-spacing: 2px;
+    margin-top: 45px;
     margin-bottom: 8px;
+    color: white;
+}
+
+.login-logo span {
+    color: #4f8cff;
 }
 
 .login-slogan {
     text-align: center;
     color: #9fb0c7;
-    font-size: 15px;
-    margin-bottom: 35px;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 40px;
+}
+
+
+/* =========================
+   LOGIN
+   ========================= */
+
+.login-box {
+    max-width: 590px;
+    margin: 20px auto 0 auto;
+    padding: 42px;
+    background: rgba(15, 31, 52, 0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.35);
 }
 
 
@@ -179,24 +194,17 @@ st.markdown("""
    HEADER
    ========================= */
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 45px;
-}
-
-.logo {
-    font-size: 25px;
+.header-logo {
+    font-size: 27px;
     font-weight: 800;
     letter-spacing: 1px;
 }
 
-.logo span {
+.header-logo span {
     color: #4f8cff;
 }
 
-.slogan {
+.header-slogan {
     color: #9fb0c7;
     font-size: 13px;
 }
@@ -209,6 +217,7 @@ st.markdown("""
 .main-title {
     font-size: 42px;
     font-weight: 800;
+    margin-top: 20px;
     margin-bottom: 5px;
 }
 
@@ -244,6 +253,7 @@ st.markdown("""
 .subject-title {
     font-size: 34px;
     font-weight: 800;
+    margin-top: 20px;
     margin-bottom: 8px;
 }
 
@@ -251,6 +261,11 @@ st.markdown("""
     color: #8fa3bd;
     margin-bottom: 35px;
 }
+
+
+/* =========================
+   TEST
+   ========================= */
 
 .test-card {
     background: rgba(15, 31, 52, 0.85);
@@ -295,14 +310,6 @@ st.markdown("""
     border-color: #4f8cff;
 }
 
-.login-button .stButton > button {
-    background: #2563eb;
-}
-
-.login-button .stButton > button:hover {
-    background: #3474f2;
-}
-
 
 /* =========================
    INPUT
@@ -336,86 +343,109 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# =========================
+# =========================================================
 # LOGIN PAGE
-# =========================
+# =========================================================
 
 if not st.session_state.logged_in:
 
-    st.markdown("""
-    <div class="login-container">
+    # ТЕК КӘДІМГІ МӘТІН
+    st.markdown(
+        '<div class="login-logo">KASYM <span>EDU</span></div>',
+        unsafe_allow_html=True
+    )
 
-        <div class="login-logo">
-            KASYM <span style="color:#4f8cff;">EDU</span>
-        </div>
+    st.markdown(
+        '<div class="login-slogan">Бүгінгі дайындық — ертеңгі грант</div>',
+        unsafe_allow_html=True
+    )
 
-        <div class="login-slogan">
-            Бүгінгі дайындық — ертеңгі грант
-        </div>
+    st.markdown(
+        '<div class="login-box">',
+        unsafe_allow_html=True
+    )
 
-    </div>
-    """, unsafe_allow_html=True)
+    username = st.text_input(
+        "Логин",
+        key="login_username"
+    )
 
-    username = st.text_input("Логин")
-    password = st.text_input("Құпия сөз", type="password")
+    password = st.text_input(
+        "Құпия сөз",
+        type="password",
+        key="login_password"
+    )
 
-    st.markdown('<div class="login-button">', unsafe_allow_html=True)
+    if st.button("Кіру →", key="login_button"):
 
-    if st.button("Кіру →"):
         if username.strip() and password.strip():
+
             st.session_state.logged_in = True
             st.session_state.page = "home"
+
             st.rerun()
+
         else:
+
             st.error("Логин мен құпия сөзді енгізіңіз.")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     st.stop()
 
 
-# =========================
+# =========================================================
 # HEADER
-# =========================
+# =========================================================
 
 col1, col2 = st.columns([5, 1])
 
 with col1:
-    st.markdown("""
-    <div class="header">
-        <div>
-            <div class="logo">
-                KASYM <span>EDU</span>
-            </div>
-            <div class="slogan">
-                Бүгінгі дайындық — ертеңгі грант
-            </div>
+
+    st.markdown(
+        """
+        <div class="header-logo">
+            KASYM <span>EDU</span>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+
+        <div class="header-slogan">
+            Бүгінгі дайындық — ертеңгі грант
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 with col2:
-    if st.button("Шығу"):
+
+    if st.button("Шығу", key="logout"):
+
         st.session_state.logged_in = False
         st.session_state.page = "login"
+
         st.rerun()
 
 
-# =========================
+# =========================================================
 # HOME PAGE
-# =========================
+# =========================================================
 
 if st.session_state.page == "home":
 
-    st.markdown("""
-    <div class="main-title">
-        ҰБТ-ға дайындық
-    </div>
+    st.markdown(
+        """
+        <div class="main-title">
+            ҰБТ-ға дайындық
+        </div>
 
-    <div class="main-subtitle">
-        Өз бағытыңды таңда да, дайындықты баста.
-    </div>
-    """, unsafe_allow_html=True)
+        <div class="main-subtitle">
+            Өз бағытыңды таңда да, дайындықты баста.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         '<div class="section-title">📚 Пәндік комбинациялар</div>',
@@ -427,13 +457,18 @@ if st.session_state.page == "home":
         col1, col2 = st.columns([6, 1])
 
         with col1:
+
             st.markdown(
                 f'<div class="combo-title">{combination}</div>',
                 unsafe_allow_html=True
             )
 
         with col2:
-            if st.button("→", key=f"combo_{i}"):
+
+            if st.button(
+                "→",
+                key=f"combo_{i}"
+            ):
 
                 st.session_state.selected_combination = combination
                 st.session_state.page = "combination"
@@ -441,9 +476,9 @@ if st.session_state.page == "home":
                 st.rerun()
 
 
-# =========================
+# =========================================================
 # COMBINATION PAGE
-# =========================
+# =========================================================
 
 elif st.session_state.page == "combination":
 
@@ -459,20 +494,22 @@ elif st.session_state.page == "combination":
         unsafe_allow_html=True
     )
 
-    # MAIN SUBJECTS
 
-    main_subjects = combination.split(" + ")
+    # Негізгі пәндер
 
     st.markdown(
         '<div class="section-title">🎯 Негізгі пәндер</div>',
         unsafe_allow_html=True
     )
 
+    main_subjects = combination.split(" + ")
+
     for i, subject in enumerate(main_subjects):
 
         col1, col2 = st.columns([6, 1])
 
         with col1:
+
             st.markdown(
                 f'<div class="combo-title">{subject}</div>',
                 unsafe_allow_html=True
@@ -482,7 +519,7 @@ elif st.session_state.page == "combination":
 
             if st.button(
                 "→",
-                key=f"main_subject_{i}_{subject}"
+                key=f"main_{i}_{subject}"
             ):
 
                 st.session_state.selected_subject = subject
@@ -492,7 +529,7 @@ elif st.session_state.page == "combination":
                 st.rerun()
 
 
-    # COMMON SUBJECTS
+    # Міндетті пәндер
 
     st.markdown(
         '<div class="section-title">📖 Міндетті пәндер</div>',
@@ -504,6 +541,7 @@ elif st.session_state.page == "combination":
         col1, col2 = st.columns([6, 1])
 
         with col1:
+
             st.markdown(
                 f'<div class="combo-title">{subject}</div>',
                 unsafe_allow_html=True
@@ -513,7 +551,7 @@ elif st.session_state.page == "combination":
 
             if st.button(
                 "→",
-                key=f"common_subject_{i}_{subject}"
+                key=f"common_{i}_{subject}"
             ):
 
                 st.session_state.selected_subject = subject
@@ -525,15 +563,15 @@ elif st.session_state.page == "combination":
 
     st.write("")
 
-    if st.button("← Артқа"):
+    if st.button("← Артқа", key="back_home"):
 
         st.session_state.page = "home"
         st.rerun()
 
 
-# =========================
+# =========================================================
 # TEST PAGE
-# =========================
+# =========================================================
 
 elif st.session_state.page == "test":
 
@@ -541,7 +579,7 @@ elif st.session_state.page == "test":
     question_index = st.session_state.current_question
 
     st.markdown(
-        f'<div class="subject-title">💻 {subject}</div>',
+        f'<div class="subject-title">📚 {subject}</div>',
         unsafe_allow_html=True
     )
 
@@ -551,20 +589,21 @@ elif st.session_state.page == "test":
     )
 
 
-    # IF QUESTIONS EXIST
-
     if subject in questions:
 
         subject_questions = questions[subject]
 
-        # prevent index error
         if question_index >= len(subject_questions):
+
             question_index = 0
             st.session_state.current_question = 0
 
         current = subject_questions[question_index]
 
-        st.markdown('<div class="test-card">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="test-card">',
+            unsafe_allow_html=True
+        )
 
         st.markdown(
             f"""
@@ -585,7 +624,10 @@ elif st.session_state.page == "test":
             key=f"answer_{subject}_{question_index}"
         )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
 
         st.write("")
 
@@ -593,7 +635,10 @@ elif st.session_state.page == "test":
 
         with col2:
 
-            if st.button("Келесі →"):
+            if st.button(
+                "Келесі →",
+                key=f"next_{question_index}"
+            ):
 
                 if question_index < len(subject_questions) - 1:
 
@@ -608,7 +653,6 @@ elif st.session_state.page == "test":
                         "Нәтиже шығару жүйесін келесі кезеңде қосамыз."
                     )
 
-
     else:
 
         st.info(
@@ -617,7 +661,10 @@ elif st.session_state.page == "test":
 
         st.write("")
 
-        if st.button("← Пәндерге қайту"):
+        if st.button(
+            "← Пәндерге қайту",
+            key="back_subjects"
+        ):
 
             st.session_state.page = "combination"
             st.rerun()
