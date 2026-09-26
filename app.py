@@ -8,9 +8,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # =========================================================
-# KASYM EDU CONFIG
+# 1. КОНФИГУРАЦИЯ ЖӘНЕ ФАЙЛДАР
 # =========================================================
-st.set_page_config(page_title="KASYM EDU", page_icon="🎓", layout="wide")
+st.set_page_config(
+    page_title="KASYM EDU - Білім беру платформасы", page_icon="🎓", layout="wide"
+)
 
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
@@ -18,14 +20,14 @@ USERS_FILE = "users.json"
 
 
 # =========================================================
-# ҚАУІПСІЗДІК: ПАРОЛЬДІ ХЭШТЕУ
+# 2. ҚАУІПСІЗДІК ЖӘНЕ ХЭШТЕУ
 # =========================================================
 def hash_password(password: str) -> str:
   return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 # =========================================================
-# ПӘНДӘР МЕН КОМБИНАЦИЯЛАР
+# 3. ПӘНДЕР МЕН КОМБИНАЦИЯЛАР
 # =========================================================
 all_subjects = [
     "Биология",
@@ -109,7 +111,7 @@ default_questions = {
 
 
 # =========================================================
-# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ
+# 4. ҚОЛДАНУШЫЛАР БАЗАСЫ МЕН ЛОГИКАСЫ
 # =========================================================
 def default_users():
   return [{
@@ -137,27 +139,23 @@ def load_users():
     except Exception:
       pass
 
-  # Админ міндетті түрде болуын қадағалау
-  admin_exists = any(
-      u.get("username") == "kas01" and u.get("role") == "admin"
-      for u in users_list
-  )
-  if not admin_exists:
-    # Бар болса ролін түзету немесе қосу
-    found = False
-    for u in users_list:
-      if u.get("username") == "kas01":
-        u["role"] = "admin"
-        found = True
-    if not found:
-      users_list.append({
-          "username": "kas01",
-          "password": hash_password("kasko100228550357"),
-          "name": "KASYM",
-          "role": "admin",
-          "combination": None,
-      })
-    save_users(users_list)
+  # Админ әрқашан болуын және ролі дұрыстығын қадағалау
+  admin_found = False
+  for u in users_list:
+    if u.get("username") == "kas01":
+      u["role"] = "admin"
+      admin_found = True
+
+  if not admin_found:
+    users_list.append({
+        "username": "kas01",
+        "password": hash_password("kasko100228550357"),
+        "name": "KASYM",
+        "role": "admin",
+        "combination": None,
+    })
+
+  save_users(users_list)
   return users_list
 
 
@@ -180,7 +178,7 @@ def username_exists(username):
 
 
 # =========================================================
-# СҰРАҚТАР МЕН НӘТИЖЕЛЕР БАЗАСЫ
+# 5. СҰРАҚТАР МЕН НӘТИЖЕЛЕР БАЗАСЫ
 # =========================================================
 def load_questions():
   if os.path.exists(QUESTIONS_FILE):
@@ -222,7 +220,7 @@ def save_results_history(history):
 
 
 # =========================================================
-# SESSION STATE
+# 6. SESSION STATE ИНИЦИАЛИЗАЦИЯСЫ
 # =========================================================
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
@@ -232,9 +230,15 @@ if "username" not in st.session_state:
   st.session_state.username = ""
 if "full_name" not in st.session_state:
   st.session_state.full_name = ""
+if "test_started" not in st.session_state:
+  st.session_state.test_started = False
+if "active_combination" not in st.session_state:
+  st.session_state.active_combination = None
+if "test_answers" not in st.session_state:
+  st.session_state.test_answers = {}
 
 # =========================================================
-# СТИЛЬДЕР
+# 7. UI СТИЛЬДЕРІ (DESIGN)
 # =========================================================
 st.markdown(
     """
@@ -299,11 +303,16 @@ st.markdown(
 def logout():
   st.session_state.logged_in = False
   st.session_state.role = None
+  st.session_state.username = ""
+  st.session_state.full_name = ""
+  st.session_state.test_started = False
+  st.session_state.active_combination = None
+  st.session_state.test_answers = {}
   st.rerun()
 
 
 # =========================================================
-# LOGIN PAGE
+# 8. КІРУ БЕТІ (LOGIN PAGE)
 # =========================================================
 def login_page():
   st.markdown(
@@ -337,6 +346,7 @@ def login_page():
         st.error("❌ Логин немесе құпия сөз қате.")
 
     st.markdown("---")
+    # Тест жасауға немесе тікелей кіруге арналған жылдам батырма
     if st.button(
         "👑 Админ болып бірден кіру", use_container_width=True, type="secondary"
     ):
@@ -349,7 +359,7 @@ def login_page():
 
 
 # =========================================================
-# МОДЕРАТОР ЖӘНЕ АДМИН ПАНЕЛДЕРІ
+# 9. СҰРАҚТАРДЫ БАСҚАРУ ЖӘНЕ ПАНЕЛЬДЕР
 # =========================================================
 def parse_bulk_questions(raw_text):
   questions_list = []
@@ -490,7 +500,7 @@ def render_question_manager():
 
       if st.button("🗑️ Таңдалған сұрақты жою", type="primary"):
         idx_to_delete = q_options[selected_q_label]
-        removed = sub_list.pop(idx_to_delete)
+        sub_list.pop(idx_to_delete)
         questions[del_subject] = sub_list
         save_questions()
         st.success("🗑️ Сәтті жойылды!")
@@ -499,34 +509,46 @@ def render_question_manager():
 
 
 def moderator_page():
-  if st.button("🚪 Шығу"):
-    logout()
+  col1, col2 = st.columns([6, 1])
+  with col1:
+    st.markdown(
+        '<div class="kasym-title" style="font-size: 32px;">🛠️ Модератор'
+        " панелі</div>",
+        unsafe_allow_html=True,
+    )
+  with col2:
+    if st.button("🚪 Шығу", use_container_width=True):
+      logout()
+
   st.markdown(
-      '<div class="kasym-title" style="font-size: 32px;">🛠️ Модератор'
-      " панелі</div>",
-      unsafe_allow_html=True,
-  )
-  st.markdown(
-      '<div class="kasym-subtitle">Сұрақтар базасын басқару</div>',
+      '<div class="kasym-subtitle">Сұрақтар базасын басқару жүйесі</div>',
       unsafe_allow_html=True,
   )
   render_question_manager()
 
 
 def admin_page():
-  if st.button("🚪 Шығу"):
-    logout()
-  st.markdown(
-      '<div class="kasym-title" style="font-size: 32px;">👑 Администратор'
-      " панелі</div>",
-      unsafe_allow_html=True,
-  )
+  col1, col2 = st.columns([6, 1])
+  with col1:
+    st.markdown(
+        '<div class="kasym-title" style="font-size: 32px;">👑 Администратор'
+        " панелі</div>",
+        unsafe_allow_html=True,
+    )
+  with col2:
+    if st.button("🚪 Шығу", use_container_width=True):
+      logout()
+
   st.markdown(
       '<div class="kasym-subtitle">Қолданушыларды басқару және статистика</div>',
       unsafe_allow_html=True,
   )
 
-  admin_tabs = st.tabs(["👥 Қолданушыларды басқару", "📊 Статистика"])
+  admin_tabs = st.tabs([
+      "👥 Қолданушыларды басқару",
+      "📚 Сұрақтарды басқару",
+      "📊 Статистика",
+  ])
 
   with admin_tabs[0]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -539,7 +561,7 @@ def admin_page():
     if st.button("Қолданушыны сақтау", type="primary"):
       if new_u and new_p:
         if username_exists(new_u):
-          st.error("❌ Бұл логин бар!")
+          st.error("❌ Бұл логин жүйеде бар!")
         else:
           users.append({
               "username": new_u,
@@ -554,7 +576,7 @@ def admin_page():
         st.error("⚠️ Логин мен құпия сөзді толтырыңыз!")
 
     st.markdown("---")
-    st.markdown("### 📋 Қолданушылар тізімі")
+    st.markdown("### 📋 Тіркелген қолданушылар тізімі")
     for u in users:
       st.write(
           f"- **{u.get('name', 'Аты жоқ')}** (@{u.get('username')}) — Ролі:"
@@ -563,6 +585,9 @@ def admin_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
   with admin_tabs[1]:
+    render_question_manager()
+
+  with admin_tabs[2]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     total_q = sum(len(q_list) for q_list in questions.values())
     st.metric("Барлық сұрақтар саны", total_q)
@@ -570,21 +595,48 @@ def admin_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+def user_page():
+  col1, col2 = st.columns([6, 1])
+  with col1:
+    st.markdown(
+        f'<div class="kasym-title" style="font-size: 32px;">🎓 Қош келдіңіз,'
+        f" {st.session_state.full_name}!</div>",
+        unsafe_allow_html=True,
+    )
+  with col2:
+    if st.button("🚪 Шығу", use_container_width=True):
+      logout()
+
+  st.markdown(
+      '<div class="kasym-subtitle">Оқушы кабинеті және тест тапсыру</div>',
+      unsafe_allow_html=True,
+  )
+  st.markdown('<div class="card">', unsafe_allow_html=True)
+  st.info(
+      "Бұл бөлімде оқушыларға арналған тест тапсыру және нәтижелерді көру"
+      " функциялары жұмыс істейді."
+  )
+  st.markdown("</div>", unsafe_allow_html=True)
+
+
 # =========================================================
-# РОУТЕР
+# 10. РОУТЕР (БАСТЫ БАҒДАРЛАМА)
 # =========================================================
 def main():
   if not st.session_state.logged_in:
     login_page()
   else:
     role = st.session_state.get("role", "user")
+
     if role == "admin":
       admin_page()
     elif role == "moderator":
       moderator_page()
+    elif role == "user":
+      user_page()
     else:
-      st.warning("⚠️ Бұл бөлім оқушыларға арналған.")
-      if st.button("🚪 Шығу"):
+      st.warning(f"⚠️ Белгісіз рөл анықталды: {role}")
+      if st.button("🚪 Шығу және қайта кіру"):
         logout()
 
 
