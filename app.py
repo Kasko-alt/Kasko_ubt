@@ -25,7 +25,7 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
-# ПӘНДЕР ТІЗІМІ
+# ПӘНДЕР МЕН КОМБИНАЦИЯЛАР
 # =========================================================
 all_subjects = [
     "Биология",
@@ -190,7 +190,7 @@ def logout():
     st.rerun()
 
 # =========================================================
-# LOGIN
+# LOGIN БЕТІ
 # =========================================================
 def login_page():
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
@@ -217,7 +217,7 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АҚЫЛДЫ АВТО-ПАРСЕР ФУНКЦИЯСЫ
+# АҚЫЛДЫ АВТО-ПАРСЕР ФУНКЦИЯСЫ (Мәтіннен 40+ сұрақты бөліп алу)
 # =========================================================
 def parse_bulk_questions(raw_text):
     questions_list = []
@@ -260,50 +260,97 @@ def parse_bulk_questions(raw_text):
     return questions_list
 
 # =========================================================
-# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ (ЖЫЛДАМ СҰРАҚ ЖҮКТЕУ)
+# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ (СҰРАҚ ҚОСУ ЖӘНЕ АВТО-ЖҮКТЕУ)
 # =========================================================
 def prime_minister_page():
     if st.button("🚪 Шығу"): logout()
     
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">⚡ Жылдам сұрақ жүктеу</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Интернеттен 40-50 сұрақты көшіріп алып, төменге бірден қойыңыз</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Сұрақтарды басқару панелі</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Жалғызлап немесе 40-50 сұрақты бірден автоматты түрде жүктеңіз</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects)
-    
-    st.info("💡 **Үлгі формат:**\n1. Фотосинтез процесі қайда жүреді?\nA) Ядро\nB) Хлоропласт\nC) Митохондрия\nD) Рибосома")
+    tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (Авто-парсер)", "✍️ Жеке сұрақ қосу"])
 
-    raw_text_input = st.text_area(
-        "✍️ Сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", 
-        height=250,
-        placeholder="1. Сұрақ мәтіні...\nA) ...\nB) ...\nC) ...\nD) ...\n\n2. Сұрақ мәтіні..."
-    )
+    with tab1:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        selected_subject_bulk = st.selectbox("📚 Пәнді таңдаңыз (Авто-жүктеу):", all_subjects, key="bulk_sub")
+        st.info("💡 **Үлгі формат:**\n1. 2 + 2 өрнегінің мәні?\nA) 2\nB) 4\nC) 5\nD) 3")
 
-    if st.button("🚀 Барлық сұрақтарды бірден базаға қосу", use_container_width=True, type="primary"):
-        if raw_text_input.strip():
-            parsed_questions = parse_bulk_questions(raw_text_input)
-            
-            if parsed_questions:
+        raw_text_input = st.text_area(
+            "✍️ Барлық сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", 
+            height=250,
+            placeholder="1. Сұрақ...\nA) ...\nB) ...\nC) ...\nD) ..."
+        )
+
+        if st.button("🚀 Барлық сұрақтарды бірден базаға қосу", use_container_width=True, type="primary"):
+            if raw_text_input.strip():
+                parsed_questions = parse_bulk_questions(raw_text_input)
+                if parsed_questions:
+                    if selected_subject_bulk not in questions:
+                        questions[selected_subject_bulk] = []
+                    questions[selected_subject_bulk].extend(parsed_questions)
+                    save_questions()
+                    st.success(f"✨ Сәтті! Барлығы **{len(parsed_questions)}** сұрақ автоматты түрде қосылды!")
+                else:
+                    st.error("⚠️ Сұрақтар форматын тану мүмкін болмады. Үлгіге сәйкестігін тексеріңіз.")
+            else:
+                st.warning("⚠️ Мәтін өрісі бос болмауы тиіс!")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="single_sub")
+        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            ans1 = st.text_input("А нұсқасы:")
+            ans3 = st.text_input("В нұсқасы:")
+        with col_b:
+            ans2 = st.text_input("Б нұсқасы:")
+            ans4 = st.text_input("Г нұсқасы:")
+
+        correct_option = st.selectbox("✅ Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
+        correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
+
+        if st.button("💾 Сұрақты базаға сақтау", use_container_width=True, type="primary"):
+            if question_text and ans1 and ans2 and ans3 and ans4:
+                new_q = {
+                    "question": question_text,
+                    "answers": [ans1, ans2, ans3, ans4],
+                    "correct": correct_index,
+                }
                 if selected_subject not in questions:
                     questions[selected_subject] = []
-                
-                questions[selected_subject].extend(parsed_questions)
+                questions[selected_subject].append(new_q)
                 save_questions()
-                st.success(f"✨ Сәтті! Барлығы **{len(parsed_questions)}** сұрақ автоматты түрде базаға қосылды!")
+                st.success("✨ Сұрақ сәтті сақталды!")
             else:
-                st.error("⚠️ Сұрақтар форматын тану мүмкін болмады. Үлгіге сәйкес екенін тексеріңіз.")
-        else:
-            st.warning("⚠️ Мәтін өрісі бос болмауы тиіс!")
-            
-    st.markdown('</div>', unsafe_allow_html=True)
+                st.error("⚠️ Барлық өрістерді толық толтырыңыз!")
+        st.markdown('</div>', unsafe_allow_html=True)
 
+# =========================================================
+# ПРЕЗИДЕНТ ПАНЕЛІ
+# =========================================================
 def admin_page():
     if st.button("🚪 Шығу"): logout()
-    st.title("👑 Президент панелі")
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Президент панелі</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Жүйені басқару және бақылау орталығы</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write(f"Қош келдіңіз, **{st.session_state.full_name}**! Мұнда барлық статистика мен қолданушылар тізімі көрсетіледі.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
+# =========================================================
+# ОҚУШЫНЫҢ БАСТЫ БЕТІ
+# =========================================================
 def home_page():
     if st.button("🚪 Шығу"): logout()
-    st.title("🏠 Басты бет (Оқушы)")
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Басты бет (Оқушы)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру бөлімі</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write(f"Сәлем, **{st.session_state.full_name}**! Тест тапсыру парақтары мен пәндерді осы жерден таңдайсыз.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # РОУТЕР
