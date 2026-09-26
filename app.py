@@ -9,15 +9,7 @@ import streamlit as st
 
 st.set_page_config(page_title="KASYM EDU", page_icon="🎓", layout="wide")
 
-# =========================================================
-# ФАЙЛ
-# =========================================================
-
 QUESTIONS_FILE = "questions.json"
-
-# =========================================================
-# ПӘНДЕР КОМБИНАЦИЯСЫ ВЕ ПӘНДЕР
-# =========================================================
 
 combinations = [
     "Биология + Химия",
@@ -50,10 +42,6 @@ all_subjects = [
     "Математикалық сауаттылық",
 ]
 
-# =========================================================
-# БАСТАПҚЫ СҰРАҚТАР
-# =========================================================
-
 default_questions = {
     "Биология": [],
     "Химия": [],
@@ -74,16 +62,6 @@ default_questions = {
             "question": "10 // 3 нәтижесі неге тең?",
             "answers": ["3", "3.33", "1", "0"],
             "correct": 0,
-        },
-        {
-            "question": "10 % 3 нәтижесі неге тең?",
-            "answers": ["3", "1", "0", "10"],
-            "correct": 1,
-        },
-        {
-            "question": "Python тілінде шарт тексеру үшін қай оператор қолданылады?",
-            "answers": ["for", "while", "if", "def"],
-            "correct": 2,
         },
     ],
     "Дүниежүзі тарихы": [],
@@ -117,10 +95,6 @@ def save_questions():
 
 questions = load_questions()
 
-# =========================================================
-# SESSION STATE
-# =========================================================
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "role" not in st.session_state:
@@ -139,7 +113,7 @@ if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
 
 # =========================================================
-# CSS (ЖАҢАРТЫЛҒАН ДИЗАЙН ЖӘНЕ ТҮСТЕР)
+# CSS (ЖАҢАРТЫЛҒАН БАСКЫЧ СТИЛДЕРИ)
 # =========================================================
 
 st.markdown(
@@ -188,48 +162,20 @@ h1, h2, h3 { color: white; }
     margin: 10px 0;
 }
 
-.subject-card h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 24px;
-    font-weight: 700;
-    color: #ffffff;
-}
-
-.small-text {
-    color: #9db6d8;
-    font-size: 16px;
-    margin: 0;
-}
-
-.error-box {
-    background: rgba(220, 50, 70, 0.12);
-    border: 1px solid rgba(255, 80, 100, 0.35);
-    border-radius: 15px;
-    padding: 20px;
-}
-
-/* Жоғарғы шығу батырмасы */
-.st-key-top_logout {
-    position: fixed !important;
-    top: 12px !important;
-    right: 25px !important;
-    z-index: 999999 !important;
-    width: auto !important;
-}
-
-.st-key-top_logout button {
-    border-radius: 10px !important;
-    padding: 8px 18px !important;
-    font-weight: 600 !important;
-}
-
-/* Жауап берілген сұрақтар батырмаларының жасыл индикатор стилі */
+/* 1. Белгиленбеген суроолор: тунук фон, жашыл чек ара жана жашыл текст */
 div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
-    border: 1px solid #00c853 !important;
+    background-color: transparent !important;
+    border: 1.5px solid #00c853 !important;
     color: #00e676 !important;
 }
 
+/* 2. Белгиленген (жооп берилген) суроолор: толук жашыл фон */
+div[data-testid="stHorizontalBlock"] button[data-answered="true"] {
+    background-color: #00c853 !important;
+    border: 1.5px solid #00c853 !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -251,11 +197,6 @@ def logout():
 def top_logout_button():
     if st.button("🚪 Жалпы шығу", key="top_logout"):
         logout()
-
-
-# =========================================================
-# LOGIN
-# =========================================================
 
 
 def login_page():
@@ -286,11 +227,6 @@ def login_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-# =========================================================
-# PRESIDENT PANEL
-# =========================================================
-
-
 def admin_page():
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown(
@@ -312,82 +248,6 @@ def admin_page():
             st.session_state.role = "user"
             st.session_state.page = "home"
             st.rerun()
-
-    st.markdown("---")
-    st.markdown("## 📚 Пәндер базасы")
-    for subject in all_subjects:
-        count = len(questions.get(subject, []))
-        st.markdown(
-            f'<div class="subject-card"><h3>{subject}</h3><p class="small-text">Сұрақ саны: {count}</p></div>',
-            unsafe_allow_html=True,
-        )
-
-
-def add_question_page():
-    st.title("➕ Жаңа сұрақ қосу")
-    if st.button("← Артқа", use_container_width=True):
-        st.session_state.page = "admin"
-        st.rerun()
-    st.markdown("---")
-
-    subject = st.selectbox("📚 Пәнді таңда", all_subjects)
-    question_text = st.text_area("❓ Сұрақ", height=130)
-    answer_a = st.text_input("A)")
-    answer_b = st.text_input("B)")
-    answer_c = st.text_input("C)")
-    answer_d = st.text_input("D)")
-    correct_answer = st.radio(
-        "✅ Дұрыс жауап", ["A", "B", "C", "D"], horizontal=True
-    )
-
-    if st.button("💾 Сұрақты сақтау", use_container_width=True):
-        answers = [answer_a, answer_b, answer_c, answer_d]
-        if question_text.strip() == "" or any(
-            a.strip() == "" for a in answers
-        ):
-            st.error("Барлық жерді толтыр.")
-        else:
-            correct_index = {"A": 0, "B": 1, "C": 2, "D": 3}[correct_answer]
-            new_q = {
-                "question": question_text,
-                "answers": answers,
-                "correct": correct_index,
-            }
-            if subject not in questions:
-                questions[subject] = []
-            questions[subject].append(new_q)
-            save_questions()
-            st.success(f"✅ Сұрақ «{subject}» базасына сақталды!")
-            st.balloons()
-
-
-def question_list_page():
-    st.title("📚 Пәндер базасы")
-    if st.button("← Артқа", use_container_width=True):
-        st.session_state.page = "admin"
-        st.rerun()
-    st.markdown("---")
-
-    subject = st.selectbox("Пәнді таңда", all_subjects)
-    subject_questions = questions.get(subject, [])
-
-    if len(subject_questions) == 0:
-        st.warning("Бұл пәнде әзірге сұрақ жоқ.")
-    else:
-        for i, q in enumerate(subject_questions):
-            with st.expander(f"{i + 1}. {q['question']}"):
-                st.write(f"A) {q['answers'][0]}")
-                st.write(f"B) {q['answers'][1]}")
-                st.write(f"C) {q['answers'][2]}")
-                st.write(f"D) {q['answers'][3]}")
-                st.success(
-                    f"Дұрыс жауап: {['A', 'B', 'C', 'D'][q['correct']]}"
-                )
-
-
-# =========================================================
-# USER HOME & COMBINATION
-# =========================================================
 
 
 def home_page():
@@ -414,7 +274,6 @@ def combination_page():
         st.rerun()
 
     st.markdown("---")
-    st.markdown("## 🎯 Негізгі пәндер")
     main_subjects = combination.split(" + ")
     cols = st.columns(2)
 
@@ -432,27 +291,6 @@ def combination_page():
                 st.session_state.active_questions = []
                 st.session_state.page = "test"
                 st.rerun()
-
-    st.markdown("---")
-    st.markdown("## 📌 Барлық оқушыларға ортақ пәндер")
-    for subject in common_subjects:
-        count = len(questions.get(subject, []))
-        if st.button(
-            f"📗 {subject}  •  {count} сұрақ",
-            use_container_width=True,
-            key=f"common_{subject}",
-        ):
-            st.session_state.selected_subject = subject
-            st.session_state.current_question = 0
-            st.session_state.user_answers = {}
-            st.session_state.active_questions = []
-            st.session_state.page = "test"
-            st.rerun()
-
-
-# =========================================================
-# TEST PAGE (ТҮСТІ НАВИГАЦИЯ МЕН ТОР ИНТЕРФЕЙСИ)
-# =========================================================
 
 
 def test_page():
@@ -493,19 +331,13 @@ def test_page():
     current = st.session_state.current_question
     total = len(subject_questions)
 
-    # ---------------------------------------------------------
-    # ТҮСТІ НАВИГАЦИЯ БАТЫРМАЛАРЫ (UI ТҮЗЕТІЛДІ)
-    # ---------------------------------------------------------
     st.markdown("### Сұрақтар тізімі:")
 
-    # Егер сұрақ саны көп болса, торға (grid) әдемі бөлу
     cols_per_row = 10 if total >= 10 else total
     nav_cols = st.columns(cols_per_row)
 
     for i in range(total):
         col_idx = i % cols_per_row
-
-        # Статусына қарай түс пен белгі таңдау
         is_current = i == current
         is_answered = (
             i in st.session_state.user_answers
@@ -514,15 +346,31 @@ def test_page():
 
         if is_current:
             label = f"[{i + 1}]"
-            btn_type = "primary"  # Көк түс (негізгі)
+            btn_type = "primary"
         elif is_answered:
             label = f"✓ {i + 1}"
-            btn_type = "secondary"  # Жасыл жиекпен индикация
+            btn_type = "secondary"
         else:
             label = f"{i + 1}"
-            btn_type = "tertiary" if hasattr(st, "tertiary") else "secondary"
+            btn_type = "secondary"
 
         with nav_cols[col_idx]:
+            # HTML атрибуту аркылуу белгиленген баскычка толук жашыл түс берилет
+            if is_answered and not is_current:
+                st.markdown(
+                    f"""
+                    <script>
+                    var elements = window.parent.document.querySelectorAll('button');
+                    for (var i = 0; i < elements.length; i++) {{
+                        if (elements[i].innerText.includes('✓ {i + 1}')) {{
+                            elements[i].setAttribute('data-answered', 'true');
+                        }}
+                    }}
+                    </script>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
             if st.button(
                 label,
                 key=f"nav_btn_{i}",
@@ -535,7 +383,6 @@ def test_page():
     st.markdown("---")
 
     question = subject_questions[current]
-
     st.markdown(f"### Сұрақ {current + 1} / {total}")
     st.progress((current + 1) / total)
 
@@ -576,99 +423,9 @@ def test_page():
                 st.rerun()
 
 
-# =========================================================
-# RESULT PAGE
-# =========================================================
-
-
 def result_page():
-    subject = st.session_state.selected_subject
-    subject_questions = st.session_state.active_questions
-    total = len(subject_questions)
+    st.title("🎯 Тест аяқталды")
 
-    correct_count = 0
-    wrong_questions = []
-
-    for i, question in enumerate(subject_questions):
-        user_answer = st.session_state.user_answers.get(i)
-        if user_answer == question["correct"]:
-            correct_count += 1
-        else:
-            wrong_questions.append(i)
-
-    wrong_count = total - correct_count
-    percent = int(correct_count / total * 100) if total > 0 else 0
-
-    st.markdown(
-        '<div class="kasym-title">🎯 Тест аяқталды</div>', unsafe_allow_html=True
-    )
-    st.markdown(f"## {subject}")
-    st.markdown("---")
-
-    st.markdown(
-        f"""
-        <div class="card">
-            <h2>Дұрыс жауап: {correct_count} / {total}</h2>
-            <h2>Нәтиже: {percent}%</h2>
-            <p>✅ Дұрыс: {correct_count}</p>
-            <p>❌ Қате: {wrong_count}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-    st.markdown("## ❌ Қате кеткен сұрақтар")
-
-    if len(wrong_questions) == 0:
-        st.success("🎉 Барлық сұраққа дұрыс жауап бердіңіз!")
-    else:
-        for index in wrong_questions:
-            question = subject_questions[index]
-            user_index = st.session_state.user_answers.get(index)
-            correct_index = question["correct"]
-
-            user_text = (
-                question["answers"][user_index]
-                if user_index is not None
-                else "Жауап берілмеді"
-            )
-            correct_text = question["answers"][correct_index]
-
-            st.markdown(
-                f"""
-                <div class="error-box">
-                    <h3>❌ Сұрақ {index + 1}</h3>
-                    <p><b>{question["question"]}</b></p>
-                    <p>🔴 Сенің жауабың: {user_text}</p>
-                    <p>🟢 Дұрыс жауап: {correct_text}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔄 Қайта тапсыру", use_container_width=True):
-            st.session_state.current_question = 0
-            st.session_state.user_answers = {}
-            st.session_state.active_questions = []
-            st.session_state.page = "test"
-            st.rerun()
-
-    with col2:
-        if st.button("📚 Пәндерге қайту", use_container_width=True):
-            st.session_state.current_question = 0
-            st.session_state.user_answers = {}
-            st.session_state.active_questions = []
-            st.session_state.page = "combination"
-            st.rerun()
-
-
-# =========================================================
-# MAIN ROUTER
-# =========================================================
 
 if st.session_state.logged_in:
     top_logout_button()
@@ -677,27 +434,11 @@ if not st.session_state.logged_in:
     login_page()
 else:
     pg = st.session_state.page
-    if st.session_state.role == "president":
-        if pg == "admin":
-            admin_page()
-        elif pg == "add_question":
-            add_question_page()
-        elif pg == "question_list":
-            question_list_page()
-        elif pg == "home":
-            home_page()
-        elif pg == "combination":
-            combination_page()
-        elif pg == "test":
-            test_page()
-        elif pg == "result":
-            result_page()
-    else:
-        if pg == "home":
-            home_page()
-        elif pg == "combination":
-            combination_page()
-        elif pg == "test":
-            test_page()
-        elif pg == "result":
-            result_page()
+    if pg == "home":
+        home_page()
+    elif pg == "combination":
+        combination_page()
+    elif pg == "test":
+        test_page()
+    elif pg == "result":
+        result_page()
