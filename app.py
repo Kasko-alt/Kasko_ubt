@@ -139,7 +139,6 @@ def load_users():
     except Exception:
       pass
 
-  # Админ әрқашан болуын және ролі дұрыстығын қадағалау
   admin_found = False
   for u in users_list:
     if u.get("username") == "kas01":
@@ -312,7 +311,7 @@ def logout():
 
 
 # =========================================================
-# 8. КІРУ БЕТІ (LOGIN PAGE)
+# 8. КІРУ БЕТІ (LOGIN PAGE) - Тек логин және құпия сөз
 # =========================================================
 def login_page():
   st.markdown(
@@ -345,16 +344,6 @@ def login_page():
       else:
         st.error("❌ Логин немесе құпия сөз қате.")
 
-    st.markdown("---")
-    # Тест жасауға немесе тікелей кіруге арналған жылдам батырма
-    if st.button(
-        "👑 Админ болып бірден кіру", use_container_width=True, type="secondary"
-    ):
-      st.session_state.logged_in = True
-      st.session_state.username = "kas01"
-      st.session_state.full_name = "KASYM"
-      st.session_state.role = "admin"
-      st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -612,10 +601,7 @@ def user_page():
       unsafe_allow_html=True,
   )
   st.markdown('<div class="card">', unsafe_allow_html=True)
-  st.info(
-      "Бұл бөлімде оқушыларға арналған тест тапсыру және нәтижелерді көру"
-      " функциялары жұмыс істейді."
-  )
+  st.info("Бұл бөлімде оқушыларға арналған тест тапсыру жүйесі жұмыс істейді.")
   st.markdown("</div>", unsafe_allow_html=True)
 
 
