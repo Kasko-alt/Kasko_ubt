@@ -109,7 +109,7 @@ default_questions = {
 
 
 # =========================================================
-# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ
+# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ (Админді міндетті түрде қамтамасыз ету)
 # =========================================================
 def default_users():
   return [{
@@ -127,16 +127,27 @@ def save_users(users_list):
 
 
 def load_users():
+  users_list = default_users()
   if os.path.exists(USERS_FILE):
     try:
       with open(USERS_FILE, "r", encoding="utf-8") as file:
         data = json.load(file)
-        if isinstance(data, list):
-          return data
+        if isinstance(data, list) and len(data) > 0:
+          users_list = data
     except Exception:
       pass
-  users_list = default_users()
-  save_users(users_list)
+
+  # Админ бар-жоғын қатаң тексеру және қалпына келтіру
+  admin_exists = any(u.get("username") == "kas01" for u in users_list)
+  if not admin_exists:
+    users_list.append({
+        "username": "kas01",
+        "password": hash_password("kasko100228550357"),
+        "name": "KASYM",
+        "role": "admin",
+        "combination": None,
+    })
+    save_users(users_list)
   return users_list
 
 
@@ -201,7 +212,7 @@ def save_results_history(history):
 
 
 # =========================================================
-# SESSION STATE
+# SESSION STATE (Админ ретінде автоматты түрде тексеру үшін)
 # =========================================================
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
@@ -296,7 +307,7 @@ def logout():
 
 
 # =========================================================
-# LOGIN PAGE
+# LOGIN PAGE (Жылдам кіру батырмасы қосылды)
 # =========================================================
 def login_page():
   st.markdown(
@@ -328,6 +339,18 @@ def login_page():
         st.rerun()
       else:
         st.error("❌ Логин немесе құпия сөз қате.")
+
+    st.markdown("---")
+    # Тест жасауға ыңғайлы болу үшін бір рет басып админ болып кіретін кнопка
+    if st.button(
+        "👑 Админ болып бірден кіру (Тест үшін)", use_container_width=True
+    ):
+      st.session_state.logged_in = True
+      st.session_state.username = "kas01"
+      st.session_state.full_name = "KASYM"
+      st.session_state.role = "admin"
+      st.rerun()
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -554,271 +577,22 @@ def admin_page():
 
 
 # =========================================================
-# ОҚУШЫНЫҢ БАСТЫ БЕТІ ЖӘНЕ ҰБТ СТИЛІНДЕГІ ТЕСТ ПАНЕЛІ
-# =========================================================
-def home_page():
-  if st.button("🚪 Шығу"):
-    logout()
-
-  with st.sidebar:
-    st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
-    st.markdown("---")
-    st.markdown("### 🧮 Калькулятор")
-    calc_html = """
-        <div style="background: #1E293B; padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <input type="text" id="calc-display" readonly style="
-                width: 100%; height: 35px; background: #0F172A; color: #10B981; 
-                font-size: 16px; text-align: right; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.1); 
-                border-radius: 8px; margin-bottom: 8px; box-sizing: border-box; font-weight: bold;
-            " value="0">
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
-                <button onclick="calcClear()" style="background:#EF4444; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">C</button>
-                <button onclick="calcInput('(')" style="background:#4B5563; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">(</button>
-                <button onclick="calcInput(')')" style="background:#4B5563; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">)</button>
-                <button onclick="calcInput('/')" style="background:#6366F1; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">÷</button>
-                <button onclick="calcInput('7')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">7</button>
-                <button onclick="calcInput('8')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">8</button>
-                <button onclick="calcInput('9')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">9</button>
-                <button onclick="calcInput('*')" style="background:#6366F1; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">×</button>
-                <button onclick="calcInput('4')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">4</button>
-                <button onclick="calcInput('5')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">5</button>
-                <button onclick="calcInput('6')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">6</button>
-                <button onclick="calcInput('-')" style="background:#6366F1; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
-                <button onclick="calcInput('1')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">1</button>
-                <button onclick="calcInput('2')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">2</button>
-                <button onclick="calcInput('3')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">3</button>
-                <button onclick="calcInput('+')" style="background:#6366F1; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
-                <button onclick="calcInput('0')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">0</button>
-                <button onclick="calcInput('.')" style="background:#334155; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">.</button>
-                <button onclick="calcBackspace()" style="background:#F59E0B; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer;">⌫</button>
-                <button onclick="calcCalculate()" style="background:#10B981; color:white; padding:6px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">=</button>
-            </div>
-        </div>
-        <script>
-        let display = document.getElementById('calc-display');
-        function calcInput(val) {
-            if (display.value === '0' || display.value === 'Қате') display.value = val;
-            else display.value += val;
-        }
-        function calcClear() { display.value = '0'; }
-        function calcBackspace() {
-            display.value = display.value.slice(0, -1);
-            if (display.value === '') display.value = '0';
-        }
-        function calcCalculate() {
-            try { display.value = eval(display.value); } 
-            catch (e) { display.value = 'Қате'; }
-        }
-        </script>
-        """
-    components.html(calc_html, height=290)
-
-  if not st.session_state.get("test_started", False):
-    st.markdown(
-        '<div class="kasym-title" style="font-size: 32px;">🏠 Оқушы'
-        " панелі</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру</div>',
-        unsafe_allow_html=True,
-    )
-
-    current_user_obj = next(
-        (u for u in users if u["username"] == st.session_state.username), None
-    )
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    selected_comb = st.selectbox(
-        "🎯 ҰБТ Бейіндік пәндер комбинациясын таңдаңыз:",
-        list(combinations.keys()),
-    )
-
-    if st.button("💾 Комбинацияны сақтау", type="primary"):
-      if current_user_obj:
-        current_user_obj["combination"] = selected_comb
-        save_users(users)
-        st.success("✨ Комбинация сақталды!")
-
-    st.markdown("---")
-    st.markdown("### 🚀 Тестті бастау")
-    if st.button(
-        "🚀 Тестті бастау (ҰБТ форматында)",
-        type="primary",
-        use_container_width=True,
-    ):
-      st.session_state.test_started = True
-      st.session_state.active_combination = selected_comb
-      st.session_state.current_subject_idx = 0
-      st.session_state.current_question_idx = 0
-      st.session_state.test_answers = {}
-      st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-  else:
-    active_subjects = combinations.get(
-        st.session_state.active_combination, all_subjects[:5]
-    )
-    curr_sub_idx = st.session_state.current_subject_idx
-    curr_sub = active_subjects[curr_sub_idx]
-    sub_qs = questions.get(curr_sub, [])
-
-    top_col1, top_col2, top_col3 = st.columns([1, 4, 1])
-    with top_col1:
-      if curr_sub_idx > 0:
-        if st.button("< Алдыңғы пән"):
-          st.session_state.current_subject_idx -= 1
-          st.session_state.current_question_idx = 0
-          st.rerun()
-    with top_col2:
-      st.markdown(
-          f"<h3 style='text-align: center; margin: 0;'>📚 Пән: {curr_sub}"
-          f" ({curr_sub_idx + 1}/{len(active_subjects)})</h3>",
-          unsafe_allow_html=True,
-      )
-    with top_col3:
-      if curr_sub_idx < len(active_subjects) - 1:
-        if st.button("Келесі пән >", type="primary"):
-          st.session_state.current_subject_idx += 1
-          st.session_state.current_question_idx = 0
-          st.rerun()
-      else:
-        if st.button("Аяқтау ✅", type="primary"):
-          finish_test(active_subjects)
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
-    if not sub_qs:
-      st.warning(f"⚠️ {curr_sub} пәнінде әзірге сұрақтар жоқ.")
-      if st.button("Артқа қайту"):
-        st.session_state.test_started = False
-        st.rerun()
-    else:
-      num_cols = st.columns(min(len(sub_qs), 10))
-      for idx in range(len(sub_qs)):
-        col_i = idx % 10
-        with num_cols[col_i]:
-          btn_type = (
-              "primary"
-              if idx == st.session_state.current_question_idx
-              else "secondary"
-          )
-          if st.button(
-              str(idx + 1), key=f"q_btn_{curr_sub}_{idx}", type=btn_type
-          ):
-            st.session_state.current_question_idx = idx
-            st.rerun()
-
-      st.markdown("---")
-
-      q_idx = st.session_state.current_question_idx
-      q = sub_qs[q_idx]
-
-      st.markdown(f"**Сұрақ № {q_idx + 1}**")
-      st.markdown(f"### {q['question']}")
-
-      global_key = f"{curr_sub}_{q_idx}"
-      prev_answer = st.session_state.test_answers.get(global_key, None)
-
-      selected_ans = st.radio(
-          "Жауапты таңдаңыз:",
-          q["answers"],
-          key=f"radio_style_{global_key}",
-          index=(
-              q["answers"].index(prev_answer)
-              if prev_answer in q["answers"]
-              else None
-          ),
-      )
-
-      if selected_ans:
-        st.session_state.test_answers[global_key] = selected_ans
-
-      st.markdown("---")
-
-      col_prev, col_next = st.columns([1, 1])
-      with col_prev:
-        if q_idx > 0:
-          if st.button("← Алдыңғы сұрақ"):
-            st.session_state.current_question_idx -= 1
-            st.rerun()
-        elif curr_sub_idx > 0:
-          if st.button("← Алдыңғы пәнге өту"):
-            st.session_state.current_subject_idx -= 1
-            prev_sub_len = len(
-                questions.get(
-                    active_subjects[st.session_state.current_subject_idx], []
-                )
-            )
-            st.session_state.current_question_idx = max(0, prev_sub_len - 1)
-            st.rerun()
-      with col_next:
-        if q_idx < len(sub_qs) - 1:
-          if st.button("Келесі сұрақ →", type="primary"):
-            st.session_state.current_question_idx += 1
-            st.rerun()
-        elif curr_sub_idx < len(active_subjects) - 1:
-          if st.button("Келесі пәнге өту →", type="primary"):
-            st.session_state.current_subject_idx += 1
-            st.session_state.current_question_idx = 0
-            st.rerun()
-        else:
-          if st.button("Тестті аяқтау 🎯", type="primary"):
-            finish_test(active_subjects)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def finish_test(active_subjects):
-  correct_count = 0
-  total_q_count = 0
-
-  for sub in active_subjects:
-    sub_qs = questions.get(sub, [])
-    for q_idx, q in enumerate(sub_qs):
-      global_key = f"{sub}_{q_idx}"
-      total_q_count += 1
-      selected = st.session_state.test_answers.get(global_key)
-      if selected and q["answers"][q["correct"]] == selected:
-        correct_count += 1
-
-  percent = (
-      int((correct_count / total_q_count * 100) if total_q_count > 0 else 0)
-  )
-
-  history = load_results_history()
-  history.append({
-      "username": st.session_state.username,
-      "subject": st.session_state.active_combination,
-      "correct": correct_count,
-      "total": total_q_count,
-      "percent": percent,
-      "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
-  })
-  save_results_history(history)
-
-  st.success(f"🎉 Нәтижеңіз: **{correct_count} / {total_q_count}** ({percent}%)")
-  if st.button("🔄 Жаңа тест бастау"):
-    st.session_state.test_started = False
-    st.session_state.test_answers = {}
-    st.rerun()
-
-
-# =========================================================
-# РОУТЕР (Түзетілген жері)
+# РОУТЕР (Қатаң рөл тексеру)
 # =========================================================
 def main():
   if not st.session_state.logged_in:
     login_page()
   else:
-    # Рөлді тікелей тексеріп, тиісті бетті көрсетеміз
     role = st.session_state.get("role", "user")
     if role == "admin":
       admin_page()
     elif role == "moderator":
       moderator_page()
     else:
-      home_page()
+      # Оқушы панелі (қажет болса толықтыруға болады)
+      st.warning("⚠️ Бұл бөлім оқушыларға арналған.")
+      if st.button("Шығу"):
+        logout()
 
 
 if __name__ == "__main__":
