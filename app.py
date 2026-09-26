@@ -167,13 +167,12 @@ if "page" not in st.session_state: st.session_state.page = "login"
 if "test_started" not in st.session_state: st.session_state.test_started = False
 if "active_combination" not in st.session_state: st.session_state.active_combination = None
 
-# Тест барысындағы навигация күйлері
 if "current_subject_idx" not in st.session_state: st.session_state.current_subject_idx = 0
 if "current_question_idx" not in st.session_state: st.session_state.current_question_idx = 0
 if "test_answers" not in st.session_state: st.session_state.test_answers = {}
 
 # =========================================================
-# СТИЛЬДЕР (DARK MODE & PREMIUM DESIGN)
+# СТИЛЬДЕР
 # =========================================================
 st.markdown(
     """
@@ -497,7 +496,7 @@ def home_page():
         """
         components.html(calc_html, height=290)
 
-    # Егер тест басталмаған болса — комбинация таңдау экраны
+    # Егер тест басталмаған болса
     if not st.session_state.get("test_started", False):
         st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Оқушы панелі</div>', unsafe_allow_html=True)
         st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру</div>', unsafe_allow_html=True)
@@ -524,18 +523,24 @@ def home_page():
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Егер тест басталған болса — ҰБТ стиліндегі сұрақ экрандары мен «Келесі сұрақ / Келесі пән» батырмалары
+    # Тест басталған кездегі ҰБТ интерфейсі (Алдыңғы/Келесі пән және сұрақ ауыстырғыштар)
     else:
         active_subjects = combinations.get(st.session_state.active_combination, all_subjects[:5])
         curr_sub_idx = st.session_state.current_subject_idx
         curr_sub = active_subjects[curr_sub_idx]
         sub_qs = questions.get(curr_sub, [])
 
-        # Жоғарғы панель: «Келесі пән >» батырмасы (суреттегідей)
-        top_col1, top_col2 = st.columns([6, 1])
+        # Жоғарғы панель: «Алдыңғы пән» және «Келесі пән» батырмалары
+        top_col1, top_col2, top_col3 = st.columns([1, 4, 1])
         with top_col1:
-            st.markdown(f"### 📚 Пән: **{curr_sub}**")
+            if curr_sub_idx > 0:
+                if st.button("< Алдыңғы пән"):
+                    st.session_state.current_subject_idx -= 1
+                    st.session_state.current_question_idx = 0
+                    st.rerun()
         with top_col2:
+            st.markdown(f"<h3 style='text-align: center; margin: 0;'>📚 Пән: {curr_sub} ({curr_sub_idx + 1}/{len(active_subjects)})</h3>", unsafe_allow_html=True)
+        with top_col3:
             if curr_sub_idx < len(active_subjects) - 1:
                 if st.button("Келесі пән >", type="primary"):
                     st.session_state.current_subject_idx += 1
@@ -543,7 +548,6 @@ def home_page():
                     st.rerun()
             else:
                 if st.button("Аяқтау ✅", type="primary"):
-                    # Тестті аяқтап нәтиже шығару
                     finish_test(active_subjects)
 
         st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -554,7 +558,7 @@ def home_page():
                 st.session_state.test_started = False
                 st.rerun()
         else:
-            # Сұрақ нөмірлері панелі (1, 2, 3... суреттегідей жоғарғы батырмалар тізбегі)
+            # Сұрақ нөмірлері панелі (1, 2, 3...)
             num_cols = st.columns(min(len(sub_qs), 10))
             for idx in range(len(sub_qs)):
                 col_i = idx % 10
@@ -566,7 +570,7 @@ def home_page():
 
             st.markdown("---")
 
-            # Ағымдағы сұрақты шығару
+            # Ағымдағы сұрақ
             q_idx = st.session_state.current_question_idx
             q = sub_qs[q_idx]
 
@@ -576,7 +580,6 @@ def home_page():
             global_key = f"{curr_sub}_{q_idx}"
             prev_answer = st.session_state.test_answers.get(global_key, None)
             
-            # Нұсқаларды radio арқылы таңдау
             selected_ans = st.radio(
                 "Жауапты таңдаңыз:", 
                 q["answers"], 
@@ -584,33 +587,37 @@ def home_page():
                 index=q["answers"].index(prev_answer) if prev_answer in q["answers"] else None
             )
 
-            # Таңдалған жауапты сақтау
             if selected_ans:
                 st.session_state.test_answers[global_key] = selected_ans
 
             st.markdown("---")
 
-            # Келесі сұраққа немесе келесі пәнге өту батырмалары
+            # Сұрақтар арасында жылжу батырмалары
             col_prev, col_next = st.columns([1, 1])
             with col_prev:
                 if q_idx > 0:
                     if st.button("← Алдыңғы сұрақ"):
                         st.session_state.current_question_idx -= 1
                         st.rerun()
+                elif curr_sub_idx > 0:
+                    if st.button("← Алдыңғы пәнге өту"):
+                        st.session_state.current_subject_idx -= 1
+                        prev_sub_len = len(questions.get(active_subjects[st.session_state.current_subject_idx], []))
+                        st.session_state.current_question_idx = max(0, prev_sub_len - 1)
+                        st.rerun()
             with col_next:
                 if q_idx < len(sub_qs) - 1:
                     if st.button("Келесі сұрақ →", type="primary"):
                         st.session_state.current_question_idx += 1
                         st.rerun()
+                elif curr_sub_idx < len(active_subjects) - 1:
+                    if st.button("Келесі пәнге өту →", type="primary"):
+                        st.session_state.current_subject_idx += 1
+                        st.session_state.current_question_idx = 0
+                        st.rerun()
                 else:
-                    if curr_sub_idx < len(active_subjects) - 1:
-                        if st.button("Келесі пәнге өту →", type="primary"):
-                            st.session_state.current_subject_idx += 1
-                            st.session_state.current_question_idx = 0
-                            st.rerun()
-                    else:
-                        if st.button("Тестті аяқтау 🎯", type="primary"):
-                            finish_test(active_subjects)
+                    if st.button("Тестті аяқтау 🎯", type="primary"):
+                        finish_test(active_subjects)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
