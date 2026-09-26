@@ -10,6 +10,7 @@ import streamlit as st
 st.set_page_config(page_title="KASYM EDU", page_icon="🎓", layout="wide")
 
 QUESTIONS_FILE = "questions.json"
+RESULTS_FILE = "results_history.json"
 
 combinations = [
     "Биология + Химия",
@@ -83,6 +84,8 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "role" not in st.session_state:
     st.session_state.role = None
+if "username" not in st.session_state:
+    st.session_state.username = None
 if "page" not in st.session_state:
     st.session_state.page = "login"
 if "selected_combination" not in st.session_state:
@@ -95,6 +98,8 @@ if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
+if "result_saved_for_current_test" not in st.session_state:
+    st.session_state.result_saved_for_current_test = False
 
 # =========================================================
 # CSS (КҮҢГІРТ ДИЗАЙН ЖӘНЕ СТИЛЬДЕР)
@@ -184,9 +189,74 @@ div[data-testid="stHorizontalBlock"] button[kind="primary"] {
 )
 
 
+def load_results_history():
+    if os.path.exists(RESULTS_FILE):
+        try:
+            with open(RESULTS_FILE, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+    return []
+
+
+def save_results_history(history):
+    with open(RESULTS_FILE, "w", encoding="utf-8") as file:
+        json.dump(history, file, ensure_ascii=False, indent=4)
+
+
+def add_result_to_history(subject, correct_count, total):
+    from datetime import datetime
+    history = load_results_history()
+    username = st.session_state.get("username") or "student"
+    percent = int(correct_count / total * 100) if total > 0 else 0
+    history.append({
+        "username": username,
+        "subject": subject,
+        "correct": correct_count,
+        "total": total,
+        "percent": percent,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+    })
+    save_results_history(history)
+
+
+def results_history_page():
+    st.markdown('<div class="kasym-title">📊 Менің нәтижелерім</div>', unsafe_allow_html=True)
+
+    if st.button("← Басты бетке қайту", use_container_width=True):
+        st.session_state.page = "home"
+        st.rerun()
+
+    st.markdown("---")
+
+    username = st.session_state.get("username") or "student"
+    history = [item for item in load_results_history() if item.get("username") == username]
+
+    if not history:
+        st.info("Әзірге тапсырылған тест нәтижелері жоқ.")
+        return
+
+    st.markdown("### 📚 Тест нәтижелерінің тарихы")
+
+    for idx, item in enumerate(reversed(history), start=1):
+        st.markdown(
+            f"""
+            <div class="card">
+                <h3>#{idx} — {item.get('subject', 'Пән')}</h3>
+                <p>🎯 Нәтиже: <b>{item.get('percent', 0)}%</b></p>
+                <p>✅ Дұрыс: <b>{item.get('correct', 0)} / {item.get('total', 0)}</b></p>
+                <p>🕒 {item.get('date', '')}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def logout():
     st.session_state.logged_in = False
     st.session_state.role = None
+    st.session_state.username = None
     st.session_state.page = "login"
     st.session_state.selected_combination = None
     st.session_state.selected_subject = None
@@ -216,11 +286,13 @@ def login_page():
     if st.button("Кіру →", use_container_width=True):
         if username == "kas01" and password == "kasko100228550357":
             st.session_state.logged_in = True
+            st.session_state.username = username
             st.session_state.role = "president"
             st.session_state.page = "admin"
             st.rerun()
         elif username != "" and password != "":
             st.session_state.logged_in = True
+            st.session_state.username = username
             st.session_state.role = "user"
             st.session_state.page = "home"
             st.rerun()
@@ -337,6 +409,10 @@ def home_page():
         '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
         unsafe_allow_html=True,
     )
+    if st.button("📊 Менің нәтижелерім", use_container_width=True):
+        st.session_state.page = "results_history"
+        st.rerun()
+
     st.markdown("## 📚 Пәндер комбинациясы")
 
     for combination in combinations:
@@ -370,6 +446,7 @@ def combination_page():
                 st.session_state.current_question = 0
                 st.session_state.user_answers = {}
                 st.session_state.active_questions = []
+                st.session_state.result_saved_for_current_test = False
                 st.session_state.page = "test"
                 st.rerun()
 
@@ -488,6 +565,20 @@ def test_page():
                 st.session_state.current_question += 1
                 st.rerun()
             else:
+                correct_count = sum(
+                    1
+                    for q_index, q_item in enumerate(st.session_state.active_questions)
+                    if st.session_state.user_answers.get(q_index) == q_item["correct"]
+                )
+
+                if not st.session_state.get("result_saved_for_current_test", False):
+                    add_result_to_history(
+                        subject,
+                        correct_count,
+                        len(st.session_state.active_questions)
+                    )
+                    st.session_state.result_saved_for_current_test = True
+
                 st.session_state.page = "result"
                 st.rerun()
 
@@ -534,6 +625,7 @@ def result_page():
             st.session_state.current_question = 0
             st.session_state.user_answers = {}
             st.session_state.active_questions = []
+            st.session_state.result_saved_for_current_test = False
             st.session_state.page = "test"
             st.rerun()
 
@@ -601,3 +693,5 @@ else:
         test_page()
     elif pg == "result":
         result_page()
+    elif pg == "results_history":
+        results_history_page()
