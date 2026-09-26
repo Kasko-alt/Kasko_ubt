@@ -13,6 +13,64 @@ st.set_page_config(
     layout="wide"
 )
 
+# ---------------------------------------------------------
+# CUSTOM CSS STYLES (Әдемі дизайн)
+# ---------------------------------------------------------
+st.markdown("""
+<style>
+    /* Жалпы фон мен қаріп */
+    .main {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
+    
+    /* Батырмалардың дизайны */
+    .stButton > button {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+
+    /* Карталар мен блоктар */
+    div[data-testid="stMetricValue"] {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #818cf8;
+    }
+    
+    /* Input өрістері */
+    .stTextInput > div > div > input, .stTextArea textarea, .stSelectbox > div > div {
+        background-color: #1e293b;
+        color: #f8fafc;
+        border: 1px solid #334155;
+        border-radius: 8px;
+    }
+    .stTextInput > div > div > input:focus, .stTextArea textarea:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Шапка (Header) карточкасы */
+    .user-card {
+        background: #1e293b;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        margin-bottom: 1.5rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 USERS_FILE = "users.json"
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
@@ -59,7 +117,6 @@ users_db = load_json(USERS_FILE, DEFAULT_USERS)
 questions_db = load_json(QUESTIONS_FILE, DEFAULT_QUESTIONS)
 results_db = load_json(RESULTS_FILE, [])
 
-# Session state инициализациясы
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
@@ -87,16 +144,19 @@ def logout():
     st.rerun()
 
 def top_logout_button():
+    user_info = users_db.get(st.session_state.username, {})
+    display_name = user_info.get("name", st.session_state.username)
+    
     col1, col2 = st.columns([8, 2])
     with col1:
-        # Безопасное получение имени пользователя
-        user_info = users_db.get(st.session_state.username, {})
-        display_name = user_info.get("name", st.session_state.username)
-        st.write(f"👤 Пайдаланушы: **{st.session_state.username}** ({display_name})")
+        st.markdown(f"""
+        <div class="user-card">
+            👤 Пайдаланушы: <b>{st.session_state.username}</b> ({display_name})
+        </div>
+        """, unsafe_allow_html=True)
     with col2:
-        if st.button("Шығу", key="top_logout"):
+        if st.button("🚪 Шығу", key="top_logout"):
             logout()
-    st.markdown("---")
 
 # =========================================================
 # PAGES
@@ -109,7 +169,7 @@ def login_page():
         username_input = st.text_input("Пайдаланушы аты (Username)")
         password_input = st.text_input("Құпия сөз", type="password")
         
-        if st.button("Кіру", use_container_width=True):
+        if st.button("🚀 Кіру", use_container_width=True):
             if username_input in users_db and users_db[username_input]["password"] == password_input:
                 st.session_state.logged_in = True
                 st.session_state.username = username_input
@@ -124,16 +184,14 @@ def home_page():
     st.title("🏠 Басты бет")
     role = st.session_state.role
     
-    # ИСПРАВЛЕНО: Безопасное обращение к users_db через .get()
     user_info = users_db.get(st.session_state.username, {})
     display_name = user_info.get("name", st.session_state.username)
     
     st.write(f"Қош келдіңіз, **{display_name}**!")
     st.info(f"Сіздің жүйедегі рөліңіз: **{role.upper()}**")
     
-    st.markdown("### Қолжетімді бөлімдер:")
+    st.markdown("### 📌 Қолжетімді бөлімдер:")
     
-    # Рөлге байланысты меню
     if role == "president":
         if st.button("👑 Президент панелі"):
             st.session_state.page = "admin"
@@ -161,7 +219,6 @@ def home_page():
             st.session_state.page = "progress"
             st.rerun()
 
-# --- Admin / President Pages ---
 def admin_page():
     st.title("👑 Президент Басқару Панелі")
     col1, col2, col3 = st.columns(3)
@@ -217,7 +274,6 @@ def users_list_page():
         st.session_state.page = "admin"
         st.rerun()
 
-# --- Prime Minister Pages ---
 def prime_minister_page():
     st.title("🏛 Премьер-Министр Панелі")
     
@@ -264,7 +320,6 @@ def add_question_page():
         st.session_state.page = "prime_minister"
         st.rerun()
 
-# --- General Navigation Pages ---
 def question_list_page():
     st.title("📚 Сұрақтар тізімі")
     
