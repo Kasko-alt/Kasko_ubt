@@ -223,19 +223,17 @@ if "is_full_ubt" not in st.session_state:
     st.session_state.is_full_ubt = False
 
 # =========================================================
-# PREMIUM CSS STYLES (ЗАМАНАУИ ДИЗАЙН КОДЫ)
+# PREMIUM CSS STYLES (ЖАҢАРТЫЛҒАН ДИЗАЙН)
 # =========================================================
 st.markdown(
     """
     <style>
-    /* Негізгі фон мен қаріп */
     .stApp {
         background-color: #0B0F19;
         color: #F3F4F6;
         font-family: 'Inter', sans-serif;
     }
 
-    /* Басты тақырыптар */
     .kasym-title {
         font-size: 42px;
         font-weight: 800;
@@ -255,17 +253,15 @@ st.markdown(
         font-weight: 500;
     }
 
-    /* Карточкалар дизайны */
     .card {
         background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
         padding: 24px;
         border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
     }
 
-    /* Streamlit батырмаларын әдемілеу */
     .stButton>button {
         border-radius: 12px;
         font-weight: 600;
@@ -280,24 +276,16 @@ st.markdown(
         border-color: #6366F1;
     }
 
-    /* Енгізу өрістері (Input fields) */
-    .stTextInput>div>div>input, .stSelectbox>div>div>div {
-        background-color: #1E293B;
-        border-radius: 10px;
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
+        background-color: #1E293B !important;
+        border-radius: 10px !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Sidebar (Бүйірлік панель) дизайны */
     [data-testid="stSidebar"] {
         background-color: #0F172A;
         border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    /* Мәтін аймақтары мен радио батырмалар */
-    .stRadio label {
-        font-size: 16px;
-        font-weight: 500;
     }
     </style>
     """,
@@ -336,7 +324,6 @@ def login_page():
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
 
-    # Ортаға келтіру үшін колончалар қолданамыз
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -384,8 +371,6 @@ def admin_page():
     st.markdown('<div class="kasym-subtitle">👑 PRESIDENT PANEL</div>', unsafe_allow_html=True)
 
     st.success(f"Қош келдіңіз, {st.session_state.full_name}!")
-    st.info("Президенттің негізгі міндеті — жүйедегі аккаунттарды басқару.")
-
     st.markdown("## 👤 Аккаунт басқару")
     col1, col2 = st.columns(2)
 
@@ -439,8 +424,6 @@ def create_user_page():
             })
             save_users(users)
             st.success(f"✅ {name} үшін аккаунт жасалды.")
-            st.info(f"Логин: {new_username}")
-            st.info(f"Бағыты: {selected_comb}")
 
 # =========================================================
 # USERS LIST
@@ -484,7 +467,7 @@ def users_list_page():
 def prime_minister_page():
     top_logout_button()
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">👨‍💼 ПРЕМЬЕР МИНИСТР</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">👨‍💼 ПРЕМЬЕР МИНИСТР ПАНЕКІ</div>', unsafe_allow_html=True)
 
     st.success(f"Қош келдіңіз, {st.session_state.full_name}!")
 
@@ -501,42 +484,51 @@ def prime_minister_page():
             st.session_state.page = "question_list"
             st.rerun()
 
-    st.markdown("---")
-    if st.button("👤 Оқушы режиміне өту", use_container_width=True):
-        st.session_state.role = "user"
-        st.session_state.user_combination = combinations[0]
-        st.session_state.page = "home"
-        st.rerun()
-
 # =========================================================
-# ADD QUESTION
+# ADD QUESTION (ЖАҢАРТЫЛҒАН ДИЗАЙН - КАРТОЧКА ФОРМАТЫ)
 # =========================================================
 def add_question_page():
     top_logout_button()
-    st.title("➕ Жаңа сұрақ қосу")
-
+    
     if st.session_state.role != "prime_minister":
         st.error("Бұл бөлімге тек Премьер министр кіре алады.")
         return
 
-    if st.button("← Панельге қайту", use_container_width=True):
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Жаңа сұрақ қосу</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Базаға жаңа сұрақтар мен нұсқаларды енгізу панелі</div>', unsafe_allow_html=True)
+
+    if st.button("← Панельге қайту", use_container_width=False):
         st.session_state.page = "prime_minister"
         st.rerun()
 
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
 
-    selected_subject = st.selectbox("Пәнді таңдаңыз:", all_subjects)
-    question_text = st.text_area("Сұрақты жазыңыз:")
+    # Карточка контейнерінің ішіне форманы саламыз
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    
+    selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects)
+    
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
 
-    ans1 = st.text_input("А нұсқасы:")
-    ans2 = st.text_input("Б нұсқасы:")
-    ans3 = st.text_input("В нұсқасы:")
-    ans4 = st.text_input("Г нұсқасы:")
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    st.markdown("#### 🎯 Желке нұсқаларын толтырыңыз:")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        ans1 = st.text_input("А нұсқасы:", placeholder="Ядро")
+        ans3 = st.text_input("В нұсқасы:", placeholder="Рибосома")
+    with col_b:
+        ans2 = st.text_input("Б нұсқасы:", placeholder="Хлоропласт")
+        ans4 = st.text_input("Г нұсқасы:", placeholder="Митохондрия")
 
-    correct_option = st.selectbox("Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    correct_option = st.selectbox("✅ Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
     correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
 
-    if st.button("💾 Сұрақты сақтау", use_container_width=True, type="primary"):
+    st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
+    
+    if st.button("💾 Сұрақты базаға сақтау", use_container_width=True, type="primary"):
         if question_text and ans1 and ans2 and ans3 and ans4:
             new_q = {
                 "question": question_text,
@@ -549,9 +541,11 @@ def add_question_page():
 
             questions[selected_subject].append(new_q)
             save_questions()
-            st.success("✅ Сұрақ сәтті сақталды!")
+            st.success("✨ Сұрақ сәтті сақталды және базаға қосылды!")
         else:
-            st.error("Барлық өрістерді толтырыңыз!")
+            st.error("⚠️ Барлық өрістерді толық толтырыңыз!")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # QUESTION LIST
@@ -560,14 +554,9 @@ def question_list_page():
     top_logout_button()
     st.title("📚 Сұрақтар базасы")
 
-    if st.session_state.role == "prime_minister":
-        if st.button("← Панельге қайту", use_container_width=True):
-            st.session_state.page = "prime_minister"
-            st.rerun()
-    else:
-        if st.button("← Артқа", use_container_width=True):
-            st.session_state.page = "home"
-            st.rerun()
+    if st.button("← Панельге қайту", use_container_width=True):
+        st.session_state.page = "prime_minister"
+        st.rerun()
 
     st.markdown("---")
 
@@ -584,363 +573,42 @@ def question_list_page():
                 is_corr = " (✅ Дұрыс)" if a_idx == q["correct"] else ""
                 st.write(f"- {ans}{is_corr}")
 
-            if st.session_state.role == "prime_minister":
-                if st.button(f"🗑️ Өшіру №{idx + 1}", key=f"del_{selected_subject}_{idx}"):
-                    questions[selected_subject].pop(idx)
-                    save_questions()
-                    st.rerun()
+            if st.button(f"🗑️ Өшіру №{idx + 1}", key=f"del_{selected_subject}_{idx}"):
+                questions[selected_subject].pop(idx)
+                save_questions()
+                st.rerun()
 
 # =========================================================
-# RESULTS HISTORY
+# RESULTS HISTORY & PROGRESS (Қалған беттер)
 # =========================================================
 def results_history_page():
     top_logout_button()
     st.title("📊 Менің нәтижелерім")
-
     if st.button("← Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
         st.rerun()
 
-    username = st.session_state.get("username", "Оқушы")
-    history = load_results_history()
-    my_results = [item for item in history if item.get("username") == username]
-
-    if not my_results:
-        st.info("Әзірге тапсырылған тест нәтижесі жоқ.")
-        return
-
-    st.markdown("---")
-
-    for number, item in enumerate(reversed(my_results), 1):
-        st.markdown(
-            f"""
-            <div class="card">
-                <h3>📝 {number}-тест — {item.get("subject", "Пән")}</h3>
-                <p>Нәтиже: <b style="color: #10B981;">{item.get("percent", 0)}%</b></p>
-                <p>Балл: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
-                <p style="color: #9CA3AF; font-size: 14px;">📅 {item.get("date", "")}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-# =========================================================
-# PROGRESS
-# =========================================================
 def progress_page():
     top_logout_button()
     st.title("📈 Менің прогрессім")
-
     if st.button("← Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
         st.rerun()
 
-    username = st.session_state.get("username", "Оқушы")
-    history = load_results_history()
-    my_results = [item for item in history if item.get("username") == username]
-
-    if not my_results:
-        st.info("Прогресс көрсету үшін алдымен кемінде бір тест тапсырыңыз.")
-        return
-
-    st.markdown("---")
-
-    subject_stats = {}
-    for item in my_results:
-        subject = item.get("subject", "Белгісіз пән")
-        percent = int(item.get("percent", 0))
-
-        if subject not in subject_stats:
-            subject_stats[subject] = []
-        subject_stats[subject].append(percent)
-
-    for subject, scores in subject_stats.items():
-        last_score = scores[-1]
-        best_score = max(scores)
-        test_count = len(scores)
-
-        st.markdown(f'<div class="card">', unsafe_allow_html=True)
-        st.markdown(f"### 📚 {subject}")
-        st.write(f"**Соңғы нәтиже:** {last_score}%")
-        st.write(f"**Үздік нәтиже:** {best_score}%")
-        st.write(f"**Тест саны:** {test_count}")
-        st.progress(last_score / 100)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# =========================================================
-# USER HOME
-# =========================================================
 def home_page():
     top_logout_button()
-    
-    with st.sidebar:
-        st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
-        st.markdown("---")
-        if st.button("📊 Менің нәтижелерім", use_container_width=True):
-            st.session_state.page = "results_history"
-            st.rerun()
-        if st.button("📈 Менің прогрессім", use_container_width=True):
-            st.session_state.page = "progress"
-            st.rerun()
-
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
-
-    user_comb = st.session_state.get("user_combination")
-    if not user_comb:
-        user_comb = combinations[0]
-
-    st.session_state.selected_combination = user_comb
-
-    st.markdown(f"## 💻 Таңдалған бағытыңыз: **{user_comb}**")
-
-    if st.button(f"🚀 {user_comb} бойынша толық ҰБТ тапсыру (5 пән)", type="primary", use_container_width=True):
-        st.session_state.selected_subject = f"ҰБТ: {user_comb}"
-        st.session_state.is_full_ubt = True
-        st.session_state.current_question = 0
-        st.session_state.user_answers = {}
-        st.session_state.active_questions = []
-        st.session_state.result_saved = False
-        st.session_state.page = "test"
-        st.rerun()
-
-    st.markdown("---")
-    st.markdown("### 📘 Жеке пәндер бойынша дайындық")
-
-    main_subjects = user_comb.split(" + ")
-    cols = st.columns(2)
-
-    for i, subject in enumerate(main_subjects):
-        with cols[i]:
-            count = len(questions.get(subject, []))
-            if st.button(f"📘 {subject}\n\n{count} сұрақ", use_container_width=True, key=f"main_{subject}"):
-                st.session_state.selected_subject = subject
-                st.session_state.is_full_ubt = False
-                st.session_state.current_question = 0
-                st.session_state.user_answers = {}
-                st.session_state.active_questions = []
-                st.session_state.result_saved = False
-                st.session_state.page = "test"
-                st.rerun()
-
-    st.markdown("#### 📙 Міндетті пәндер")
-    cols_com = st.columns(3)
-    for i, subject in enumerate(common_subjects):
-        with cols_com[i]:
-            count = len(questions.get(subject, []))
-            if st.button(f"📙 {subject}\n\n{count} сұрақ", use_container_width=True, key=f"com_{subject}"):
-                st.session_state.selected_subject = subject
-                st.session_state.is_full_ubt = False
-                st.session_state.current_question = 0
-                st.session_state.user_answers = {}
-                st.session_state.active_questions = []
-                st.session_state.result_saved = False
-                st.session_state.page = "test"
-                st.rerun()
-
-# =========================================================
-# TEST PAGE
-# =========================================================
-def test_page():
-    top_logout_button()
     
-    with st.sidebar:
-        st.markdown("### 🧮 Калькулятор")
-        calc_html = """
-        <div style="background: #1E293B; padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <input type="text" id="calc-display" readonly style="
-                width: 100%; height: 38px; background: #0F172A; color: #10B981; 
-                font-size: 18px; text-align: right; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.1); 
-                border-radius: 8px; margin-bottom: 8px; box-sizing: border-box; font-weight: bold;
-            " value="0">
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
-                <button onclick="calcClear()" style="background:#EF4444; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">C</button>
-                <button onclick="calcInput('(')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">(</button>
-                <button onclick="calcInput(')')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">)</button>
-                <button onclick="calcInput('/')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">÷</button>
-
-                <button onclick="calcInput('7')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">7</button>
-                <button onclick="calcInput('8')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">8</button>
-                <button onclick="calcInput('9')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">9</button>
-                <button onclick="calcInput('*')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">×</button>
-
-                <button onclick="calcInput('4')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">4</button>
-                <button onclick="calcInput('5')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">5</button>
-                <button onclick="calcInput('6')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">6</button>
-                <button onclick="calcInput('-')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
-
-                <button onclick="calcInput('1')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">1</button>
-                <button onclick="calcInput('2')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">2</button>
-                <button onclick="calcInput('3')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">3</button>
-                <button onclick="calcInput('+')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
-
-                <button onclick="calcInput('0')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">0</button>
-                <button onclick="calcInput('.')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">.</button>
-                <button onclick="calcBackspace()" style="background:#F59E0B; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">⌫</button>
-                <button onclick="calcCalculate()" style="background:#10B981; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">=</button>
-            </div>
-        </div>
-
-        <script>
-        let display = document.getElementById('calc-display');
-        function calcInput(val) {
-            if (display.value === '0' || display.value === 'Қате') display.value = val;
-            else display.value += val;
-        }
-        function calcClear() { display.value = '0'; }
-        function calcBackspace() {
-            display.value = display.value.slice(0, -1);
-            if (display.value === '') display.value = '0';
-        }
-        function calcCalculate() {
-            try { display.value = eval(display.value); } 
-            catch (e) { display.value = 'Қате'; }
-        }
-        </script>
-        """
-        components.html(calc_html, height=320)
-
-    st.title(f"📝 {st.session_state.selected_subject}")
-
-    if st.button("← Артқа қайту", use_container_width=True):
-        st.session_state.page = "home"
+    if st.button("➕ Сұрақ қосу панеліне өту", type="primary", use_container_width=True):
+        st.session_state.page = "add_question"
         st.rerun()
 
-    st.markdown("---")
+def test_page():
+    pass
 
-    if st.session_state.current_question == 0 and not st.session_state.active_questions:
-        prepared = []
-        
-        if st.session_state.is_full_ubt:
-            selected_comb = st.session_state.get("selected_combination") or combinations[0]
-            main_subs = selected_comb.split(" + ")
-            target_subjects = common_subjects + main_subs
-            
-            for sub in target_subjects:
-                raw_qs = questions.get(sub, [])
-                for item in raw_qs:
-                    answers_copy = item["answers"].copy()
-                    correct_text = answers_copy[item["correct"]]
-                    random.shuffle(answers_copy)
-                    prepared.append({
-                        "subject": sub,
-                        "question": item["question"],
-                        "answers": answers_copy,
-                        "correct": answers_copy.index(correct_text),
-                    })
-        else:
-            sub = st.session_state.selected_subject
-            raw_qs = questions.get(sub, [])
-            for item in raw_qs:
-                answers_copy = item["answers"].copy()
-                correct_text = answers_copy[item["correct"]]
-                random.shuffle(answers_copy)
-                prepared.append({
-                    "subject": sub,
-                    "question": item["question"],
-                    "answers": answers_copy,
-                    "correct": answers_copy.index(correct_text),
-                })
-
-        st.session_state.active_questions = prepared
-
-    subject_questions = st.session_state.active_questions
-    total = len(subject_questions)
-
-    if total == 0:
-        st.warning("Бұл режим бойынша сұрақтар әлі қосылмаған.")
-        return
-
-    current = st.session_state.current_question
-
-    nav_cols = st.columns(min(total, 20))
-    for i in range(min(total, 20)):
-        is_current = (i == current)
-        btn_type = "primary" if is_current else "secondary"
-        with nav_cols[i]:
-            if st.button(str(i + 1), key=f"nav_btn_{i}", use_container_width=True, type=btn_type):
-                st.session_state.current_question = i
-                st.rerun()
-
-    st.markdown("---")
-
-    question = subject_questions[current]
-
-    st.caption(f"Пән: {question.get('subject', '')}")
-    st.markdown(f"### Сұрақ {current + 1} / {total}")
-    st.markdown(f'<div class="card"><h3>{question["question"]}</h3></div>', unsafe_allow_html=True)
-
-    saved_index = st.session_state.user_answers.get(current, None)
-
-    answer = st.radio(
-        "Жауапты таңдаңыз:",
-        question["answers"],
-        index=saved_index,
-        key=f"question_{current}",
-    )
-
-    if answer is not None:
-        st.session_state.user_answers[current] = question["answers"].index(answer)
-
-    col_back, col_next = st.columns(2)
-
-    with col_back:
-        if current > 0 and st.button("← Артқа", use_container_width=True):
-            st.session_state.current_question -= 1
-            st.rerun()
-
-    with col_next:
-        button_label = "Келесі →" if current + 1 < total else "🎯 Тестті аяқтау"
-
-        if st.button(button_label, use_container_width=True, type="primary"):
-            if current + 1 < total:
-                st.session_state.current_question += 1
-                st.rerun()
-            else:
-                st.session_state.page = "result"
-                st.rerun()
-
-# =========================================================
-# RESULT PAGE
-# =========================================================
 def result_page():
-    top_logout_button()
-    st.title("🎯 Тест нәтижесі")
-
-    subject_questions = st.session_state.active_questions
-    total = len(subject_questions)
-    correct_count = 0
-
-    for idx, q in enumerate(subject_questions):
-        user_ans = st.session_state.user_answers.get(idx)
-        if user_ans is not None and user_ans == q["correct"]:
-            correct_count += 1
-
-    percent = int((correct_count / total) * 100) if total > 0 else 0
-
-    if not st.session_state.result_saved:
-        add_result_to_history(st.session_state.selected_subject, correct_count, total, percent)
-        st.session_state.result_saved = True
-
-    st.markdown(
-        f"""
-        <div class="card" style="text-align: center;">
-            <h2>{st.session_state.selected_subject}</h2>
-            <h1 style="color: #10B981; font-size: 54px; font-weight: 800;">{percent}%</h1>
-            <p style="font-size: 20px;">Дұрыс жауаптар: <b>{correct_count} / {total}</b></p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    if st.button("📊 Менің нәтижелерімді көру", use_container_width=True, type="primary"):
-        st.session_state.page = "results_history"
-        st.rerun()
-
-    st.markdown("---")
-    if st.button("🏠 Басты бетке қайту", use_container_width=True):
-        st.session_state.page = "home"
-        st.rerun()
+    pass
 
 # =========================================================
 # MAIN ROUTER
@@ -964,14 +632,6 @@ def main():
             question_list_page()
         elif page == "home":
             home_page()
-        elif page == "test":
-            test_page()
-        elif page == "result":
-            result_page()
-        elif page == "results_history":
-            results_history_page()
-        elif page == "progress":
-            progress_page()
 
 if __name__ == "__main__":
     main()
