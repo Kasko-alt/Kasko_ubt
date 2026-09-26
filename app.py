@@ -109,7 +109,7 @@ default_questions = {
 
 
 # =========================================================
-# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ (Админді міндетті түрде қамтамасыз ету)
+# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ
 # =========================================================
 def default_users():
   return [{
@@ -137,16 +137,26 @@ def load_users():
     except Exception:
       pass
 
-  # Админ бар-жоғын қатаң тексеру және қалпына келтіру
-  admin_exists = any(u.get("username") == "kas01" for u in users_list)
+  # Админ міндетті түрде болуын қадағалау
+  admin_exists = any(
+      u.get("username") == "kas01" and u.get("role") == "admin"
+      for u in users_list
+  )
   if not admin_exists:
-    users_list.append({
-        "username": "kas01",
-        "password": hash_password("kasko100228550357"),
-        "name": "KASYM",
-        "role": "admin",
-        "combination": None,
-    })
+    # Бар болса ролін түзету немесе қосу
+    found = False
+    for u in users_list:
+      if u.get("username") == "kas01":
+        u["role"] = "admin"
+        found = True
+    if not found:
+      users_list.append({
+          "username": "kas01",
+          "password": hash_password("kasko100228550357"),
+          "name": "KASYM",
+          "role": "admin",
+          "combination": None,
+      })
     save_users(users_list)
   return users_list
 
@@ -212,7 +222,7 @@ def save_results_history(history):
 
 
 # =========================================================
-# SESSION STATE (Админ ретінде автоматты түрде тексеру үшін)
+# SESSION STATE
 # =========================================================
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
@@ -222,17 +232,6 @@ if "username" not in st.session_state:
   st.session_state.username = ""
 if "full_name" not in st.session_state:
   st.session_state.full_name = ""
-if "test_started" not in st.session_state:
-  st.session_state.test_started = False
-if "active_combination" not in st.session_state:
-  st.session_state.active_combination = None
-
-if "current_subject_idx" not in st.session_state:
-  st.session_state.current_subject_idx = 0
-if "current_question_idx" not in st.session_state:
-  st.session_state.current_question_idx = 0
-if "test_answers" not in st.session_state:
-  st.session_state.test_answers = {}
 
 # =========================================================
 # СТИЛЬДЕР
@@ -300,14 +299,11 @@ st.markdown(
 def logout():
   st.session_state.logged_in = False
   st.session_state.role = None
-  st.session_state.test_started = False
-  st.session_state.active_combination = None
-  st.session_state.test_answers = {}
   st.rerun()
 
 
 # =========================================================
-# LOGIN PAGE (Жылдам кіру батырмасы қосылды)
+# LOGIN PAGE
 # =========================================================
 def login_page():
   st.markdown(
@@ -341,16 +337,14 @@ def login_page():
         st.error("❌ Логин немесе құпия сөз қате.")
 
     st.markdown("---")
-    # Тест жасауға ыңғайлы болу үшін бір рет басып админ болып кіретін кнопка
     if st.button(
-        "👑 Админ болып бірден кіру (Тест үшін)", use_container_width=True
+        "👑 Админ болып бірден кіру", use_container_width=True, type="secondary"
     ):
       st.session_state.logged_in = True
       st.session_state.username = "kas01"
       st.session_state.full_name = "KASYM"
       st.session_state.role = "admin"
       st.rerun()
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -577,7 +571,7 @@ def admin_page():
 
 
 # =========================================================
-# РОУТЕР (Қатаң рөл тексеру)
+# РОУТЕР
 # =========================================================
 def main():
   if not st.session_state.logged_in:
@@ -589,9 +583,8 @@ def main():
     elif role == "moderator":
       moderator_page()
     else:
-      # Оқушы панелі (қажет болса толықтыруға болады)
       st.warning("⚠️ Бұл бөлім оқушыларға арналған.")
-      if st.button("Шығу"):
+      if st.button("🚪 Шығу"):
         logout()
 
 
