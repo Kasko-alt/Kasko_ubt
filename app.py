@@ -97,30 +97,63 @@ if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
 
 # =========================================================
-# CSS (СУРЕТТЕГІДЕЙ БАТЫРМА СТИЛЬДЕРІ)
+# CSS (КҮҢГІРТ ДИЗАЙН ЖӘНЕ ЖАҢА БАТЫРМАЛАР)
 # =========================================================
 
 st.markdown(
     """
 <style>
+/* Күңгірт фон */
 .stApp {
-    background: #ffffff;
-    color: #000000;
+    background: linear-gradient(135deg, #07111f 0%, #0b1b31 50%, #06101d 100%);
+    color: white;
 }
 
 .block-container {
     max-width: 1200px;
-    padding-top: 20px;
+    padding-top: 30px;
 }
 
-/* Навигация батырмаларының ортақ стилі */
+h1, h2, h3, label { color: white !important; }
+
+.kasym-title {
+    text-align: center;
+    font-size: 55px;
+    font-weight: 900;
+    margin-bottom: 5px;
+    color: #ffffff;
+}
+
+.kasym-subtitle {
+    text-align: center;
+    font-size: 20px;
+    color: #8fb8ff;
+    margin-bottom: 40px;
+}
+
+.card {
+    background: rgba(20, 39, 65, 0.85);
+    border: 1px solid rgba(100, 160, 255, 0.18);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+/* Шығу батырмасын оң жақ жоғарыға қою */
+.st-key-top_logout {
+    position: fixed !important;
+    top: 12px !important;
+    right: 25px !important;
+    z-index: 999999 !important;
+}
+
+/* Тест навигация батырмаларының стилі */
 div[data-testid="stHorizontalBlock"] button {
     border-radius: 6px !important;
     height: 38px !important;
     font-weight: 600 !important;
     font-size: 15px !important;
     padding: 0px !important;
-    margin: 2px !important;
 }
 
 /* 1. Белгіленбеген (әлі жауап берілмеген) сұрақтар - Ашық көк */
@@ -162,12 +195,17 @@ def logout():
 
 
 def top_logout_button():
-    if st.button("🚪 Шығу", key="top_logout"):
+    if st.button("🚪 Жалпы шығу", key="top_logout"):
         logout()
 
 
 def login_page():
-    st.title("🎓 KASYM EDU")
+    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("## 🔐 Кіру")
 
     username = st.text_input("Логин")
@@ -185,11 +223,41 @@ def login_page():
             st.session_state.page = "home"
             st.rerun()
         else:
-            st.error("Логин мен құпия сөзді енгізіңіз.")
+            st.error("Логин мен құпия сөзді енгіз.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def admin_page():
+    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="kasym-subtitle">👑 PRESIDENT PANEL</div>', unsafe_allow_html=True
+    )
+    st.success("Сен Президент режиміндесің.")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("➕ Сұрақ қосу", use_container_width=True):
+            st.session_state.page = "add_question"
+            st.rerun()
+    with col2:
+        if st.button("📚 Пәндер базасы", use_container_width=True):
+            st.session_state.page = "question_list"
+            st.rerun()
+    with col3:
+        if st.button("👤 Оқушы режимі", use_container_width=True):
+            st.session_state.role = "user"
+            st.session_state.page = "home"
+            st.rerun()
 
 
 def home_page():
-    st.title("📚 Пәндер комбинациясы")
+    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("## 📚 Пәндер комбинациясы")
+
     for combination in combinations:
         if st.button(combination, use_container_width=True):
             st.session_state.selected_combination = combination
@@ -213,7 +281,7 @@ def combination_page():
         with cols[i]:
             count = len(questions.get(subject, []))
             if st.button(
-                f"📘 {subject} ({count} сұрақ)",
+                f"📘 {subject}\n\n{count} сұрақ",
                 use_container_width=True,
                 key=f"main_{subject}",
             ):
@@ -263,13 +331,11 @@ def test_page():
     current = st.session_state.current_question
     total = len(subject_questions)
 
-    # =========================================================
-    # СУРЕТТЕГІДЕЙ СҰРАҚТАР НЕНАВИГАЦИЯСЫ
-    # =========================================================
-    nav_cols = st.columns(20)
+    # Навигация батырмалары
+    nav_cols = st.columns(20 if total >= 20 else total)
 
     for i in range(total):
-        col_idx = i % 20
+        col_idx = i % (20 if total >= 20 else total)
         is_current = i == current
         is_answered = (
             i in st.session_state.user_answers
@@ -277,14 +343,9 @@ def test_page():
         )
 
         label = f"{i + 1}"
-
-        if is_current:
-            btn_type = "primary"
-        else:
-            btn_type = "secondary"
+        btn_type = "primary" if is_current else "secondary"
 
         with nav_cols[col_idx]:
-            # Жауап берілген сұрақты жасыл түске бояу
             if is_answered and not is_current:
                 st.markdown(
                     f"""
@@ -314,7 +375,10 @@ def test_page():
     question = subject_questions[current]
     st.markdown(f"### Сұрақ {current + 1} / {total}")
 
-    st.subheader(question["question"])
+    st.markdown(
+        f'<div class="card"><h3>{question["question"]}</h3></div>',
+        unsafe_allow_html=True,
+    )
 
     saved_index = st.session_state.user_answers.get(current, None)
     answer = st.radio(
@@ -359,7 +423,9 @@ if not st.session_state.logged_in:
     login_page()
 else:
     pg = st.session_state.page
-    if pg == "home":
+    if pg == "admin":
+        admin_page()
+    elif pg == "home":
         home_page()
     elif pg == "combination":
         combination_page()
