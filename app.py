@@ -27,7 +27,7 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
-# ПӘНДЕР МЕН ҰБТ СТРУКТУРАСЫ
+# ПӘНДЕР МЕН КОМБИНАЦИЯЛАР
 # =========================================================
 combinations = [
     "Биология + Химия",
@@ -88,6 +88,7 @@ def default_users():
             "password": hash_password("kasko100228550357"),
             "name": "KASYM",
             "role": "president",
+            "combination": None,
         }
     ]
 
@@ -204,6 +205,8 @@ if "username" not in st.session_state:
     st.session_state.username = ""
 if "full_name" not in st.session_state:
     st.session_state.full_name = ""
+if "user_combination" not in st.session_state:
+    st.session_state.user_combination = None
 if "result_saved" not in st.session_state:
     st.session_state.result_saved = False
 if "page" not in st.session_state:
@@ -258,6 +261,7 @@ def logout():
     st.session_state.role = None
     st.session_state.username = ""
     st.session_state.full_name = ""
+    st.session_state.user_combination = None
     st.session_state.result_saved = False
     st.session_state.page = "login"
     st.session_state.selected_combination = None
@@ -302,6 +306,7 @@ def login_page():
                 st.session_state.username = user["username"]
                 st.session_state.full_name = user.get("name", user["username"])
                 st.session_state.role = user.get("role", "user")
+                st.session_state.user_combination = user.get("combination", combinations[0])
                 st.session_state.result_saved = False
 
                 if user.get("role") == "president":
@@ -330,7 +335,7 @@ def admin_page():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("➕ Жаңа аккаунт жасау", use_container_width=True):
+        if st.button("➕ Жаңа оқушы/аккаунт жасау", use_container_width=True):
             st.session_state.page = "create_user"
             st.rerun()
 
@@ -346,7 +351,7 @@ def admin_page():
     st.write("👤 **Оқушы** — тест тапсырады және нәтижесін көреді.")
 
 # =========================================================
-# CREATE USER
+# CREATE USER (ЖАҢАРТЫЛДЫ: БАҒЫТ ТАҢДАУ ҚОСЫЛДЫ)
 # =========================================================
 def create_user_page():
     top_logout_button()
@@ -363,9 +368,12 @@ def create_user_page():
     new_password = st.text_input("Жаңа құпия сөз", type="password")
     role = st.selectbox("Рөлді таңдаңыз", ["Оқушы", "Премьер министр"])
 
+    # 🔥 БАҒЫТ (КОМБИНАЦИЯ) ТАҢДАУ
+    selected_comb = st.selectbox("Бағыты (Оқушылар үшін):", combinations)
+
     role_value = "prime_minister" if role == "Премьер министр" else "user"
 
-    if st.button("💾 Аккаунтты сақтау", use_container_width=True):
+    if st.button("💾 Оқушыны сақтау", use_container_width=True):
         name = name.strip()
         new_username = new_username.strip()
         new_password = new_password.strip()
@@ -380,9 +388,12 @@ def create_user_page():
                 "password": hash_password(new_password),
                 "name": name,
                 "role": role_value,
+                "combination": selected_comb if role_value == "user" else None,
             })
             save_users(users)
             st.success(f"✅ {name} үшін аккаунт жасалды.")
+            st.info(f"Логин: {new_username}")
+            st.info(f"Бағыты: {selected_comb}")
 
 # =========================================================
 # USERS LIST
@@ -399,6 +410,7 @@ def users_list_page():
 
     for index, user in enumerate(users):
         r_name = role_name(user.get("role"))
+        comb_info = f"<p>💻 Бағыты: <b>{user.get('combination', 'Белгіленбеген')}</b></p>" if user.get("role") == "user" else ""
 
         st.markdown(
             f"""
@@ -406,6 +418,7 @@ def users_list_page():
                 <h3>👤 {user.get("name", "Аты жоқ")}</h3>
                 <p>🔑 Логин: <b>{user.get("username", "")}</b></p>
                 <p>🎖️ Рөл: <b>{r_name}</b></p>
+                {comb_info}
             </div>
             """,
             unsafe_allow_html=True
@@ -445,6 +458,7 @@ def prime_minister_page():
 
     if st.button("👤 Оқушы режиміне өту", use_container_width=True):
         st.session_state.role = "user"
+        st.session_state.user_combination = combinations[0]
         st.session_state.page = "home"
         st.rerun()
 
@@ -531,7 +545,7 @@ def question_list_page():
                     st.rerun()
 
 # =========================================================
-# RESULTS HISTORY
+# RESULTS HISTORY (ТЕК ӨЗ НӘТИЖЕЛЕРІ КӨРІНЕДІ)
 # =========================================================
 def results_history_page():
     top_logout_button()
@@ -544,6 +558,7 @@ def results_history_page():
     username = st.session_state.get("username", "Оқушы")
     history = load_results_history()
 
+    # ТЕК ӨЗ ЛОГИНІМЕН СӘЙКЕС КЕЛЕТІН НӘТИЖЕЛЕР ДЕРЕГІ
     my_results = [item for item in history if item.get("username") == username]
 
     if not my_results:
@@ -609,7 +624,7 @@ def progress_page():
         st.markdown("---")
 
 # =========================================================
-# USER HOME
+# USER HOME (ЖАҢАРТЫЛДЫ: ТЕК БЕКІТІЛГЕН БАҒЫТ КӨРІНЕДІ)
 # =========================================================
 def home_page():
     top_logout_button()
@@ -630,33 +645,16 @@ def home_page():
             st.rerun()
 
     st.markdown("---")
-    st.markdown("## 📚 Пәндер комбинациясы")
 
-    for combination in combinations:
-        if st.button(combination, use_container_width=True):
-            st.session_state.selected_combination = combination
-            st.session_state.page = "combination"
-            st.rerun()
+    # 🎯 ОҚУШЫНЫҢ ЖЕКЕ БАҒЫТЫ
+    user_comb = st.session_state.get("user_combination", combinations[0])
+    st.session_state.selected_combination = user_comb
 
-# =========================================================
-# COMBINATION PAGE
-# =========================================================
-def combination_page():
-    top_logout_button()
-    combination = st.session_state.selected_combination
+    st.markdown(f"## 💻 Таңдалған бағытыңыз: **{user_comb}**")
 
-    st.title(f"📚 {combination}")
-
-    if st.button("← Артқа", use_container_width=True):
-        st.session_state.page = "home"
-        st.rerun()
-
-    st.markdown("---")
-
-    # 🔥 ЖАҢАЛЫҚ: ТОЛЫҚ ҰБТ ТАПСЫРУ
-    st.markdown("### 🎓 Толық ҰБТ тапсыру (140 балл)")
-    if st.button(f"🚀 {combination} бойынша толық ҰБТ тапсыру (5 пән)", type="primary", use_container_width=True):
-        st.session_state.selected_subject = f"ҰБТ: {combination}"
+    # 1. ТОЛЫҚ ҰБТ
+    if st.button(f"🚀 {user_comb} бойынша толық ҰБТ тапсыру (5 пән)", type="primary", use_container_width=True):
+        st.session_state.selected_subject = f"ҰБТ: {user_comb}"
         st.session_state.is_full_ubt = True
         st.session_state.current_question = 0
         st.session_state.user_answers = {}
@@ -666,9 +664,9 @@ def combination_page():
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### 📘 Жеке пән бойынша дайындалу")
+    st.markdown("### 📘 Жеке пәндер бойынша дайындық")
 
-    main_subjects = combination.split(" + ")
+    main_subjects = user_comb.split(" + ")
     cols = st.columns(2)
 
     for i, subject in enumerate(main_subjects):
@@ -765,7 +763,7 @@ def test_page():
     st.title(f"📝 {st.session_state.selected_subject}")
 
     if st.button("← Артқа қайту", use_container_width=True):
-        st.session_state.page = "combination"
+        st.session_state.page = "home"
         st.rerun()
 
     st.markdown("---")
@@ -775,7 +773,6 @@ def test_page():
         prepared = []
         
         if st.session_state.is_full_ubt:
-            # 5 пәннің бәрінен сұрақтар жинаймыз
             main_subs = st.session_state.selected_combination.split(" + ")
             target_subjects = common_subjects + main_subs
             
@@ -816,7 +813,6 @@ def test_page():
 
     current = st.session_state.current_question
 
-    # Сұрақтар навигациясы
     nav_cols = st.columns(min(total, 20))
     for i in range(min(total, 20)):
         is_current = (i == current)
@@ -886,16 +882,6 @@ def result_page():
         add_result_to_history(st.session_state.selected_subject, correct_count, total, percent)
         st.session_state.result_saved = True
 
-    # ҰБТ Градациясы (баллға байланысты)
-    grant_status = ""
-    if st.session_state.is_full_ubt:
-        if percent >= 75:
-            grant_status = "🎉 **Құттықтаймыз! Грантқа түсу ықтималдығы өте жоғары!**"
-        elif percent >= 50:
-            grant_status = "👍 **Жақсы нәтиже! Тағы сәл дайындалсаңыз, грант сіздікі!**"
-        else:
-            grant_status = "⚠️ **Әлі де іздену керек. Тесттерді жиірек тапсырыңыз.**"
-
     st.markdown(
         f"""
         <div class="card" style="text-align: center;">
@@ -906,9 +892,6 @@ def result_page():
         """,
         unsafe_allow_html=True
     )
-
-    if grant_status:
-        st.info(grant_status)
 
     if st.button("🏠 Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
@@ -936,8 +919,6 @@ def main():
             question_list_page()
         elif page == "home":
             home_page()
-        elif page == "combination":
-            combination_page()
         elif page == "test":
             test_page()
         elif page == "result":
