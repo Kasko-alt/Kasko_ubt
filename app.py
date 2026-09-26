@@ -5,21 +5,19 @@ import pandas as pd
 from datetime import datetime
 
 # =========================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =========================================================
 st.set_page_config(
     page_title="Білім беру жүйесі",
     page_icon="🎓",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # =========================================================
-# PREMIUM CSS STYLES (БАШТАПКЫ КООЗ ДИЗАЙН)
+# CUSTOM CSS STYLES
 # =========================================================
 st.markdown("""
 <style>
-    /* Негизги фон жана шрифтер */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
     
     html, body, [class*="css"]  {
@@ -31,26 +29,15 @@ st.markdown("""
         color: #f8fafc;
     }
 
-    /* Карточкалар (Glassmorphism / Neon style) */
     .custom-card {
         background: rgba(30, 41, 59, 0.7);
         backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         margin-bottom: 20px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .custom-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.25);
-        border: 1px solid rgba(99, 102, 241, 0.4);
     }
 
-    /* Колдонуучунун профиль карточкасы */
     .user-profile-bar {
         background: linear-gradient(90deg, #312e81 0%, #4c1d95 100%);
         padding: 12px 24px;
@@ -59,31 +46,25 @@ st.markdown("""
         align-items: center;
         justify-content: space-between;
         border: 1px solid rgba(139, 92, 246, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         margin-bottom: 25px;
     }
 
-    /* Баскычтар (Buttons) */
     .stButton > button {
         width: 100%;
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: #ffffff !important;
         font-weight: 600 !important;
-        font-size: 15px !important;
-        padding: 12px 24px !important;
+        padding: 10px 20px !important;
         border-radius: 12px !important;
         border: none !important;
-        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
         transition: all 0.3s ease-in-out !important;
     }
 
     .stButton > button:hover {
         background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6) !important;
         transform: translateY(-2px);
     }
 
-    /* Форма киргизүү талаалары */
     .stTextInput > div > div > input, 
     .stTextArea textarea, 
     .stSelectbox > div > div {
@@ -91,34 +72,6 @@ st.markdown("""
         color: #f8fafc !important;
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
-        padding: 10px 14px !important;
-    }
-
-    .stTextInput > div > div > input:focus, 
-    .stTextArea textarea:focus {
-        border-color: #8b5cf6 !important;
-        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3) !important;
-    }
-
-    /* Заголовкалар жана тексттер */
-    h1, h2, h3 {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.5px;
-    }
-    
-    .gradient-text {
-        background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    /* Метрикалар (Статистика) */
-    div[data-testid="stMetric"] {
-        background: rgba(30, 41, 59, 0.5);
-        border-radius: 12px;
-        padding: 15px;
-        border: 1px solid rgba(255,255,255,0.05);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -160,7 +113,8 @@ def load_json(filepath, default_data):
         return default_data
     with open(filepath, "r", encoding="utf-8") as f:
         try:
-            return json.load(f)
+            data = json.load(f)
+            return data
         except json.JSONDecodeError:
             return default_data
 
@@ -188,7 +142,7 @@ if "last_result" not in st.session_state:
     st.session_state.last_result = None
 
 # =========================================================
-# NAVBAR & USER BAR
+# NAVBAR
 # =========================================================
 def logout():
     st.session_state.logged_in = False
@@ -220,11 +174,10 @@ def top_logout_button():
 # PAGES
 # =========================================================
 def login_page():
-    st.markdown("<h1 style='text-align: center; margin-bottom: 30px;'>🔐 Жүйеге кіру</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>🔐 Жүйеге кіру</h1>", unsafe_allow_html=True)
     
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         username_input = st.text_input("👤 Пайдаланушы аты (Username)")
         password_input = st.text_input("🔑 Құпия сөз", type="password")
         
@@ -239,39 +192,29 @@ def login_page():
                 st.rerun()
             else:
                 st.error("Логин немесе құпия сөз қате!")
-        st.markdown('</div>', unsafe_allow_html=True)
 
 def home_page():
     user_info = users_db.get(st.session_state.username, {})
     display_name = user_info.get("name", st.session_state.username)
     role = st.session_state.role
 
-    st.markdown(f"""
-    <div class="custom-card">
-        <h1>Қош келдіңіз, <span class="gradient-text">{display_name}</span>! 👋</h1>
-        <p style="color: #94a3b8; font-size: 16px;">Системадағы ролуңуз: <b>{role.upper()}</b></p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"<h1>Қош келдіңіз, <span style='color: #818cf8;'>{display_name}</span>! 👋</h1>", unsafe_allow_html=True)
+    st.info(f"Сіздің жүйедегі рөліңіз: **{role.upper()}**")
 
     st.markdown("### 📌 Негізгі бөлімдер")
     
     if role == "president":
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         if st.button("👑 Президент Басқару Панелі"):
             st.session_state.page = "admin"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
             
     if role == "prime_minister":
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         if st.button("🏛 Премьер-Министр Панелі"):
             st.session_state.page = "prime_minister"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         st.subheader("📝 Сұрақ-Жауап")
         if st.button("📝 Тест тапсыру", use_container_width=True):
             st.session_state.page = "combination"
@@ -280,10 +223,8 @@ def home_page():
         if st.button("📚 Сұрақтар тізімі", use_container_width=True):
             st.session_state.page = "question_list"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
             
     with col2:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         st.subheader("📊 Аналитика")
         if st.button("📊 Нәтижелер тарихы", use_container_width=True):
             st.session_state.page = "results_history"
@@ -292,7 +233,6 @@ def home_page():
         if st.button("📈 Прогресс және Статистика", use_container_width=True):
             st.session_state.page = "progress"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
 def admin_page():
     st.markdown("<h1>👑 Президент Басқару Панелі</h1>", unsafe_allow_html=True)
@@ -314,7 +254,6 @@ def admin_page():
 def create_user_page():
     st.markdown("<h1>➕ Жаңа пайдаланушы тіркеу</h1>", unsafe_allow_html=True)
     
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     new_username = st.text_input("Логин")
     new_name = st.text_input("Аты-жөні")
     new_password = st.text_input("Құпия сөз", type="password")
@@ -323,7 +262,7 @@ def create_user_page():
     st.write("")
     if st.button("💾 Тіркеу"):
         if new_username in users_db:
-            st.error("Бұл логин мурда тіркелген!")
+            st.error("Бұл логин бұрын тіркелген!")
         elif new_username and new_password:
             users_db[new_username] = {
                 "password": new_password,
@@ -333,8 +272,7 @@ def create_user_page():
             save_json(USERS_FILE, users_db)
             st.success("Пайдаланушы сәтті қосылды!")
         else:
-            st.warning("Барлық талааларды толтырыңыз.")
-    st.markdown('</div>', unsafe_allow_html=True)
+            st.warning("Барлық өрістерді толтырыңыз.")
             
     if st.button("⬅️ Артқа"):
         st.session_state.page = "admin"
@@ -345,11 +283,10 @@ def users_list_page():
     
     data = []
     for uname, info in users_db.items():
-        data.append({"Логин": uname, "Аты-жөні": info.get("name", ""), "Рөлі": info.get("role", "")})
+        if isinstance(info, dict):
+            data.append({"Логин": uname, "Аты-жөні": info.get("name", ""), "Рөлі": info.get("role", "")})
     
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     st.table(pd.DataFrame(data))
-    st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("⬅️ Артқа"):
         st.session_state.page = "admin"
@@ -371,37 +308,38 @@ def prime_minister_page():
 def add_question_page():
     st.markdown("<h1>➕ Жаңа тест сұрағын қосу</h1>", unsafe_allow_html=True)
     
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
-    subject = st.text_input("Пән атауы (мисалы: Математика, Физика)")
-    question_text = st.text_area("Сұрақ мәтіні")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        opt1 = st.text_input("Вариант A")
-        opt2 = st.text_input("Вариант B")
-    with col2:
-        opt3 = st.text_input("Вариант C")
-        opt4 = st.text_input("Вариант D")
-    
-    correct = st.selectbox("Дұрыс жауапты таңдаңыз", [opt1, opt2, opt3, opt4])
-    
-    st.write("")
-    if st.button("💾 Сақтау"):
-        if subject and question_text and opt1 and opt2 and opt3 and opt4:
-            new_id = max([q["id"] for q in questions_db], default=0) + 1
-            new_q = {
-                "id": new_id,
-                "subject": subject,
-                "question": question_text,
-                "options": [opt1, opt2, opt3, opt4],
-                "answer": correct
-            }
-            questions_db.append(new_q)
-            save_json(QUESTIONS_FILE, questions_db)
-            st.success("Сұрақ сәтті қосылды!")
-        else:
-            st.warning("Барлық өрістерді толтырыңыз!")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.form("add_question_form"):
+        subject = st.text_input("Пән атауы (мысалы: Математика, Қазақстан тарихы)")
+        question_text = st.text_area("Сұрақ мәтіні")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            opt1 = st.text_input("Вариант A")
+            opt2 = st.text_input("Вариант B")
+        with col2:
+            opt3 = st.text_input("Вариант C")
+            opt4 = st.text_input("Вариант D")
+        
+        options = [opt1, opt2, opt3, opt4]
+        correct = st.selectbox("Дұрыс жауапты таңдаңыз", options)
+        
+        submitted = st.form_submit_button("💾 Сақтау")
+        if submitted:
+            if subject and question_text and all(options):
+                valid_qs = [q for q in questions_db if isinstance(q, dict) and "id" in q]
+                new_id = max([q["id"] for q in valid_qs], default=0) + 1
+                new_q = {
+                    "id": new_id,
+                    "subject": subject,
+                    "question": question_text,
+                    "options": options,
+                    "answer": correct
+                }
+                questions_db.append(new_q)
+                save_json(QUESTIONS_FILE, questions_db)
+                st.success("Сұрақ сәтті қосылды!")
+            else:
+                st.warning("Барлық өрістерді толтырыңыз!")
             
     if st.button("⬅️ Артқа"):
         st.session_state.page = "prime_minister"
@@ -410,14 +348,15 @@ def add_question_page():
 def question_list_page():
     st.markdown("<h1>📚 Сұрақтар тізімі</h1>", unsafe_allow_html=True)
     
-    if not questions_db:
+    valid_qs = [q for q in questions_db if isinstance(q, dict)]
+    if not valid_qs:
         st.info("Қорда сұрақтар жоқ.")
     else:
-        for idx, q in enumerate(questions_db, start=1):
-            with st.expander(f"{idx}. [{q['subject']}] {q['question']}"):
-                for opt in q["options"]:
-                    if opt == q["answer"]:
-                        st.markdown(f"- <span style='color: #4ade80; font-weight: bold;'>{opt} (Дұрыс жауап)</span>", unsafe_allow_html=True)
+        for idx, q in enumerate(valid_qs, start=1):
+            with st.expander(f"{idx}. [{q.get('subject', 'Пәнсіз')}] {q.get('question', '')}"):
+                for opt in q.get("options", []):
+                    if opt == q.get("answer"):
+                        st.markdown(f"- **{opt} (Дұрыс жауап)**")
                     else:
                         st.markdown(f"- {opt}")
                         
@@ -429,7 +368,8 @@ def question_list_page():
 def combination_page():
     st.markdown("<h1>📝 Тест түрін таңдау</h1>", unsafe_allow_html=True)
     
-    subjects = list(set(q["subject"] for q in questions_db))
+    # ТҮЗЕТІЛГЕН ҚАДAM (TypeError қатесі жойылды)
+    subjects = list(set(q.get("subject") for q in questions_db if isinstance(q, dict) and "subject" in q))
     
     if not subjects:
         st.warning("Базада сұрақтар жоқ!")
@@ -438,16 +378,14 @@ def combination_page():
             st.rerun()
         return
 
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     selected_subject = st.selectbox("Пәнді таңдаңыз:", subjects)
     st.write("")
     if st.button("🚀 Тестті бастау"):
-        filtered_qs = [q for q in questions_db if q["subject"] == selected_subject]
+        filtered_qs = [q for q in questions_db if isinstance(q, dict) and q.get("subject") == selected_subject]
         st.session_state.current_test = filtered_qs
         st.session_state.test_answers = {}
         st.session_state.page = "test"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
         
     if st.button("⬅️ Басты бет"):
         st.session_state.page = "home"
@@ -461,34 +399,33 @@ def test_page():
         st.rerun()
         return
 
-    st.markdown(f"<h1>✍️ Тест: <span class='gradient-text'>{questions[0]['subject']}</span></h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1>✍️ Тест: <span style='color: #818cf8;'>{questions[0].get('subject')}</span></h1>", unsafe_allow_html=True)
     
     for i, q in enumerate(questions):
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
-        st.markdown(f"### {i+1}-сұрақ: {q['question']}")
+        st.markdown(f"### {i+1}-сұрақ: {q.get('question')}")
         ans = st.radio(
             "Жауапты таңдаңыз:", 
-            q["options"], 
-            key=f"q_{q['id']}", 
+            q.get("options", []), 
+            key=f"q_{q.get('id')}", 
             index=None
         )
         if ans:
-            st.session_state.test_answers[q["id"]] = ans
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.session_state.test_answers[q.get("id")] = ans
+        st.markdown("---")
         
     if st.button("🎯 Тестті аяқтау"):
         score = 0
         total = len(questions)
         for q in questions:
-            user_ans = st.session_state.test_answers.get(q["id"])
-            if user_ans == q["answer"]:
+            user_ans = st.session_state.test_answers.get(q.get("id"))
+            if user_ans == q.get("answer"):
                 score += 1
                 
-        percent = round((score / total) * 100, 1)
+        percent = round((score / total) * 100, 1) if total > 0 else 0
         
         result_record = {
             "username": st.session_state.username,
-            "subject": questions[0]['subject'],
+            "subject": questions[0].get('subject'),
             "score": score,
             "total": total,
             "percent": percent,
@@ -507,14 +444,12 @@ def result_page():
     res = st.session_state.last_result
     
     if res:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
-        col1.metric("Пән", res["subject"])
-        col2.metric("Дұрыс жауаптар", f"{res['score']} / {res['total']}")
-        col3.metric("Нәтиже", f"{res['percent']}%")
-        st.markdown('</div>', unsafe_allow_html=True)
+        col1.metric("Пән", res.get("subject"))
+        col2.metric("Дұрыс жауаптар", f"{res.get('score')} / {res.get('total')}")
+        col3.metric("Нәтиже", f"{res.get('percent')}%")
         
-        if res["percent"] >= 70:
+        if res.get("percent", 0) >= 70:
             st.balloons()
             st.success("Өте жақсы нәтиже! 🥳")
         else:
@@ -530,15 +465,13 @@ def results_history_page():
     if st.session_state.role == "president":
         user_results = results_db
     else:
-        user_results = [r for r in results_db if r["username"] == st.session_state.username]
+        user_results = [r for r in results_db if isinstance(r, dict) and r.get("username") == st.session_state.username]
         
     if not user_results:
         st.info("Тарих бос.")
     else:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         df = pd.DataFrame(user_results)
         st.dataframe(df, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
         
     if st.button("⬅️ Басты бет"):
         st.session_state.page = "home"
@@ -547,16 +480,14 @@ def results_history_page():
 def progress_page():
     st.markdown("<h1>📈 Прогресс және Статистика</h1>", unsafe_allow_html=True)
     
-    user_results = [r for r in results_db if r["username"] == st.session_state.username]
+    user_results = [r for r in results_db if isinstance(r, dict) and r.get("username") == st.session_state.username]
     
     if not user_results:
         st.info("Аналитика жасау үшін әлі тест тапсырмадыңыз.")
     else:
-        st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         df = pd.DataFrame(user_results)
         st.subheader("Динамика (Пайыз бойынша)")
         st.line_chart(df.set_index("date")["percent"])
-        st.markdown('</div>', unsafe_allow_html=True)
         
     if st.button("⬅️ Басты бет"):
         st.session_state.page = "home"
@@ -565,7 +496,6 @@ def progress_page():
 # =========================================================
 # ROUTING
 # =========================================================
-
 if st.session_state.logged_in:
     top_logout_button()
 
