@@ -351,7 +351,7 @@ def admin_page():
     st.write("👤 **Оқушы** — тест тапсырады және нәтижесін көреді.")
 
 # =========================================================
-# CREATE USER (ЖАҢАРТЫЛДЫ: БАҒЫТ ТАҢДАУ ҚОСЫЛДЫ)
+# CREATE USER
 # =========================================================
 def create_user_page():
     top_logout_button()
@@ -368,7 +368,6 @@ def create_user_page():
     new_password = st.text_input("Жаңа құпия сөз", type="password")
     role = st.selectbox("Рөлді таңдаңыз", ["Оқушы", "Премьер министр"])
 
-    # 🔥 БАҒЫТ (КОМБИНАЦИЯ) ТАҢДАУ
     selected_comb = st.selectbox("Бағыты (Оқушылар үшін):", combinations)
 
     role_value = "prime_minister" if role == "Премьер министр" else "user"
@@ -545,7 +544,7 @@ def question_list_page():
                     st.rerun()
 
 # =========================================================
-# RESULTS HISTORY (ТЕК ӨЗ НӘТИЖЕЛЕРІ КӨРІНЕДІ)
+# RESULTS HISTORY
 # =========================================================
 def results_history_page():
     top_logout_button()
@@ -558,7 +557,6 @@ def results_history_page():
     username = st.session_state.get("username", "Оқушы")
     history = load_results_history()
 
-    # ТЕК ӨЗ ЛОГИНІМЕН СӘЙКЕС КЕЛЕТІН НӘТИЖЕЛЕР ДЕРЕГІ
     my_results = [item for item in history if item.get("username") == username]
 
     if not my_results:
@@ -624,7 +622,7 @@ def progress_page():
         st.markdown("---")
 
 # =========================================================
-# USER HOME (ЖАҢАРТЫЛДЫ: ТЕК БЕКІТІЛГЕН БАҒЫТ КӨРІНЕДІ)
+# USER HOME (ҚАУІПСІЗ ТҮРДЕ ТҮЗЕТІЛДІ)
 # =========================================================
 def home_page():
     top_logout_button()
@@ -646,8 +644,11 @@ def home_page():
 
     st.markdown("---")
 
-    # 🎯 ОҚУШЫНЫҢ ЖЕКЕ БАҒЫТЫ
-    user_comb = st.session_state.get("user_combination", combinations[0])
+    # 🎯 ОҚУШЫНЫҢ ЖЕКЕ БАҒЫТЫНЫҢ ТҮЗЕТІЛГЕН ЛОГИКАСЫ
+    user_comb = st.session_state.get("user_combination")
+    if not user_comb:
+        user_comb = combinations[0]  # Қателік туындамауы үшін әдепкі бағытты таңдайды
+
     st.session_state.selected_combination = user_comb
 
     st.markdown(f"## 💻 Таңдалған бағытыңыз: **{user_comb}**")
@@ -698,12 +699,11 @@ def home_page():
                 st.rerun()
 
 # =========================================================
-# TEST PAGE
+# TEST PAGE (ҚАУІПСІЗ ТҮРДЕ ТҮЗЕТІЛДІ)
 # =========================================================
 def test_page():
     top_logout_button()
     
-    # --- САЙДБАРДАҒЫ КАЛЬКУЛЯТОР ---
     with st.sidebar:
         st.markdown("### 🧮 Калькулятор")
         calc_html = """
@@ -768,12 +768,12 @@ def test_page():
 
     st.markdown("---")
 
-    # Сұрақтарды жүктеу
     if st.session_state.current_question == 0 and not st.session_state.active_questions:
         prepared = []
         
         if st.session_state.is_full_ubt:
-            main_subs = st.session_state.selected_combination.split(" + ")
+            selected_comb = st.session_state.get("selected_combination") or combinations[0]
+            main_subs = selected_comb.split(" + ")
             target_subjects = common_subjects + main_subs
             
             for sub in target_subjects:
