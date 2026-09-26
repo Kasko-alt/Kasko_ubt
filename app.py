@@ -54,30 +54,23 @@ combinations = {
 }
 
 default_questions = {
+    "Қазақстан тарихы": [
+        {
+            "question": "«Ұлы шаньюй» деп аталған тайпа көсемі:",
+            "answers": ["қаңлыларда", "үйсіндерде", "ғұндарда", "сақтарда"],
+            "correct": 2,
+        },
+        {
+            "question": "Қазақ хандығы қашан құрылды?",
+            "answers": ["1465-1466 жж.", "1729 ж.", "1841 ж.", "1916 ж."],
+            "correct": 0,
+        }
+    ],
     "Биология": [
         {
             "question": "Фотосинтез процесі қай органоидта жүреді?",
             "answers": ["Митохондрия", "Хлоропласт", "Рибосома", "Лизосома"],
             "correct": 1,
-        },
-        {
-            "question": "Адам ағзасындағы негізгі тұқықуақыт ақпаратын сақтайтын молекула:",
-            "answers": ["РНҚ", "ДНҚ", "Белок", "Липид"],
-            "correct": 1,
-        }
-    ],
-    "Информатика": [
-        {
-            "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
-            "answers": ["input()", "print()", "output()", "write()"],
-            "correct": 1,
-        }
-    ],
-    "Қазақстан тарихы": [
-        {
-            "question": "Қазақ хандығы қашан құрылды?",
-            "answers": ["1465-1466 жж.", "1729 ж.", "1841 ж.", "1916 ж."],
-            "correct": 0,
         }
     ]
 }
@@ -174,6 +167,11 @@ if "page" not in st.session_state: st.session_state.page = "login"
 if "test_started" not in st.session_state: st.session_state.test_started = False
 if "active_combination" not in st.session_state: st.session_state.active_combination = None
 
+# Тест барысындағы навигация күйлері
+if "current_subject_idx" not in st.session_state: st.session_state.current_subject_idx = 0
+if "current_question_idx" not in st.session_state: st.session_state.current_question_idx = 0
+if "test_answers" not in st.session_state: st.session_state.test_answers = {}
+
 # =========================================================
 # СТИЛЬДЕР (DARK MODE & PREMIUM DESIGN)
 # =========================================================
@@ -242,6 +240,7 @@ def logout():
     st.session_state.page = "login"
     st.session_state.test_started = False
     st.session_state.active_combination = None
+    st.session_state.test_answers = {}
     st.rerun()
 
 # =========================================================
@@ -272,7 +271,7 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АВТО-ПАРСЕР ЖӘНЕ СҰРАҚТАРДЫ ЖОЮ ФУНКЦИЯСЫ (МОДЕРАТОР ҮШІН)
+# МОДЕРАТОР ЖӘНЕ АДМИН ПАНЕЛДЕРІ
 # =========================================================
 def parse_bulk_questions(raw_text):
     questions_list = []
@@ -314,18 +313,12 @@ def parse_bulk_questions(raw_text):
     return questions_list
 
 def render_question_manager():
-    tab1, tab2, tab3 = st.tabs(["⚡ Жылдам массалық жүктеу (40+)", "✍️ Жеке сұрақ қосу", "🗑️ Сұрақтарды жою (Удалить)"])
+    tab1, tab2, tab3 = st.tabs(["⚡ Жылдам массалық жүктеу (40+)", "✍️ Жеке сұрақ қосу", "🗑️ Сұрақтарды жою"])
 
     with tab1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         selected_subject_bulk = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="bulk_sub")
-        st.info("💡 **Үлгі формат (Барлық сұрақтарды бірден көшіріп қойыңыз):**\n1. Фотосинтез қайда жүреді?\nA) Митохондрия\nB) Хлоропласт\nC) Рибосома\nD) Ядро")
-
-        raw_text_input = st.text_area(
-            "✍️ Барлық сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", 
-            height=250,
-            placeholder="1. Сұрақ...\nA) ...\nB) ...\nC) ...\nD) ..."
-        )
+        raw_text_input = st.text_area("✍️ Барлық сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", height=250)
 
         if st.button("🚀 Барлық сұрақтарды базаға қосу", use_container_width=True, type="primary"):
             if raw_text_input.strip():
@@ -337,7 +330,7 @@ def render_question_manager():
                     save_questions()
                     st.success(f"✨ Сәтті! Барлығы **{len(parsed)}** сұрақ базаға қосылды!")
                 else:
-                    st.error("⚠️ Формат танылмады. Үлгіні сақтағаныңызға көз жеткізіңіз.")
+                    st.error("⚠️ Формат танылмады.")
             else:
                 st.warning("⚠️ Өріс бос болмауы тиіс!")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -345,7 +338,7 @@ def render_question_manager():
     with tab2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="single_sub")
-        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Жасушаның энергетикалық станциясы...")
+        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:")
 
         col_a, col_b = st.columns(2)
         with col_a:
@@ -376,7 +369,6 @@ def render_question_manager():
 
     with tab3:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 🗑️ Сұрақты өшіру (Удалить)")
         del_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="del_sub")
         sub_list = questions.get(del_subject, [])
 
@@ -391,20 +383,20 @@ def render_question_manager():
                 removed = sub_list.pop(idx_to_delete)
                 questions[del_subject] = sub_list
                 save_questions()
-                st.success(f"🗑️ Сәтті жойылды: \"{removed['question'][:40]}...\"")
+                st.success(f"🗑️ Сәтті жойылды!")
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
 def moderator_page():
     if st.button("🚪 Шығу"): logout()
     st.markdown('<div class="kasym-title" style="font-size: 32px;">🛠️ Модератор панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Сұрақтар базасын толық басқару және жою</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Сұрақтар базасын басқару</div>', unsafe_allow_html=True)
     render_question_manager()
 
 def admin_page():
     if st.button("🚪 Шығу"): logout()
     st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Администратор панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Қолданушыларды басқару және жүйе мониторингі</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Қолданушыларды басқару және статистика</div>', unsafe_allow_html=True)
 
     admin_tabs = st.tabs(["👥 Қолданушыларды басқару", "📊 Статистика"])
 
@@ -441,14 +433,13 @@ def admin_page():
 
     with admin_tabs[1]:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 📊 Жүйе статистикасы")
         total_q = sum(len(q_list) for q_list in questions.values())
         st.metric("Барлық сұрақтар саны", total_q)
         st.metric("Тіркелген қолданушылар саны", len(users))
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# ОҚУШЫНЫҢ БАСТЫ БЕТІ ЖӘНЕ КАЛЬКУЛЯТОР БАР ТЕСТ ПАНЕЛІ
+# ОҚУШЫНЫҢ БАСТЫ БЕТІ ЖӘНЕ ҰБТ СТИЛІНДЕГІ ТЕСТ ПАНЕЛІ
 # =========================================================
 def home_page():
     if st.button("🚪 Шығу"): logout()
@@ -506,87 +497,154 @@ def home_page():
         """
         components.html(calc_html, height=290)
 
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Оқушы панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру</div>', unsafe_allow_html=True)
+    # Егер тест басталмаған болса — комбинация таңдау экраны
+    if not st.session_state.get("test_started", False):
+        st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Оқушы панелі</div>', unsafe_allow_html=True)
+        st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру</div>', unsafe_allow_html=True)
 
-    current_user_obj = next((u for u in users if u["username"] == st.session_state.username), None)
+        current_user_obj = next((u for u in users if u["username"] == st.session_state.username), None)
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    selected_comb = st.selectbox("🎯 ҰБТ Бейіндік пәндер комбинациясын таңдаңыз:", list(combinations.keys()))
-    
-    if st.button("💾 Комбинацияны сақтау", type="primary"):
-        if current_user_obj:
-            current_user_obj["combination"] = selected_comb
-            save_users(users)
-            st.success("✨ Комбинация сақталды!")
-
-    st.markdown("---")
-    st.markdown("### 🚀 Тестті бастау")
-    if st.button("🚀 Тестті бастау (Пәндер бөлігімен)", type="primary", use_container_width=True):
-        st.session_state.test_started = True
-        st.session_state.active_combination = selected_comb
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.session_state.get("test_started", False):
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("## 📋 ҰБТ Тест Парағы (Пәндер бойынша)")
+        selected_comb = st.selectbox("🎯 ҰБТ Бейіндік пәндер комбинациясын таңдаңыз:", list(combinations.keys()))
         
+        if st.button("💾 Комбинацияны сақтау", type="primary"):
+            if current_user_obj:
+                current_user_obj["combination"] = selected_comb
+                save_users(users)
+                st.success("✨ Комбинация сақталды!")
+
+        st.markdown("---")
+        st.markdown("### 🚀 Тестті бастау")
+        if st.button("🚀 Тестті бастау (ҰБТ форматында)", type="primary", use_container_width=True):
+            st.session_state.test_started = True
+            st.session_state.active_combination = selected_comb
+            st.session_state.current_subject_idx = 0
+            st.session_state.current_question_idx = 0
+            st.session_state.test_answers = {}
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Егер тест басталған болса — ҰБТ стиліндегі сұрақ экрандары мен «Келесі сұрақ / Келесі пән» батырмалары
+    else:
         active_subjects = combinations.get(st.session_state.active_combination, all_subjects[:5])
-        subject_tabs = st.tabs(active_subjects)
-        
-        user_answers = {}
-        
-        for tab_idx, sub in enumerate(active_subjects):
-            with subject_tabs[tab_idx]:
-                st.markdown(f"### 📚 {sub} пәні")
-                sub_qs = questions.get(sub, [])
-                
-                if not sub_qs:
-                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Модератор панелі арқылы сұрақтарды қосыңыз.")
-                else:
-                    for q_idx, q in enumerate(sub_qs):
-                        global_key = f"{sub}_{q_idx}"
-                        st.markdown(f"**{q_idx + 1}. {q['question']}**")
-                        user_answers[global_key] = st.radio(
-                            f"Жауапты таңдаңыз ({sub} - {q_idx+1}):", 
-                            q["answers"], 
-                            key=f"radio_{global_key}", 
-                            index=None
-                        )
-                        st.markdown("---")
+        curr_sub_idx = st.session_state.current_subject_idx
+        curr_sub = active_subjects[curr_sub_idx]
+        sub_qs = questions.get(curr_sub, [])
 
-        if st.button("✅ Тестті аяқтау және нәтижені көру", type="primary", use_container_width=True):
-            correct_count = 0
-            total_q_count = 0
-            
-            for sub in active_subjects:
-                sub_qs = questions.get(sub, [])
-                for q_idx, q in enumerate(sub_qs):
-                    global_key = f"{sub}_{q_idx}"
-                    total_q_count += 1
-                    selected = user_answers.get(global_key)
-                    if selected and q["answers"][q["correct"]] == selected:
-                        correct_count += 1
-            
-            percent = int((correct_count / total_q_count * 100) if total_q_count > 0 else 0)
-            
-            history = load_results_history()
-            history.append({
-                "username": st.session_state.username,
-                "subject": st.session_state.active_combination,
-                "correct": correct_count,
-                "total": total_q_count,
-                "percent": percent,
-                "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
-            })
-            save_results_history(history)
+        # Жоғарғы панель: «Келесі пән >» батырмасы (суреттегідей)
+        top_col1, top_col2 = st.columns([6, 1])
+        with top_col1:
+            st.markdown(f"### 📚 Пән: **{curr_sub}**")
+        with top_col2:
+            if curr_sub_idx < len(active_subjects) - 1:
+                if st.button("Келесі пән >", type="primary"):
+                    st.session_state.current_subject_idx += 1
+                    st.session_state.current_question_idx = 0
+                    st.rerun()
+            else:
+                if st.button("Аяқтау ✅", type="primary"):
+                    # Тестті аяқтап нәтиже шығару
+                    finish_test(active_subjects)
 
-            st.success(f"🎉 Нәтижеңіз: **{correct_count} / {total_q_count}** ({percent}%)")
-            if st.button("🔄 Жаңа тест бастау"):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+
+        if not sub_qs:
+            st.warning(f"⚠️ {curr_sub} пәнінде әзірге сұрақтар жоқ.")
+            if st.button("Артқа қайту"):
                 st.session_state.test_started = False
                 st.rerun()
+        else:
+            # Сұрақ нөмірлері панелі (1, 2, 3... суреттегідей жоғарғы батырмалар тізбегі)
+            num_cols = st.columns(min(len(sub_qs), 10))
+            for idx in range(len(sub_qs)):
+                col_i = idx % 10
+                with num_cols[col_i]:
+                    btn_type = "primary" if idx == st.session_state.current_question_idx else "secondary"
+                    if st.button(str(idx + 1), key=f"q_btn_{curr_sub}_{idx}", type=btn_type):
+                        st.session_state.current_question_idx = idx
+                        st.rerun()
+
+            st.markdown("---")
+
+            # Ағымдағы сұрақты шығару
+            q_idx = st.session_state.current_question_idx
+            q = sub_qs[q_idx]
+
+            st.markdown(f"**Сұрақ № {q_idx + 1}**")
+            st.markdown(f"### {q['question']}")
+
+            global_key = f"{curr_sub}_{q_idx}"
+            prev_answer = st.session_state.test_answers.get(global_key, None)
+            
+            # Нұсқаларды radio арқылы таңдау
+            selected_ans = st.radio(
+                "Жауапты таңдаңыз:", 
+                q["answers"], 
+                key=f"radio_style_{global_key}",
+                index=q["answers"].index(prev_answer) if prev_answer in q["answers"] else None
+            )
+
+            # Таңдалған жауапты сақтау
+            if selected_ans:
+                st.session_state.test_answers[global_key] = selected_ans
+
+            st.markdown("---")
+
+            # Келесі сұраққа немесе келесі пәнге өту батырмалары
+            col_prev, col_next = st.columns([1, 1])
+            with col_prev:
+                if q_idx > 0:
+                    if st.button("← Алдыңғы сұрақ"):
+                        st.session_state.current_question_idx -= 1
+                        st.rerun()
+            with col_next:
+                if q_idx < len(sub_qs) - 1:
+                    if st.button("Келесі сұрақ →", type="primary"):
+                        st.session_state.current_question_idx += 1
+                        st.rerun()
+                else:
+                    if curr_sub_idx < len(active_subjects) - 1:
+                        if st.button("Келесі пәнге өту →", type="primary"):
+                            st.session_state.current_subject_idx += 1
+                            st.session_state.current_question_idx = 0
+                            st.rerun()
+                    else:
+                        if st.button("Тестті аяқтау 🎯", type="primary"):
+                            finish_test(active_subjects)
+
         st.markdown('</div>', unsafe_allow_html=True)
+
+def finish_test(active_subjects):
+    correct_count = 0
+    total_q_count = 0
+    
+    for sub in active_subjects:
+        sub_qs = questions.get(sub, [])
+        for q_idx, q in enumerate(sub_qs):
+            global_key = f"{sub}_{q_idx}"
+            total_q_count += 1
+            selected = st.session_state.test_answers.get(global_key)
+            if selected and q["answers"][q["correct"]] == selected:
+                correct_count += 1
+    
+    percent = int((correct_count / total_q_count * 100) if total_q_count > 0 else 0)
+    
+    history = load_results_history()
+    history.append({
+        "username": st.session_state.username,
+        "subject": st.session_state.active_combination,
+        "correct": correct_count,
+        "total": total_q_count,
+        "percent": percent,
+        "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
+    })
+    save_results_history(history)
+
+    st.success(f"🎉 Нәтижеңіз: **{correct_count} / {total_q_count}** ({percent}%)")
+    if st.button("🔄 Жаңа тест бастау"):
+        st.session_state.test_started = False
+        st.session_state.test_answers = {}
+        st.rerun()
 
 # =========================================================
 # РОУТЕР
