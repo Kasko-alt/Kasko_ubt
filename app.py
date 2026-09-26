@@ -27,7 +27,7 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
-# ПӘНДЕР
+# ПӘНДЕР МЕН ҰБТ СТРУКТУРАСЫ
 # =========================================================
 combinations = [
     "Биология + Химия",
@@ -218,6 +218,8 @@ if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
+if "is_full_ubt" not in st.session_state:
+    st.session_state.is_full_ubt = False
 
 # =========================================================
 # CSS
@@ -243,13 +245,6 @@ st.markdown(
         border-radius: 10px;
         margin-bottom: 15px;
     }
-    .error-box {
-        background-color: #374151;
-        padding: 15px;
-        border-left: 5px solid #EF4444;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -270,6 +265,7 @@ def logout():
     st.session_state.current_question = 0
     st.session_state.user_answers = {}
     st.session_state.active_questions = []
+    st.session_state.is_full_ubt = False
     st.rerun()
 
 def top_logout_button():
@@ -387,8 +383,6 @@ def create_user_page():
             })
             save_users(users)
             st.success(f"✅ {name} үшін аккаунт жасалды.")
-            st.info(f"Логин: {new_username}")
-            st.info(f"Рөл: {role}")
 
 # =========================================================
 # USERS LIST
@@ -459,7 +453,7 @@ def prime_minister_page():
 # =========================================================
 def add_question_page():
     top_logout_button()
-    st.title("➕ Жаңа сұрақ қосу (Жеке)")
+    st.title("➕ Жаңа сұрақ қосу")
 
     if st.session_state.role != "prime_minister":
         st.error("Бұл бөлімге тек Премьер министр кіре алады.")
@@ -564,7 +558,7 @@ def results_history_page():
             <div class="card">
                 <h3>📝 {number}-тест — {item.get("subject", "Пән")}</h3>
                 <p>Нәтиже: <b>{item.get("percent", 0)}%</b></p>
-                <p>Дұрыс жауап: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
+                <p>Балл: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
                 <p>📅 {item.get("date", "")}</p>
             </div>
             """,
@@ -612,12 +606,6 @@ def progress_page():
         st.write(f"**Үздік нәтиже:** {best_score}%")
         st.write(f"**Тест саны:** {test_count}")
         st.progress(last_score / 100)
-
-        if last_score > 0:
-            st.caption(f"Қазіргі прогресс: {last_score}%")
-        else:
-            st.caption("Қазіргі прогресс: 0%")
-
         st.markdown("---")
 
 # =========================================================
@@ -629,10 +617,8 @@ def home_page():
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
 
     st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
-    st.markdown("## 📚 Пәндер комбинациясы")
-
+    
     col1, col2 = st.columns(2)
-
     with col1:
         if st.button("📊 Менің нәтижелерім", use_container_width=True):
             st.session_state.page = "results_history"
@@ -644,6 +630,7 @@ def home_page():
             st.rerun()
 
     st.markdown("---")
+    st.markdown("## 📚 Пәндер комбинациясы")
 
     for combination in combinations:
         if st.button(combination, use_container_width=True):
@@ -652,7 +639,7 @@ def home_page():
             st.rerun()
 
 # =========================================================
-# COMBINATION
+# COMBINATION PAGE
 # =========================================================
 def combination_page():
     top_logout_button()
@@ -666,15 +653,45 @@ def combination_page():
 
     st.markdown("---")
 
+    # 🔥 ЖАҢАЛЫҚ: ТОЛЫҚ ҰБТ ТАПСЫРУ
+    st.markdown("### 🎓 Толық ҰБТ тапсыру (140 балл)")
+    if st.button(f"🚀 {combination} бойынша толық ҰБТ тапсыру (5 пән)", type="primary", use_container_width=True):
+        st.session_state.selected_subject = f"ҰБТ: {combination}"
+        st.session_state.is_full_ubt = True
+        st.session_state.current_question = 0
+        st.session_state.user_answers = {}
+        st.session_state.active_questions = []
+        st.session_state.result_saved = False
+        st.session_state.page = "test"
+        st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 📘 Жеке пән бойынша дайындалу")
+
     main_subjects = combination.split(" + ")
     cols = st.columns(2)
 
     for i, subject in enumerate(main_subjects):
         with cols[i]:
             count = len(questions.get(subject, []))
-
             if st.button(f"📘 {subject}\n\n{count} сұрақ", use_container_width=True, key=f"main_{subject}"):
                 st.session_state.selected_subject = subject
+                st.session_state.is_full_ubt = False
+                st.session_state.current_question = 0
+                st.session_state.user_answers = {}
+                st.session_state.active_questions = []
+                st.session_state.result_saved = False
+                st.session_state.page = "test"
+                st.rerun()
+
+    st.markdown("#### 📙 Міндетті пәндер")
+    cols_com = st.columns(3)
+    for i, subject in enumerate(common_subjects):
+        with cols_com[i]:
+            count = len(questions.get(subject, []))
+            if st.button(f"📙 {subject}\n\n{count} сұрақ", use_container_width=True, key=f"com_{subject}"):
+                st.session_state.selected_subject = subject
+                st.session_state.is_full_ubt = False
                 st.session_state.current_question = 0
                 st.session_state.user_answers = {}
                 st.session_state.active_questions = []
@@ -745,50 +762,66 @@ def test_page():
         """
         components.html(calc_html, height=320)
 
-    subject = st.session_state.selected_subject
-    raw_questions = questions.get(subject, [])
+    st.title(f"📝 {st.session_state.selected_subject}")
 
-    st.title(f"📝 {subject}")
-
-    if st.button("← Пәндерге қайту", use_container_width=True):
+    if st.button("← Артқа қайту", use_container_width=True):
         st.session_state.page = "combination"
         st.rerun()
 
     st.markdown("---")
 
-    if len(raw_questions) == 0:
-        st.warning(f"«{subject}» пәнінде әзірге сұрақ жоқ.")
-        return
-
+    # Сұрақтарды жүктеу
     if st.session_state.current_question == 0 and not st.session_state.active_questions:
         prepared = []
-        shuffled_list = random.sample(raw_questions, len(raw_questions))
-
-        for item in shuffled_list:
-            answers_copy = item["answers"].copy()
-            correct_text = answers_copy[item["correct"]]
-            random.shuffle(answers_copy)
-
-            prepared.append({
-                "question": item["question"],
-                "answers": answers_copy,
-                "correct": answers_copy.index(correct_text),
-            })
+        
+        if st.session_state.is_full_ubt:
+            # 5 пәннің бәрінен сұрақтар жинаймыз
+            main_subs = st.session_state.selected_combination.split(" + ")
+            target_subjects = common_subjects + main_subs
+            
+            for sub in target_subjects:
+                raw_qs = questions.get(sub, [])
+                for item in raw_qs:
+                    answers_copy = item["answers"].copy()
+                    correct_text = answers_copy[item["correct"]]
+                    random.shuffle(answers_copy)
+                    prepared.append({
+                        "subject": sub,
+                        "question": item["question"],
+                        "answers": answers_copy,
+                        "correct": answers_copy.index(correct_text),
+                    })
+        else:
+            sub = st.session_state.selected_subject
+            raw_qs = questions.get(sub, [])
+            for item in raw_qs:
+                answers_copy = item["answers"].copy()
+                correct_text = answers_copy[item["correct"]]
+                random.shuffle(answers_copy)
+                prepared.append({
+                    "subject": sub,
+                    "question": item["question"],
+                    "answers": answers_copy,
+                    "correct": answers_copy.index(correct_text),
+                })
 
         st.session_state.active_questions = prepared
 
     subject_questions = st.session_state.active_questions
-    current = st.session_state.current_question
     total = len(subject_questions)
 
-    nav_cols = st.columns(min(total, 20))
+    if total == 0:
+        st.warning("Бұл режим бойынша сұрақтар әлі қосылмаған.")
+        return
 
-    for i in range(total):
-        col_idx = i % min(total, 20)
+    current = st.session_state.current_question
+
+    # Сұрақтар навигациясы
+    nav_cols = st.columns(min(total, 20))
+    for i in range(min(total, 20)):
         is_current = (i == current)
         btn_type = "primary" if is_current else "secondary"
-
-        with nav_cols[col_idx]:
+        with nav_cols[i]:
             if st.button(str(i + 1), key=f"nav_btn_{i}", use_container_width=True, type=btn_type):
                 st.session_state.current_question = i
                 st.rerun()
@@ -797,6 +830,7 @@ def test_page():
 
     question = subject_questions[current]
 
+    st.caption(f"Пән: {question.get('subject', '')}")
     st.markdown(f"### Сұрақ {current + 1} / {total}")
     st.markdown(f'<div class="card"><h3>{question["question"]}</h3></div>', unsafe_allow_html=True)
 
@@ -852,16 +886,29 @@ def result_page():
         add_result_to_history(st.session_state.selected_subject, correct_count, total, percent)
         st.session_state.result_saved = True
 
+    # ҰБТ Градациясы (баллға байланысты)
+    grant_status = ""
+    if st.session_state.is_full_ubt:
+        if percent >= 75:
+            grant_status = "🎉 **Құттықтаймыз! Грантқа түсу ықтималдығы өте жоғары!**"
+        elif percent >= 50:
+            grant_status = "👍 **Жақсы нәтиже! Тағы сәл дайындалсаңыз, грант сіздікі!**"
+        else:
+            grant_status = "⚠️ **Әлі де іздену керек. Тесттерді жиірек тапсырыңыз.**"
+
     st.markdown(
         f"""
         <div class="card" style="text-align: center;">
             <h2>{st.session_state.selected_subject}</h2>
             <h1 style="color: #10B981; font-size: 48px;">{percent}%</h1>
-            <p style="font-size: 20px;">Дұрыс жауап: <b>{correct_count} / {total}</b></p>
+            <p style="font-size: 20px;">Дұрыс балл: <b>{correct_count} / {total}</b></p>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    if grant_status:
+        st.info(grant_status)
 
     if st.button("🏠 Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
