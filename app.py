@@ -3,6 +3,7 @@ import os
 import random
 import datetime
 import hashlib
+import pandas as pd
 import streamlit as st
 
 # =========================================================
@@ -22,7 +23,6 @@ USERS_FILE = "users.json"
 # ҚАУІПСІЗДІК: ПАРОЛЬДІ ХЭШТЕУ ФУНКЦИЯСЫ
 # =========================================================
 def hash_password(password: str) -> str:
-    """Парольді SHA-256 алгоритмі арқылы шифрлайды"""
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
@@ -78,13 +78,13 @@ default_questions = {
 }
 
 # =========================================================
-# АККАУНТ ЖҮЙЕСІ (ШИФРЛАНҒАН)
+# АККАУНТ ЖҮЙЕСІ
 # =========================================================
 def default_users():
     return [
         {
             "username": "kas01",
-            "password": hash_password("kasko100228550357"),  # Пароль хэш түрінде сақталады
+            "password": hash_password("kasko100228550357"),
             "name": "KASYM",
             "role": "president",
         }
@@ -113,7 +113,6 @@ users = load_users()
 def find_user(username, password):
     hashed_input_password = hash_password(password)
     for user in users:
-        # Ескі жүйеден қалған ашық парольдер болса, оларды да тексеруге мүмкіндік береді
         stored_password = user.get("password")
         if user.get("username") == username and (stored_password == hashed_input_password or stored_password == password):
             return user
@@ -153,12 +152,7 @@ def load_questions():
 
 def save_questions():
     with open(QUESTIONS_FILE, "w", encoding="utf-8") as file:
-        json.dump(
-            questions,
-            file,
-            ensure_ascii=False,
-            indent=4
-        )
+        json.dump(questions, file, ensure_ascii=False, indent=4)
 
 questions = load_questions()
 
@@ -179,18 +173,10 @@ def load_results_history():
 
 def save_results_history(history):
     with open(RESULTS_FILE, "w", encoding="utf-8") as file:
-        json.dump(
-            history,
-            file,
-            ensure_ascii=False,
-            indent=4
-        )
+        json.dump(history, file, ensure_ascii=False, indent=4)
 
 def add_result_to_history(subject, correct, total, percent):
-    username = st.session_state.get(
-        "username",
-        "Оқушы"
-    )
+    username = st.session_state.get("username", "Оқушы")
     history = load_results_history()
 
     history.append(
@@ -200,9 +186,7 @@ def add_result_to_history(subject, correct, total, percent):
             "correct": correct,
             "total": total,
             "percent": percent,
-            "date": datetime.datetime.now().strftime(
-                "%d.%m.%Y %H:%M"
-            ),
+            "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
         }
     )
 
@@ -394,7 +378,7 @@ def create_user_page():
         else:
             users.append({
                 "username": new_username,
-                "password": hash_password(new_password),  # Жаңа қолданушының паролі де хэштеледі
+                "password": hash_password(new_password),
                 "name": name,
                 "role": role_value,
             })
@@ -445,15 +429,20 @@ def prime_minister_page():
 
     st.success(f"Қош келдіңіз, {st.session_state.full_name}!")
 
-    st.markdown("## 📚 Сұрақтар базасы")
-    col1, col2 = st.columns(2)
+    st.markdown("## 📚 Сұрақтар базасын басқару")
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("➕ Сұрақ қосу", use_container_width=True):
+        if st.button("➕ Жеке сұрақ қосу", use_container_width=True):
             st.session_state.page = "add_question"
             st.rerun()
 
     with col2:
+        if st.button("📥 Excel/CSV арқылы жүктеу", use_container_width=True):
+            st.session_state.page = "upload_excel"
+            st.rerun()
+
+    with col3:
         if st.button("📚 Сұрақтар базасы", use_container_width=True):
             st.session_state.page = "question_list"
             st.rerun()
@@ -466,10 +455,80 @@ def prime_minister_page():
         st.rerun()
 
 # =========================================================
+# EXCEL / CSV арқылы сұрақтарды жүктеу
+# =========================================================
+def upload_excel_page():
+    st.title("📥 Excel немесе CSV файлы арқылы сұрақ жүктеу")
+
+    if st.session_state.role != "prime_minister":
+        st.error("Бұл бөлімге тек Премьер министр кіре алады.")
+        return
+
+    if st.button("← Панельге қайту", use_container_width=True):
+        st.session_state.page = "prime_minister"
+        st.rerun()
+
+    st.markdown("---")
+
+    selected_subject = st.selectbox("Сұрақтар қосылатын пәнді таңдаңыз:", all_subjects)
+
+    st.info(
+        "💡 **Файл талаптары:**\n"
+        "Файлыңызда (Excel немесе CSV) келесі бағандар болуы тиіс:\n"
+        "- `question`: Сұрақтың мәтіні\n"
+        "- `answer1`, `answer2`, `answer3`, `answer4`: 4 жауап нұсқасы\n"
+        "- `correct`: Дұрыс жауаптың нөмірі (1, 2, 3 немесе 4)"
+    )
+
+    uploaded_file = st.file_uploader("Excel (.xlsx) немесе CSV (.csv) файлын таңдаңыз", type=["xlsx", "csv"])
+
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file)
+
+            required_cols = {"question", "answer1", "answer2", "answer3", "answer4", "correct"}
+            if not required_cols.issubset(set(df.columns)):
+                st.error("❌ Файлда қажетті бағандар түгел емес! Өтініш, файл құрылымын тексеріңіз.")
+            else:
+                st.write("📋 Жүктелген деректерді алдын ала қарау:")
+                st.dataframe(df.head())
+
+                if st.button("🚀 Сұрақтарды базаға сақтау", use_container_width=True):
+                    added_count = 0
+                    if selected_subject not in questions:
+                        questions[selected_subject] = []
+
+                    for _, row in df.iterrows():
+                        corr_val = int(row["correct"]) - 1  # Index 0-3 аралығына ауыстыру
+                        corr_val = max(0, min(3, corr_val)) # Қателіктерден қорғау
+
+                        new_q = {
+                            "question": str(row["question"]),
+                            "answers": [
+                                str(row["answer1"]),
+                                str(row["answer2"]),
+                                str(row["answer3"]),
+                                str(row["answer4"]),
+                            ],
+                            "correct": corr_val,
+                        }
+                        questions[selected_subject].append(new_q)
+                        added_count += 1
+
+                    save_questions()
+                    st.success(f"🎉 «{selected_subject}» пәніне {added_count} сұрақ сәтті қосылды!")
+
+        except Exception as e:
+            st.error(f"Файлды оқу кезінде қателік шықты: {e}")
+
+# =========================================================
 # ADD QUESTION
 # =========================================================
 def add_question_page():
-    st.title("➕ Жаңа сұрақ қосу")
+    st.title("➕ Жаңа сұрақ қосу (Жеке)")
 
     if st.session_state.role != "prime_minister":
         st.error("Бұл бөлімге тек Премьер министр кіре алады.")
@@ -732,8 +791,6 @@ def test_page():
     for i in range(total):
         col_idx = i % min(total, 20)
         is_current = (i == current)
-        is_answered = (i in st.session_state.user_answers and st.session_state.user_answers[i] is not None)
-
         btn_type = "primary" if is_current else "secondary"
 
         with nav_cols[col_idx]:
@@ -906,6 +963,13 @@ else:
     elif pg == "add_question":
         if st.session_state.role == "prime_minister":
             add_question_page()
+        else:
+            st.session_state.page = "home"
+            st.rerun()
+
+    elif pg == "upload_excel":
+        if st.session_state.role == "prime_minister":
+            upload_excel_page()
         else:
             st.session_state.page = "home"
             st.rerun()
