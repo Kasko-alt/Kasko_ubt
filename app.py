@@ -54,6 +54,18 @@ combinations = {
 }
 
 default_questions = {
+    "Биология": [
+        {
+            "question": "Фотосинтез процесі қай органоидта жүреді?",
+            "answers": ["Митохондрия", "Хлоропласт", "Рибосома", "Лизосома"],
+            "correct": 1,
+        },
+        {
+            "question": "Адам ағзасындағы негізгі тұқықуақыт ақпаратын сақтайтын молекула:",
+            "answers": ["РНҚ", "ДНҚ", "Белок", "Липид"],
+            "correct": 1,
+        }
+    ],
     "Информатика": [
         {
             "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
@@ -71,7 +83,7 @@ default_questions = {
 }
 
 # =========================================================
-# КОЛДАНУШЫЛАР ЖҮЙЕСІ
+# ҚОЛДАНУШЫЛАР ЖҮЙЕСІ
 # =========================================================
 def default_users():
     return [
@@ -260,7 +272,7 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АВТО-ПАРСЕР (СҰРАҚТАРДЫ ЖАППАЙ ЖҮКТЕУ)
+# АВТО-ПАРСЕР (40 СҰРАҚТЫ БІРДЕН ЖҮКТЕУ)
 # =========================================================
 def parse_bulk_questions(raw_text):
     questions_list = []
@@ -302,16 +314,16 @@ def parse_bulk_questions(raw_text):
     return questions_list
 
 def render_question_manager():
-    tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (Авто-парсер)", "✍️ Жеке сұрақ қосу"])
+    tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (40+ сұрақ)", "✍️ Жеке сұрақ қосу"])
 
     with tab1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         selected_subject_bulk = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="bulk_sub")
-        st.info("💡 **Үлгі формат:**\n1. 2 + 2 өрнегінің мәні?\nA) 2\nB) 4\nC) 5\nD) 3")
+        st.info("💡 **Үлгі формат (Барлық сұрақтарды бірден көшіріп қойыңыз):**\n1. Фотосинтез қайда жүреді?\nA) Митохондрия\nB) Хлоропласт\nC) Рибосома\nD) Ядро")
 
         raw_text_input = st.text_area(
             "✍️ Барлық сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", 
-            height=220,
+            height=250,
             placeholder="1. Сұрақ...\nA) ...\nB) ...\nC) ...\nD) ..."
         )
 
@@ -323,7 +335,7 @@ def render_question_manager():
                         questions[selected_subject_bulk] = []
                     questions[selected_subject_bulk].extend(parsed)
                     save_questions()
-                    st.success(f"✨ Сәтті! Барлығы **{len(parsed)}** сұрақ қосылды!")
+                    st.success(f"✨ Сәтті! Барлығы **{len(parsed)}** сұрақ базаға қосылды!")
                 else:
                     st.error("⚠️ Формат танылмады. Үлгіні сақтағаныңызға көз жеткізіңіз.")
             else:
@@ -333,7 +345,7 @@ def render_question_manager():
     with tab2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="single_sub")
-        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
+        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Жасушаның энергетикалық станциясы...")
 
         col_a, col_b = st.columns(2)
         with col_a:
@@ -423,7 +435,6 @@ def admin_page():
 def home_page():
     if st.button("🚪 Шығу"): logout()
     
-    # Бүйірлік панельде калькулятор орналастыру (екінші кодтағыдай)
     with st.sidebar:
         st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
         st.markdown("---")
@@ -499,7 +510,6 @@ def home_page():
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Тест басталған кезде әр пән астындағы вкладкалар дұрыс жұмыс істейді
     if st.session_state.get("test_started", False):
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("## 📋 ҰБТ Тест Парағы (Пәндер бойынша)")
@@ -515,7 +525,7 @@ def home_page():
                 sub_qs = questions.get(sub, [])
                 
                 if not sub_qs:
-                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ.")
+                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Президент немесе Премьер-министр панелі арқылы сұрақтарды қосыңыз.")
                 else:
                     for q_idx, q in enumerate(sub_qs):
                         global_key = f"{sub}_{q_idx}"
@@ -543,7 +553,6 @@ def home_page():
             
             percent = int((correct_count / total_q_count * 100) if total_q_count > 0 else 0)
             
-            # Нәтижені тарихқа сақтау
             history = load_results_history()
             history.append({
                 "username": st.session_state.username,
