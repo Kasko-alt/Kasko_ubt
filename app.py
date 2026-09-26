@@ -323,6 +323,7 @@ def login_page():
 # PRESIDENT PANEL
 # =========================================================
 def admin_page():
+    top_logout_button()
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">👑 PRESIDENT PANEL</div>', unsafe_allow_html=True)
 
@@ -352,6 +353,7 @@ def admin_page():
 # CREATE USER
 # =========================================================
 def create_user_page():
+    top_logout_button()
     st.title("➕ Жаңа аккаунт жасау")
 
     if st.button("← Президент панеліне қайту", use_container_width=True):
@@ -392,6 +394,7 @@ def create_user_page():
 # USERS LIST
 # =========================================================
 def users_list_page():
+    top_logout_button()
     st.title("👥 Аккаунттар тізімі")
 
     if st.button("← Президент панеліне қайту", use_container_width=True):
@@ -425,6 +428,7 @@ def users_list_page():
 # PRIME MINISTER PANEL
 # =========================================================
 def prime_minister_page():
+    top_logout_button()
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">👨‍💼 ПРЕМЬЕР МИНИСТР</div>', unsafe_allow_html=True)
 
@@ -454,6 +458,7 @@ def prime_minister_page():
 # ADD QUESTION
 # =========================================================
 def add_question_page():
+    top_logout_button()
     st.title("➕ Жаңа сұрақ қосу (Жеке)")
 
     if st.session_state.role != "prime_minister":
@@ -498,6 +503,7 @@ def add_question_page():
 # QUESTION LIST
 # =========================================================
 def question_list_page():
+    top_logout_button()
     st.title("📚 Сұрақтар базасы")
 
     if st.session_state.role == "prime_minister":
@@ -534,6 +540,7 @@ def question_list_page():
 # RESULTS HISTORY
 # =========================================================
 def results_history_page():
+    top_logout_button()
     st.title("📊 Менің нәтижелерім")
 
     if st.button("← Басты бетке қайту", use_container_width=True):
@@ -568,6 +575,7 @@ def results_history_page():
 # PROGRESS
 # =========================================================
 def progress_page():
+    top_logout_button()
     st.title("📈 Менің прогрессім")
 
     if st.button("← Басты бетке қайту", use_container_width=True):
@@ -616,6 +624,7 @@ def progress_page():
 # USER HOME
 # =========================================================
 def home_page():
+    top_logout_button()
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
 
@@ -646,6 +655,7 @@ def home_page():
 # COMBINATION
 # =========================================================
 def combination_page():
+    top_logout_button()
     combination = st.session_state.selected_combination
 
     st.title(f"📚 {combination}")
@@ -673,60 +683,21 @@ def combination_page():
                 st.rerun()
 
 # =========================================================
-# TEST
+# TEST PAGE
 # =========================================================
 def test_page():
-    # --- СҮЙРЕМЕЛІ (DRAGGABLE) КАЛЬКУЛЯТОР (HTML/JS/CSS) ---
-    calc_html = """
-    <div id="calc-container" style="
-        position: fixed; 
-        top: 80px; 
-        right: 30px; 
-        z-index: 99999; 
-        width: 250px; 
-        background: #1F2937; 
-        border: 2px solid #4F46E5; 
-        border-radius: 12px; 
-        box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
-        font-family: Arial, sans-serif;
-        color: white;
-    ">
-        <div id="calc-header" style="
-            padding: 8px 12px; 
-            cursor: move; 
-            background: #374151; 
-            border-top-left-radius: 10px; 
-            border-top-right-radius: 10px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            font-weight: bold;
-            user-select: none;
-            font-size: 14px;
-        ">
-            <span>🧮 Калькулятор</span>
-            <div>
-                <button onclick="toggleCalc()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:14px; margin-right: 6px;">_</button>
-                <button onclick="closeCalc()" style="background:none; border:none; color:#EF4444; cursor:pointer; font-weight:bold; font-size:14px;">✕</button>
-            </div>
-        </div>
-
-        <div id="calc-body" style="padding: 10px;">
+    top_logout_button()
+    
+    # --- САЙДБАРДАҒЫ КАЛЬКУЛЯТОР ---
+    with st.sidebar:
+        st.markdown("### 🧮 Калькулятор")
+        calc_html = """
+        <div style="background: #1F2937; padding: 12px; border-radius: 10px; border: 1px solid #4F46E5;">
             <input type="text" id="calc-display" readonly style="
-                width: 100%; 
-                height: 38px; 
-                background: #111827; 
-                color: #10B981; 
-                font-size: 18px; 
-                text-align: right; 
-                padding: 4px 8px; 
-                border: 1px solid #4B5563; 
-                border-radius: 6px; 
-                margin-bottom: 8px; 
-                box-sizing: border-box;
-                font-weight: bold;
+                width: 100%; height: 38px; background: #111827; color: #10B981; 
+                font-size: 18px; text-align: right; padding: 4px 8px; border: 1px solid #4B5563; 
+                border-radius: 6px; margin-bottom: 8px; box-sizing: border-box; font-weight: bold;
             " value="0">
-
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
                 <button onclick="calcClear()" style="background:#EF4444; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">C</button>
                 <button onclick="calcInput('(')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">(</button>
@@ -754,78 +725,25 @@ def test_page():
                 <button onclick="calcCalculate()" style="background:#10B981; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">=</button>
             </div>
         </div>
-    </div>
 
-    <script>
-    let display = document.getElementById('calc-display');
-    function calcInput(val) {
-        if (display.value === '0' || display.value === 'Қате') {
-            display.value = val;
-        } else {
-            display.value += val;
+        <script>
+        let display = document.getElementById('calc-display');
+        function calcInput(val) {
+            if (display.value === '0' || display.value === 'Қате') display.value = val;
+            else display.value += val;
         }
-    }
-    function calcClear() {
-        display.value = '0';
-    }
-    function calcBackspace() {
-        display.value = display.value.slice(0, -1);
-        if (display.value === '') display.value = '0';
-    }
-    function calcCalculate() {
-        try {
-            display.value = eval(display.value);
-        } catch (e) {
-            display.value = 'Қате';
+        function calcClear() { display.value = '0'; }
+        function calcBackspace() {
+            display.value = display.value.slice(0, -1);
+            if (display.value === '') display.value = '0';
         }
-    }
-
-    function toggleCalc() {
-        let body = document.getElementById('calc-body');
-        body.style.display = (body.style.display === 'none') ? 'block' : 'none';
-    }
-    function closeCalc() {
-        document.getElementById('calc-container').style.display = 'none';
-    }
-
-    dragElement(document.getElementById("calc-container"));
-
-    function dragElement(elmnt) {
-      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-      if (document.getElementById("calc-header")) {
-        document.getElementById("calc-header").onmousedown = dragMouseDown;
-      } else {
-        elmnt.onmousedown = dragMouseDown;
-      }
-
-      function dragMouseDown(e) {
-        e = e || window.event;
-        e.preventDefault();
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        document.onmousemove = elementDrag;
-      }
-
-      function elementDrag(e) {
-        e = e || window.event;
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-      }
-
-      function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-      }
-    }
-    </script>
-    """
-    components.html(calc_html, height=0, width=0)
+        function calcCalculate() {
+            try { display.value = eval(display.value); } 
+            catch (e) { display.value = 'Қате'; }
+        }
+        </script>
+        """
+        components.html(calc_html, height=320)
 
     subject = st.session_state.selected_subject
     raw_questions = questions.get(subject, [])
@@ -913,158 +831,74 @@ def test_page():
                 st.rerun()
 
 # =========================================================
-# RESULT
+# RESULT PAGE
 # =========================================================
 def result_page():
-    subject = st.session_state.selected_subject
+    top_logout_button()
+    st.title("🎯 Тест нәтижесі")
+
     subject_questions = st.session_state.active_questions
     total = len(subject_questions)
-
     correct_count = 0
-    wrong_questions = []
 
-    for i, question in enumerate(subject_questions):
-        user_answer = st.session_state.user_answers.get(i)
-        if user_answer == question["correct"]:
+    for idx, q in enumerate(subject_questions):
+        user_ans = st.session_state.user_answers.get(idx)
+        if user_ans is not None and user_ans == q["correct"]:
             correct_count += 1
-        else:
-            wrong_questions.append(i)
 
-    wrong_count = total - correct_count
-    percent = int(correct_count / total * 100) if total > 0 else 0
+    percent = int((correct_count / total) * 100) if total > 0 else 0
 
-    if not st.session_state.get("result_saved", False):
-        add_result_to_history(subject, correct_count, total, percent)
+    if not st.session_state.result_saved:
+        add_result_to_history(st.session_state.selected_subject, correct_count, total, percent)
         st.session_state.result_saved = True
-
-    st.markdown('<div class="kasym-title">🎯 Тест аяқталды</div>', unsafe_allow_html=True)
-    st.markdown(f"## {subject}")
-    st.markdown("---")
 
     st.markdown(
         f"""
-        <div class="card">
-            <h2>Дұрыс жауап: {correct_count} / {total}</h2>
-            <h2>Нәтиже: {percent}%</h2>
-            <p>✅ Дұрыс: {correct_count}</p>
-            <p>❌ Қате: {wrong_count}</p>
+        <div class="card" style="text-align: center;">
+            <h2>{st.session_state.selected_subject}</h2>
+            <h1 style="color: #10B981; font-size: 48px;">{percent}%</h1>
+            <p style="font-size: 20px;">Дұрыс жауап: <b>{correct_count} / {total}</b></p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("🔄 Қайта тапсыру", use_container_width=True):
-            st.session_state.current_question = 0
-            st.session_state.user_answers = {}
-            st.session_state.active_questions = []
-            st.session_state.result_saved = False
-            st.session_state.page = "test"
-            st.rerun()
-
-    with col2:
-        if st.button("📚 Пәндерге қайту (Артқа)", use_container_width=True):
-            st.session_state.current_question = 0
-            st.session_state.user_answers = {}
-            st.session_state.active_questions = []
-            st.session_state.page = "combination"
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown("## ❌ Қате кеткен сұрақтар")
-
-    if len(wrong_questions) == 0:
-        st.success("🎉 Барлық сұраққа дұрыс жауап бердіңіз!")
-    else:
-        for index in wrong_questions:
-            question = subject_questions[index]
-            user_index = st.session_state.user_answers.get(index)
-            correct_index = question["correct"]
-
-            user_text = question["answers"][user_index] if user_index is not None else "Жауап берілмеді"
-            correct_text = question["answers"][correct_index]
-
-            st.markdown(
-                f"""
-                <div class="error-box">
-                    <h3>❌ Сұрақ {index + 1}</h3>
-                    <p><b>{question["question"]}</b></p>
-                    <p>🔴 Сенің жауабың: {user_text}</p>
-                    <p>🟢 Дұрыс жауап: {correct_text}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-# =========================================================
-# ROUTING
-# =========================================================
-if st.session_state.logged_in:
-    top_logout_button()
-
-if not st.session_state.logged_in:
-    login_page()
-else:
-    pg = st.session_state.page
-
-    if pg == "admin":
-        if st.session_state.role == "president":
-            admin_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "create_user":
-        if st.session_state.role == "president":
-            create_user_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "users_list":
-        if st.session_state.role == "president":
-            users_list_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "prime_minister":
-        if st.session_state.role == "prime_minister":
-            prime_minister_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "add_question":
-        if st.session_state.role == "prime_minister":
-            add_question_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "question_list":
-        question_list_page()
-
-    elif pg == "home":
-        home_page()
-
-    elif pg == "combination":
-        combination_page()
-
-    elif pg == "test":
-        test_page()
-
-    elif pg == "result":
-        result_page()
-
-    elif pg == "results_history":
-        results_history_page()
-
-    elif pg == "progress":
-        progress_page()
-
-    else:
+    if st.button("🏠 Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
         st.rerun()
+
+# =========================================================
+# MAIN ROUTER
+# =========================================================
+def main():
+    if not st.session_state.logged_in:
+        login_page()
+    else:
+        page = st.session_state.page
+        if page == "admin":
+            admin_page()
+        elif page == "create_user":
+            create_user_page()
+        elif page == "users_list":
+            users_list_page()
+        elif page == "prime_minister":
+            prime_minister_page()
+        elif page == "add_question":
+            add_question_page()
+        elif page == "question_list":
+            question_list_page()
+        elif page == "home":
+            home_page()
+        elif page == "combination":
+            combination_page()
+        elif page == "test":
+            test_page()
+        elif page == "result":
+            result_page()
+        elif page == "results_history":
+            results_history_page()
+        elif page == "progress":
+            progress_page()
+
+if __name__ == "__main__":
+    main()
