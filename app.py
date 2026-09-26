@@ -80,12 +80,141 @@ def save_questions():
 
 questions = load_questions()
 
+
+# =========================================================
+# НӘТИЖЕЛЕР ЖӘНЕ ПРОГРЕСС
+# =========================================================
+
+def load_results_history():
+    if os.path.exists(RESULTS_FILE):
+        try:
+            with open(RESULTS_FILE, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
+    return []
+
+
+def save_results_history(history):
+    with open(RESULTS_FILE, "w", encoding="utf-8") as file:
+        json.dump(history, file, ensure_ascii=False, indent=4)
+
+
+def add_result_to_history(subject, correct, total, percent):
+    username = st.session_state.get("username", "Оқушы")
+    history = load_results_history()
+
+    history.append(
+        {
+            "username": username,
+            "subject": subject,
+            "correct": correct,
+            "total": total,
+            "percent": percent,
+            "date": __import__("datetime").datetime.now().strftime("%d.%m.%Y %H:%M"),
+        }
+    )
+
+    save_results_history(history)
+
+
+def results_history_page():
+    st.title("📊 Менің нәтижелерім")
+
+    if st.button("← Басты бетке қайту", use_container_width=True):
+        st.session_state.page = "home"
+        st.rerun()
+
+    username = st.session_state.get("username", "Оқушы")
+    history = load_results_history()
+
+    my_results = [
+        item for item in history
+        if item.get("username") == username
+    ]
+
+    if not my_results:
+        st.info("Әзірге тапсырылған тест нәтижесі жоқ.")
+        return
+
+    st.markdown("---")
+
+    for number, item in enumerate(reversed(my_results), 1):
+        st.markdown(
+            f"""
+            <div class="card">
+                <h3>📝 {number}-тест — {item.get("subject", "Пән")}</h3>
+                <p>Нәтиже: <b>{item.get("percent", 0)}%</b></p>
+                <p>Дұрыс жауап: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
+                <p>📅 {item.get("date", "")}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def progress_page():
+    st.title("📈 Менің прогрессім")
+
+    if st.button("← Басты бетке қайту", use_container_width=True):
+        st.session_state.page = "home"
+        st.rerun()
+
+    username = st.session_state.get("username", "Оқушы")
+    history = load_results_history()
+
+    my_results = [
+        item for item in history
+        if item.get("username") == username
+    ]
+
+    if not my_results:
+        st.info("Прогресс көрсету үшін алдымен кемінде бір тест тапсырыңыз.")
+        return
+
+    st.markdown("---")
+
+    # Әр пән бойынша жеке статистика жинаймыз.
+    subject_stats = {}
+
+    for item in my_results:
+        subject = item.get("subject", "Белгісіз пән")
+        percent = int(item.get("percent", 0))
+
+        if subject not in subject_stats:
+            subject_stats[subject] = []
+
+        subject_stats[subject].append(percent)
+
+    for subject, scores in subject_stats.items():
+        last_score = scores[-1]
+        best_score = max(scores)
+        test_count = len(scores)
+
+        st.markdown(f"## 📚 {subject}")
+        st.write(f"**Соңғы нәтиже:** {last_score}%")
+        st.write(f"**Үздік нәтиже:** {best_score}%")
+        st.write(f"**Тест саны:** {test_count}")
+
+        st.progress(last_score / 100)
+
+        if last_score > 0:
+            st.caption(f"Қазіргі прогресс: {last_score}%")
+        else:
+            st.caption("Қазіргі прогресс: 0%")
+
+        st.markdown("---")
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "role" not in st.session_state:
     st.session_state.role = None
 if "username" not in st.session_state:
-    st.session_state.username = None
+    st.session_state.username = ""
+if "result_saved" not in st.session_state:
+    st.session_state.result_saved = False
 if "page" not in st.session_state:
     st.session_state.page = "login"
 if "selected_combination" not in st.session_state:
@@ -98,8 +227,6 @@ if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
-if "result_saved_for_current_test" not in st.session_state:
-    st.session_state.result_saved_for_current_test = False
 
 # =========================================================
 # CSS (КҮҢГІРТ ДИЗАЙН ЖӘНЕ СТИЛЬДЕР)
@@ -189,74 +316,11 @@ div[data-testid="stHorizontalBlock"] button[kind="primary"] {
 )
 
 
-def load_results_history():
-    if os.path.exists(RESULTS_FILE):
-        try:
-            with open(RESULTS_FILE, "r", encoding="utf-8") as file:
-                data = json.load(file)
-            return data if isinstance(data, list) else []
-        except Exception:
-            return []
-    return []
-
-
-def save_results_history(history):
-    with open(RESULTS_FILE, "w", encoding="utf-8") as file:
-        json.dump(history, file, ensure_ascii=False, indent=4)
-
-
-def add_result_to_history(subject, correct_count, total):
-    from datetime import datetime
-    history = load_results_history()
-    username = st.session_state.get("username") or "student"
-    percent = int(correct_count / total * 100) if total > 0 else 0
-    history.append({
-        "username": username,
-        "subject": subject,
-        "correct": correct_count,
-        "total": total,
-        "percent": percent,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-    })
-    save_results_history(history)
-
-
-def results_history_page():
-    st.markdown('<div class="kasym-title">📊 Менің нәтижелерім</div>', unsafe_allow_html=True)
-
-    if st.button("← Басты бетке қайту", use_container_width=True):
-        st.session_state.page = "home"
-        st.rerun()
-
-    st.markdown("---")
-
-    username = st.session_state.get("username") or "student"
-    history = [item for item in load_results_history() if item.get("username") == username]
-
-    if not history:
-        st.info("Әзірге тапсырылған тест нәтижелері жоқ.")
-        return
-
-    st.markdown("### 📚 Тест нәтижелерінің тарихы")
-
-    for idx, item in enumerate(reversed(history), start=1):
-        st.markdown(
-            f"""
-            <div class="card">
-                <h3>#{idx} — {item.get('subject', 'Пән')}</h3>
-                <p>🎯 Нәтиже: <b>{item.get('percent', 0)}%</b></p>
-                <p>✅ Дұрыс: <b>{item.get('correct', 0)} / {item.get('total', 0)}</b></p>
-                <p>🕒 {item.get('date', '')}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
 def logout():
     st.session_state.logged_in = False
     st.session_state.role = None
-    st.session_state.username = None
+    st.session_state.username = ""
+    st.session_state.result_saved = False
     st.session_state.page = "login"
     st.session_state.selected_combination = None
     st.session_state.selected_subject = None
@@ -287,12 +351,14 @@ def login_page():
         if username == "kas01" and password == "kasko100228550357":
             st.session_state.logged_in = True
             st.session_state.username = username
+            st.session_state.result_saved = False
             st.session_state.role = "president"
             st.session_state.page = "admin"
             st.rerun()
         elif username != "" and password != "":
             st.session_state.logged_in = True
             st.session_state.username = username
+            st.session_state.result_saved = False
             st.session_state.role = "user"
             st.session_state.page = "home"
             st.rerun()
@@ -409,11 +475,21 @@ def home_page():
         '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
         unsafe_allow_html=True,
     )
-    if st.button("📊 Менің нәтижелерім", use_container_width=True):
-        st.session_state.page = "results_history"
-        st.rerun()
-
     st.markdown("## 📚 Пәндер комбинациясы")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("📊 Менің нәтижелерім", use_container_width=True):
+            st.session_state.page = "results_history"
+            st.rerun()
+
+    with col2:
+        if st.button("📈 Менің прогрессім", use_container_width=True):
+            st.session_state.page = "progress"
+            st.rerun()
+
+    st.markdown("---")
 
     for combination in combinations:
         if st.button(combination, use_container_width=True):
@@ -446,7 +522,7 @@ def combination_page():
                 st.session_state.current_question = 0
                 st.session_state.user_answers = {}
                 st.session_state.active_questions = []
-                st.session_state.result_saved_for_current_test = False
+                st.session_state.result_saved = False
                 st.session_state.page = "test"
                 st.rerun()
 
@@ -565,20 +641,6 @@ def test_page():
                 st.session_state.current_question += 1
                 st.rerun()
             else:
-                correct_count = sum(
-                    1
-                    for q_index, q_item in enumerate(st.session_state.active_questions)
-                    if st.session_state.user_answers.get(q_index) == q_item["correct"]
-                )
-
-                if not st.session_state.get("result_saved_for_current_test", False):
-                    add_result_to_history(
-                        subject,
-                        correct_count,
-                        len(st.session_state.active_questions)
-                    )
-                    st.session_state.result_saved_for_current_test = True
-
                 st.session_state.page = "result"
                 st.rerun()
 
@@ -600,6 +662,10 @@ def result_page():
 
     wrong_count = total - correct_count
     percent = int(correct_count / total * 100) if total > 0 else 0
+
+    if not st.session_state.get("result_saved", False):
+        add_result_to_history(subject, correct_count, total, percent)
+        st.session_state.result_saved = True
 
     st.markdown(
         '<div class="kasym-title">🎯 Тест аяқталды</div>', unsafe_allow_html=True
@@ -625,7 +691,7 @@ def result_page():
             st.session_state.current_question = 0
             st.session_state.user_answers = {}
             st.session_state.active_questions = []
-            st.session_state.result_saved_for_current_test = False
+            st.session_state.result_saved = False
             st.session_state.page = "test"
             st.rerun()
 
@@ -695,3 +761,5 @@ else:
         result_page()
     elif pg == "results_history":
         results_history_page()
+    elif pg == "progress":
+        progress_page()
