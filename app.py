@@ -223,28 +223,81 @@ if "is_full_ubt" not in st.session_state:
     st.session_state.is_full_ubt = False
 
 # =========================================================
-# CSS
+# PREMIUM CSS STYLES (ЗАМАНАУИ ДИЗАЙН КОДЫ)
 # =========================================================
 st.markdown(
     """
     <style>
-    .kasym-title {
-        font-size: 36px;
-        font-weight: bold;
-        text-align: center;
-        color: #4F46E5;
+    /* Негізгі фон мен қаріп */
+    .stApp {
+        background-color: #0B0F19;
+        color: #F3F4F6;
+        font-family: 'Inter', sans-serif;
     }
-    .kasym-subtitle {
-        font-size: 18px;
+
+    /* Басты тақырыптар */
+    .kasym-title {
+        font-size: 42px;
+        font-weight: 800;
         text-align: center;
-        color: #6B7280;
+        background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0px;
+        letter-spacing: -1px;
+    }
+    
+    .kasym-subtitle {
+        font-size: 16px;
+        text-align: center;
+        color: #9CA3AF;
+        margin-bottom: 30px;
+        font-weight: 500;
+    }
+
+    /* Карточкалар дизайны */
+    .card {
+        background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
     }
-    .card {
-        background-color: #1F2937;
-        padding: 20px;
+
+    /* Streamlit батырмаларын әдемілеу */
+    .stButton>button {
+        border-radius: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        border-color: #6366F1;
+    }
+
+    /* Енгізу өрістері (Input fields) */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div {
+        background-color: #1E293B;
         border-radius: 10px;
-        margin-bottom: 15px;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Sidebar (Бүйірлік панель) дизайны */
+    [data-testid="stSidebar"] {
+        background-color: #0F172A;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Мәтін аймақтары мен радио батырмалар */
+    .stRadio label {
+        font-size: 16px;
+        font-weight: 500;
     }
     </style>
     """,
@@ -283,40 +336,44 @@ def login_page():
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("## 🔐 Жүйеге кіру")
+    # Ортаға келтіру үшін колончалар қолданамыз
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; margin-bottom: 20px;'>🔐 Жүйеге кіру</h3>", unsafe_allow_html=True)
 
-    username = st.text_input("Логин", key="login_username")
-    password = st.text_input("Құпия сөз", type="password", key="login_password")
+        username = st.text_input("Логин", key="login_username")
+        password = st.text_input("Құпия сөз", type="password", key="login_password")
 
-    if st.button("Кіру →", use_container_width=True):
-        username = username.strip()
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        if st.button("Кіру →", use_container_width=True, type="primary"):
+            username = username.strip()
 
-        if username == "" or password == "":
-            st.error("Логин мен құпия сөзді толық енгізіңіз.")
-        else:
-            user = find_user(username, password)
-
-            if user is None:
-                st.error("❌ Логин немесе құпия сөз қате.")
+            if username == "" or password == "":
+                st.error("Логин мен құпия сөзді толық енгізіңіз.")
             else:
-                st.session_state.logged_in = True
-                st.session_state.username = user["username"]
-                st.session_state.full_name = user.get("name", user["username"])
-                st.session_state.role = user.get("role", "user")
-                st.session_state.user_combination = user.get("combination", combinations[0])
-                st.session_state.result_saved = False
+                user = find_user(username, password)
 
-                if user.get("role") == "president":
-                    st.session_state.page = "admin"
-                elif user.get("role") == "prime_minister":
-                    st.session_state.page = "prime_minister"
+                if user is None:
+                    st.error("❌ Логин немесе құпия сөз қате.")
                 else:
-                    st.session_state.page = "home"
+                    st.session_state.logged_in = True
+                    st.session_state.username = user["username"]
+                    st.session_state.full_name = user.get("name", user["username"])
+                    st.session_state.role = user.get("role", "user")
+                    st.session_state.user_combination = user.get("combination", combinations[0])
+                    st.session_state.result_saved = False
 
-                st.rerun()
+                    if user.get("role") == "president":
+                        st.session_state.page = "admin"
+                    elif user.get("role") == "prime_minister":
+                        st.session_state.page = "prime_minister"
+                    else:
+                        st.session_state.page = "home"
 
-    st.markdown("</div>", unsafe_allow_html=True)
+                    st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # PRESIDENT PANEL
@@ -333,7 +390,7 @@ def admin_page():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("➕ Жаңа оқушы/аккаунт жасау", use_container_width=True):
+        if st.button("➕ Жаңа оқушы/аккаунт жасау", use_container_width=True, type="primary"):
             st.session_state.page = "create_user"
             st.rerun()
 
@@ -363,7 +420,7 @@ def create_user_page():
 
     role_value = "prime_minister" if role == "Премьер министр" else "user"
 
-    if st.button("💾 Оқушыны сақтау", use_container_width=True):
+    if st.button("💾 Оқушыны сақтау", use_container_width=True, type="primary"):
         name = name.strip()
         new_username = new_username.strip()
         new_password = new_password.strip()
@@ -435,7 +492,7 @@ def prime_minister_page():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("➕ Жеке сұрақ қосу", use_container_width=True):
+        if st.button("➕ Жеке сұрақ қосу", use_container_width=True, type="primary"):
             st.session_state.page = "add_question"
             st.rerun()
 
@@ -479,7 +536,7 @@ def add_question_page():
     correct_option = st.selectbox("Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
     correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
 
-    if st.button("💾 Сұрақты сақтау", use_container_width=True):
+    if st.button("💾 Сұрақты сақтау", use_container_width=True, type="primary"):
         if question_text and ans1 and ans2 and ans3 and ans4:
             new_q = {
                 "question": question_text,
@@ -559,9 +616,9 @@ def results_history_page():
             f"""
             <div class="card">
                 <h3>📝 {number}-тест — {item.get("subject", "Пән")}</h3>
-                <p>Нәтиже: <b>{item.get("percent", 0)}%</b></p>
+                <p>Нәтиже: <b style="color: #10B981;">{item.get("percent", 0)}%</b></p>
                 <p>Балл: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
-                <p>📅 {item.get("date", "")}</p>
+                <p style="color: #9CA3AF; font-size: 14px;">📅 {item.get("date", "")}</p>
             </div>
             """,
             unsafe_allow_html=True
@@ -602,12 +659,13 @@ def progress_page():
         best_score = max(scores)
         test_count = len(scores)
 
-        st.markdown(f"## 📚 {subject}")
+        st.markdown(f'<div class="card">', unsafe_allow_html=True)
+        st.markdown(f"### 📚 {subject}")
         st.write(f"**Соңғы нәтиже:** {last_score}%")
         st.write(f"**Үздік нәтиже:** {best_score}%")
         st.write(f"**Тест саны:** {test_count}")
         st.progress(last_score / 100)
-        st.markdown("---")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # USER HOME
@@ -689,35 +747,35 @@ def test_page():
     with st.sidebar:
         st.markdown("### 🧮 Калькулятор")
         calc_html = """
-        <div style="background: #1F2937; padding: 12px; border-radius: 10px; border: 1px solid #4F46E5;">
+        <div style="background: #1E293B; padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
             <input type="text" id="calc-display" readonly style="
-                width: 100%; height: 38px; background: #111827; color: #10B981; 
-                font-size: 18px; text-align: right; padding: 4px 8px; border: 1px solid #4B5563; 
-                border-radius: 6px; margin-bottom: 8px; box-sizing: border-box; font-weight: bold;
+                width: 100%; height: 38px; background: #0F172A; color: #10B981; 
+                font-size: 18px; text-align: right; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.1); 
+                border-radius: 8px; margin-bottom: 8px; box-sizing: border-box; font-weight: bold;
             " value="0">
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
                 <button onclick="calcClear()" style="background:#EF4444; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">C</button>
                 <button onclick="calcInput('(')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">(</button>
                 <button onclick="calcInput(')')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">)</button>
-                <button onclick="calcInput('/')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">÷</button>
+                <button onclick="calcInput('/')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">÷</button>
 
-                <button onclick="calcInput('7')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">7</button>
-                <button onclick="calcInput('8')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">8</button>
-                <button onclick="calcInput('9')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">9</button>
-                <button onclick="calcInput('*')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">×</button>
+                <button onclick="calcInput('7')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">7</button>
+                <button onclick="calcInput('8')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">8</button>
+                <button onclick="calcInput('9')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">9</button>
+                <button onclick="calcInput('*')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">×</button>
 
-                <button onclick="calcInput('4')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">4</button>
-                <button onclick="calcInput('5')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">5</button>
-                <button onclick="calcInput('6')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">6</button>
-                <button onclick="calcInput('-')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
+                <button onclick="calcInput('4')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">4</button>
+                <button onclick="calcInput('5')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">5</button>
+                <button onclick="calcInput('6')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">6</button>
+                <button onclick="calcInput('-')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
 
-                <button onclick="calcInput('1')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">1</button>
-                <button onclick="calcInput('2')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">2</button>
-                <button onclick="calcInput('3')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">3</button>
-                <button onclick="calcInput('+')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
+                <button onclick="calcInput('1')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">1</button>
+                <button onclick="calcInput('2')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">2</button>
+                <button onclick="calcInput('3')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">3</button>
+                <button onclick="calcInput('+')" style="background:#6366F1; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
 
-                <button onclick="calcInput('0')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">0</button>
-                <button onclick="calcInput('.')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">.</button>
+                <button onclick="calcInput('0')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">0</button>
+                <button onclick="calcInput('.')" style="background:#334155; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">.</button>
                 <button onclick="calcBackspace()" style="background:#F59E0B; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">⌫</button>
                 <button onclick="calcCalculate()" style="background:#10B981; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">=</button>
             </div>
@@ -834,7 +892,7 @@ def test_page():
     with col_next:
         button_label = "Келесі →" if current + 1 < total else "🎯 Тестті аяқтау"
 
-        if st.button(button_label, use_container_width=True):
+        if st.button(button_label, use_container_width=True, type="primary"):
             if current + 1 < total:
                 st.session_state.current_question += 1
                 st.rerun()
@@ -868,8 +926,8 @@ def result_page():
         f"""
         <div class="card" style="text-align: center;">
             <h2>{st.session_state.selected_subject}</h2>
-            <h1 style="color: #10B981; font-size: 48px;">{percent}%</h1>
-            <p style="font-size: 20px;">Дұрыс балл: <b>{correct_count} / {total}</b></p>
+            <h1 style="color: #10B981; font-size: 54px; font-weight: 800;">{percent}%</h1>
+            <p style="font-size: 20px;">Дұрыс жауаптар: <b>{correct_count} / {total}</b></p>
         </div>
         """,
         unsafe_allow_html=True
