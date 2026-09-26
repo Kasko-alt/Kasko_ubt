@@ -89,7 +89,10 @@ def logout():
 def top_logout_button():
     col1, col2 = st.columns([8, 2])
     with col1:
-        st.write(f"👤 Пайдаланушы: **{st.session_state.username}** ({users_db.get(st.session_state.username, {}).get('name', '')})")
+        # Безопасное получение имени пользователя
+        user_info = users_db.get(st.session_state.username, {})
+        display_name = user_info.get("name", st.session_state.username)
+        st.write(f"👤 Пайдаланушы: **{st.session_state.username}** ({display_name})")
     with col2:
         if st.button("Шығу", key="top_logout"):
             logout()
@@ -121,7 +124,11 @@ def home_page():
     st.title("🏠 Басты бет")
     role = st.session_state.role
     
-    st.write(f"Қош келдіңіз, **{users_db[st.session_state.username]['name']}**!")
+    # ИСПРАВЛЕНО: Безопасное обращение к users_db через .get()
+    user_info = users_db.get(st.session_state.username, {})
+    display_name = user_info.get("name", st.session_state.username)
+    
+    st.write(f"Қош келдіңіз, **{display_name}**!")
     st.info(f"Сіздің жүйедегі рөліңіз: **{role.upper()}**")
     
     st.markdown("### Қолжетімді бөлімдер:")
@@ -228,7 +235,7 @@ def add_question_page():
     st.title("➕ Жаңа тест сұрағын қосу")
     
     subject = st.text_input("Пән атауы (мысалы: Математика, Физика)")
-    question_text = st.text_area("Сұрақ матні")
+    question_text = st.text_area("Сұрақ мәтіні")
     
     opt1 = st.text_input("Вариант A")
     opt2 = st.text_input("Вариант B")
@@ -326,7 +333,6 @@ def test_page():
         st.markdown("---")
         
     if st.button("Тестті аяқтау"):
-        # Нәтижені есептеу
         score = 0
         total = len(questions)
         for q in questions:
@@ -374,7 +380,6 @@ def result_page():
 def results_history_page():
     st.title("📊 Нәтижелер тарихы")
     
-    # Тек ағымдағы пайдаланушының нәтижесін көрсету (егер Президент болмаса)
     if st.session_state.role == "president":
         user_results = results_db
     else:
@@ -391,7 +396,7 @@ def results_history_page():
         st.rerun()
 
 def progress_page():
-    st.title("📈 Прогресс және Аналитика")
+    st.title("📈 Прогресс және Статистика")
     
     user_results = [r for r in results_db if r["username"] == st.session_state.username]
     
