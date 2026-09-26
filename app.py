@@ -19,6 +19,7 @@ st.set_page_config(
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
 USERS_FILE = "users.json"
+MISTAKES_FILE = "mistakes_history.json"
 
 # =========================================================
 # ҚАУІПСІЗДІК: ПАРОЛЬДІ ХЭШТЕУ ФУНКЦИЯСЫ
@@ -159,7 +160,7 @@ def save_questions():
 questions = load_questions()
 
 # =========================================================
-# НӘТИЖЕЛЕР
+# НӘТИЖЕЛЕР МЕН ҚАТЕЛЕР ЖҮЙЕСІ
 # =========================================================
 def load_results_history():
     if os.path.exists(RESULTS_FILE):
@@ -170,12 +171,26 @@ def load_results_history():
                     return data
         except Exception:
             pass
-
     return []
 
 def save_results_history(history):
     with open(RESULTS_FILE, "w", encoding="utf-8") as file:
         json.dump(history, file, ensure_ascii=False, indent=4)
+
+def load_mistakes():
+    if os.path.exists(MISTAKES_FILE):
+        try:
+            with open(MISTAKES_FILE, "r", encoding="utf-8") as file:
+                data = json.load(file)
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            pass
+    return []
+
+def save_mistakes(mistakes):
+    with open(MISTAKES_FILE, "w", encoding="utf-8") as file:
+        json.dump(mistakes, file, ensure_ascii=False, indent=4)
 
 def add_result_to_history(subject, correct, total, percent):
     username = st.session_state.get("username", "Оқушы")
@@ -191,8 +206,22 @@ def add_result_to_history(subject, correct, total, percent):
             "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
         }
     )
-
     save_results_history(history)
+
+def save_user_mistakes(wrong_questions_list):
+    username = st.session_state.get("username", "Оқушы")
+    mistakes = load_mistakes()
+
+    for item in wrong_questions_list:
+        mistakes.append({
+            "username": username,
+            "subject": item.get("subject"),
+            "question": item.get("question"),
+            "answers": item.get("answers"),
+            "correct": item.get("correct"),
+            "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
+        })
+    save_mistakes(mistakes)
 
 # =========================================================
 # SESSION STATE
@@ -223,6 +252,8 @@ if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
 if "is_full_ubt" not in st.session_state:
     st.session_state.is_full_ubt = False
+if "filter_mistake_subject" not in st.session_state:
+    st.session_state.filter_mistake_subject = None
 
 # =========================================================
 # CSS
@@ -270,12 +301,13 @@ def logout():
     st.session_state.user_answers = {}
     st.session_state.active_questions = []
     st.session_state.is_full_ubt = False
+    st.session_state.filter_mistake_subject = None
     st.rerun()
 
 def top_logout_button():
     col1, col2 = st.columns([8, 2])
     with col2:
-        if st.button("🚪 Жалпы шығу", key="top_logout"):
+        if st.button("🚪 Шығу", key="top_logout"):
             logout()
 
 # =========================================================
@@ -344,12 +376,6 @@ def admin_page():
             st.session_state.page = "users_list"
             st.rerun()
 
-    st.markdown("---")
-    st.markdown("### ℹ️ Рөлдер")
-    st.write("👑 **Президент** — аккаунттарды басқарады.")
-    st.write("👨‍💼 **Премьер министр** — сұрақтар базасын басқарады.")
-    st.write("👤 **Оқушы** — тест тапсырады және нәтижесін көреді.")
-
 # =========================================================
 # CREATE USER
 # =========================================================
@@ -367,7 +393,6 @@ def create_user_page():
     new_username = st.text_input("Жаңа логин")
     new_password = st.text_input("Жаңа құпия сөз", type="password")
     role = st.selectbox("Рөлді таңдаңыз", ["Оқушы", "Премьер министр"])
-
     selected_comb = st.selectbox("Бағыты (Оқушылар үшін):", combinations)
 
     role_value = "prime_minister" if role == "Премьер министр" else "user"
@@ -454,7 +479,6 @@ def prime_minister_page():
             st.rerun()
 
     st.markdown("---")
-
     if st.button("👤 Оқушы режиміне өту", use_container_width=True):
         st.session_state.role = "user"
         st.session_state.user_combination = combinations[0]
@@ -544,7 +568,7 @@ def question_list_page():
                     st.rerun()
 
 # =========================================================
-# RESULTS HISTORY
+# RESULTS HISTORY (НӘТИЖЕЛЕР МЕН СОЛ ПӘННІҢ ҚАТЕЛЕРІ)
 # =========================================================
 def results_history_page():
     top_logout_button()
@@ -556,7 +580,6 @@ def results_history_page():
 
     username = st.session_state.get("username", "Оқушы")
     history = load_results_history()
-
     my_results = [item for item in history if item.get("username") == username]
 
     if not my_results:
@@ -566,17 +589,28 @@ def results_history_page():
     st.markdown("---")
 
     for number, item in enumerate(reversed(my_results), 1):
+        subj = item.get("subject", "Пән")
+        percent = item.get("percent", 0)
+        correct = item.get("correct", 0)
+        total = item.get("total", 0)
+        date = item.get("date", "")
+
         st.markdown(
             f"""
             <div class="card">
-                <h3>📝 {number}-тест — {item.get("subject", "Пән")}</h3>
-                <p>Нәтиже: <b>{item.get("percent", 0)}%</b></p>
-                <p>Балл: <b>{item.get("correct", 0)} / {item.get("total", 0)}</b></p>
-                <p>📅 {item.get("date", "")}</p>
+                <h3>📝 Тест №{number} — {subj}</h3>
+                <p>Нәтиже: <b>{percent}%</b> | Балл: <b>{correct} / {total}</b></p>
+                <p>📅 Күні: {date}</p>
             </div>
             """,
             unsafe_allow_html=True
         )
+
+        # Әр нәтиженің астына сол пән бойынша қатемен жұмысқа өтетін батырма қоямыз
+        if st.button(f"❌ Осы пән бойынша қатемен жұмысты көру ({subj})", key=f"btn_mistake_{number}_{subj}", use_container_width=True):
+            st.session_state.filter_mistake_subject = subj
+            st.session_state.page = "mistakes"
+            st.rerun()
 
 # =========================================================
 # PROGRESS
@@ -591,7 +625,6 @@ def progress_page():
 
     username = st.session_state.get("username", "Оқушы")
     history = load_results_history()
-
     my_results = [item for item in history if item.get("username") == username]
 
     if not my_results:
@@ -622,38 +655,100 @@ def progress_page():
         st.markdown("---")
 
 # =========================================================
-# USER HOME (ҚАУІПСІЗ ТҮРДЕ ТҮЗЕТІЛДІ)
+# ҚАТЕМЕН ЖҰМЫС БЕТІ (ФИЛЬТРЛЕНГЕН НЕМЕСЕ БАРЛЫҚҚА СӘЙКЕСТІ)
 # =========================================================
-def home_page():
+def mistakes_page():
     top_logout_button()
-    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
-
-    st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
     
+    filter_sub = st.session_state.get("filter_mistake_subject", None)
+    title_text = f"❌ Қатемен жұмыс: {filter_sub}" if filter_sub else "❌ Қатемен жұмыс (Барлық қателер)"
+    st.title(title_text)
+
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📊 Менің нәтижелерім", use_container_width=True):
+        if st.button("← Менің нәтижелеріме қайту", use_container_width=True):
+            st.session_state.filter_mistake_subject = None
             st.session_state.page = "results_history"
             st.rerun()
-
     with col2:
-        if st.button("📈 Менің прогрессім", use_container_width=True):
-            st.session_state.page = "progress"
+        if st.button("🏠 Басты бетке қайту", use_container_width=True):
+            st.session_state.filter_mistake_subject = None
+            st.session_state.page = "home"
             st.rerun()
 
     st.markdown("---")
 
-    # 🎯 ОҚУШЫНЫҢ ЖЕКЕ БАҒЫТЫНЫҢ ТҮЗЕТІЛГЕН ЛОГИКАСЫ
+    username = st.session_state.get("username", "Оқушы")
+    all_mistakes = load_mistakes()
+    my_mistakes = [m for m in all_mistakes if m.get("username") == username]
+
+    # Егер белгілі бір пән бойынша сүзгі қойылса
+    if filter_sub:
+        my_mistakes = [m for m in my_mistakes if m.get("subject") == filter_sub]
+
+    if not my_mistakes:
+        st.success("🎉 Керемет! Бұл пән бойынша қате жіберілген сұрақтар жоқ немесе бәрін дұрыс таптыңыз.")
+        return
+
+    if st.button("🧹 Осы тізімдегі қателерді тазарту", type="secondary"):
+        if filter_sub:
+            new_all_mistakes = [m for m in all_mistakes if not (m.get("username") == username and m.get("subject") == filter_sub)]
+        else:
+            new_all_mistakes = [m for m in all_mistakes if m.get("username") != username]
+        save_mistakes(new_all_mistakes)
+        st.success("Қателер тізімі тазартылды!")
+        st.rerun()
+
+    st.markdown("---")
+
+    for idx, item in enumerate(reversed(my_mistakes), 1):
+        correct_idx = item.get("correct")
+        answers = item.get("answers", [])
+        correct_text = answers[correct_idx] if 0 <= correct_idx < len(answers) else "Белгісіз"
+
+        st.markdown(
+            f"""
+            <div class="card">
+                <p>📚 <b>Пән:</b> {item.get('subject')}</p>
+                <p>📅 <b>Күні:</b> {item.get('date')}</p>
+                <h4>❓ Сұрақ: {item.get('question')}</h4>
+                <p style="color: #10B981;">✅ <b>Дұрыс жауап:</b> {correct_text}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+# =========================================================
+# USER HOME
+# =========================================================
+def home_page():
+    top_logout_button()
+    
+    with st.sidebar:
+        st.markdown(f"### 👋 Сәлем, {st.session_state.full_name}!")
+        st.markdown("---")
+        if st.button("📊 Менің нәтижелерім", use_container_width=True):
+            st.session_state.page = "results_history"
+            st.rerun()
+        if st.button("📈 Менің прогрессім", use_container_width=True):
+            st.session_state.page = "progress"
+            st.rerun()
+        if st.button("❌ Қатемен жұмыс", use_container_width=True):
+            st.session_state.filter_mistake_subject = None
+            st.session_state.page = "mistakes"
+            st.rerun()
+
+    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
+
     user_comb = st.session_state.get("user_combination")
     if not user_comb:
-        user_comb = combinations[0]  # Қателік туындамауы үшін әдепкі бағытты таңдайды
+        user_comb = combinations[0]
 
     st.session_state.selected_combination = user_comb
 
     st.markdown(f"## 💻 Таңдалған бағытыңыз: **{user_comb}**")
 
-    # 1. ТОЛЫҚ ҰБТ
     if st.button(f"🚀 {user_comb} бойынша толық ҰБТ тапсыру (5 пән)", type="primary", use_container_width=True):
         st.session_state.selected_subject = f"ҰБТ: {user_comb}"
         st.session_state.is_full_ubt = True
@@ -699,7 +794,7 @@ def home_page():
                 st.rerun()
 
 # =========================================================
-# TEST PAGE (ҚАУІПСІЗ ТҮРДЕ ТҮЗЕТІЛДІ)
+# TEST PAGE
 # =========================================================
 def test_page():
     top_logout_button()
@@ -870,16 +965,21 @@ def result_page():
     subject_questions = st.session_state.active_questions
     total = len(subject_questions)
     correct_count = 0
+    wrong_questions = []
 
     for idx, q in enumerate(subject_questions):
         user_ans = st.session_state.user_answers.get(idx)
         if user_ans is not None and user_ans == q["correct"]:
             correct_count += 1
+        else:
+            wrong_questions.append(q)
 
     percent = int((correct_count / total) * 100) if total > 0 else 0
 
     if not st.session_state.result_saved:
         add_result_to_history(st.session_state.selected_subject, correct_count, total, percent)
+        if wrong_questions:
+            save_user_mistakes(wrong_questions)
         st.session_state.result_saved = True
 
     st.markdown(
@@ -893,6 +993,18 @@ def result_page():
         unsafe_allow_html=True
     )
 
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("❌ Қатемен жұмыс жасау", use_container_width=True, type="primary"):
+            st.session_state.filter_mistake_subject = None
+            st.session_state.page = "mistakes"
+            st.rerun()
+    with col2:
+        if st.button("📊 Менің нәтижелерімді көру", use_container_width=True):
+            st.session_state.page = "results_history"
+            st.rerun()
+
+    st.markdown("---")
     if st.button("🏠 Басты бетке қайту", use_container_width=True):
         st.session_state.page = "home"
         st.rerun()
@@ -927,6 +1039,8 @@ def main():
             results_history_page()
         elif page == "progress":
             progress_page()
+        elif page == "mistakes":
+            mistakes_page()
 
 if __name__ == "__main__":
     main()
