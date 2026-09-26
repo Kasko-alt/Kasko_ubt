@@ -272,7 +272,7 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АВТО-ПАРСЕР (40 СҰРАҚТЫ БІРДЕН ЖҮКТЕУ)
+# АВТО-ПАРСЕР ЖӘНЕ СҰРАҚТАРДЫ ЖОЮ ФУНКЦИЯСЫ (ПРЕМЬЕР ҮШІН)
 # =========================================================
 def parse_bulk_questions(raw_text):
     questions_list = []
@@ -314,7 +314,7 @@ def parse_bulk_questions(raw_text):
     return questions_list
 
 def render_question_manager():
-    tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (40+ сұрақ)", "✍️ Жеке сұрақ қосу"])
+    tab1, tab2, tab3 = st.tabs(["⚡ Жылдам массалық жүктеу (40+)", "✍️ Жеке сұрақ қосу", "🗑️ Сұрақтарды жою (Удалить)"])
 
     with tab1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -374,23 +374,41 @@ def render_question_manager():
                 st.error("⚠️ Барлық өрістерді толтырыңыз!")
         st.markdown('</div>', unsafe_allow_html=True)
 
+    with tab3:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("### 🗑️ Сұрақты өшіру (Удалить)")
+        del_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="del_sub")
+        sub_list = questions.get(del_subject, [])
+
+        if not sub_list:
+            st.info(f"⚠️ {del_subject} пәнінде әзірге сұрақтар жоқ.")
+        else:
+            q_options = {f"{i+1}. {q['question'][:50]}...": i for i, q in enumerate(sub_list)}
+            selected_q_label = st.selectbox("Өшіретін сұрақты таңдаңыз:", list(q_options.keys()))
+
+            if st.button("🗑️ Таңдалған сұрақты жою", type="primary"):
+                idx_to_delete = q_options[selected_q_label]
+                removed = sub_list.pop(idx_to_delete)
+                questions[del_subject] = sub_list
+                save_questions()
+                st.success(f"🗑️ Сәтті жойылды: \"{removed['question'][:40]}...\"")
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
 def prime_minister_page():
     if st.button("🚪 Шығу"): logout()
     st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Премьер-министр панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Сұрақтар базасын басқару орталығы</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Сұрақтар базасын толық басқару және жою</div>', unsafe_allow_html=True)
     render_question_manager()
 
 def admin_page():
     if st.button("🚪 Шығу"): logout()
     st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Президент панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Жүйені және қолданушыларды басқару</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Қолданушыларды басқару және жүйе мониторингі</div>', unsafe_allow_html=True)
 
-    admin_tabs = st.tabs(["⚡ Сұрақтарды басқару", "👥 Қолданушыларды басқару", "📊 Статистика"])
+    admin_tabs = st.tabs(["👥 Қолданушыларды басқару", "📊 Статистика"])
 
     with admin_tabs[0]:
-        render_question_manager()
-
-    with admin_tabs[1]:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### ➕ Жаңа қолданушы тіркеу")
         new_u = st.text_input("Логин:")
@@ -421,7 +439,7 @@ def admin_page():
             st.write(f"- **{u.get('name', 'Аты жоқ')}** (@{u.get('username')}) — Ролі: `{u.get('role')}`")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with admin_tabs[2]:
+    with admin_tabs[1]:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 📊 Жүйе статистикасы")
         total_q = sum(len(q_list) for q_list in questions.values())
@@ -525,7 +543,7 @@ def home_page():
                 sub_qs = questions.get(sub, [])
                 
                 if not sub_qs:
-                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Президент немесе Премьер-министр панелі арқылы сұрақтарды қосыңыз.")
+                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Премьер-министр панелі арқылы сұрақтарды қосыңыз.")
                 else:
                     for q_idx, q in enumerate(sub_qs):
                         global_key = f"{sub}_{q_idx}"
