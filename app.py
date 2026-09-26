@@ -91,7 +91,7 @@ def default_users():
             "username": "kas01",
             "password": hash_password("kasko100228550357"),
             "name": "KASYM",
-            "role": "president",
+            "role": "admin",
             "combination": None,
         }
     ]
@@ -265,14 +265,14 @@ def login_page():
                 st.session_state.username = user["username"]
                 st.session_state.full_name = user.get("name", "")
                 st.session_state.role = user.get("role", "user")
-                st.session_state.page = "admin" if user["role"] == "president" else ("prime_minister" if user["role"] == "prime_minister" else "home")
+                st.session_state.page = "admin" if user["role"] == "admin" else ("moderator" if user["role"] == "moderator" else "home")
                 st.rerun()
             else:
                 st.error("❌ Логин немесе құпия сөз қате.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АВТО-ПАРСЕР ЖӘНЕ СҰРАҚТАРДЫ ЖОЮ ФУНКЦИЯСЫ (ПРЕМЬЕР ҮШІН)
+# АВТО-ПАРСЕР ЖӘНЕ СҰРАҚТАРДЫ ЖОЮ ФУНКЦИЯСЫ (МОДЕРАТОР ҮШІН)
 # =========================================================
 def parse_bulk_questions(raw_text):
     questions_list = []
@@ -395,15 +395,15 @@ def render_question_manager():
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-def prime_minister_page():
+def moderator_page():
     if st.button("🚪 Шығу"): logout()
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Премьер-министр панелі</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">🛠️ Модератор панелі</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Сұрақтар базасын толық басқару және жою</div>', unsafe_allow_html=True)
     render_question_manager()
 
 def admin_page():
     if st.button("🚪 Шығу"): logout()
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Президент панелі</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Администратор панелі</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Қолданушыларды басқару және жүйе мониторингі</div>', unsafe_allow_html=True)
 
     admin_tabs = st.tabs(["👥 Қолданушыларды басқару", "📊 Статистика"])
@@ -414,7 +414,7 @@ def admin_page():
         new_u = st.text_input("Логин:")
         new_p = st.text_input("Құпия сөз:", type="password")
         new_n = st.text_input("Толық аты-жөні:")
-        new_r = st.selectbox("Ролі:", ["user", "prime_minister", "president"])
+        new_r = st.selectbox("Ролі:", ["user", "moderator", "admin"])
         
         if st.button("Қолданушыны сақтау", type="primary"):
             if new_u and new_p:
@@ -543,7 +543,7 @@ def home_page():
                 sub_qs = questions.get(sub, [])
                 
                 if not sub_qs:
-                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Премьер-министр панелі арқылы сұрақтарды қосыңыз.")
+                    st.info(f"⚠️ {sub} пәні бойынша әзірге сұрақтар жоқ. Модератор панелі арқылы сұрақтарды қосыңыз.")
                 else:
                     for q_idx, q in enumerate(sub_qs):
                         global_key = f"{sub}_{q_idx}"
@@ -597,7 +597,7 @@ def main():
     else:
         p = st.session_state.page
         if p == "admin": admin_page()
-        elif p == "prime_minister": prime_minister_page()
+        elif p == "moderator": moderator_page()
         else: home_page()
 
 if __name__ == "__main__":
