@@ -43,10 +43,6 @@ all_subjects = [
 ]
 
 default_questions = {
-    "Биология": [],
-    "Химия": [],
-    "Физика": [],
-    "Математика": [],
     "Информатика": [
         {
             "question": "Python тілінде экранға мәтін шығару үшін қай функция қолданылады?",
@@ -58,19 +54,7 @@ default_questions = {
             "answers": ["float", "str", "int", "bool"],
             "correct": 2,
         },
-        {
-            "question": "10 // 3 нәтижесі неге тең?",
-            "answers": ["3", "3.33", "1", "0"],
-            "correct": 0,
-        },
-    ],
-    "Дүниежүзі тарихы": [],
-    "Ағылшын тілі": [],
-    "География": [],
-    "Құқық": [],
-    "Қазақстан тарихы": [],
-    "Оқу сауаттылығы": [],
-    "Математикалық сауаттылық": [],
+    ]
 }
 
 
@@ -113,68 +97,51 @@ if "active_questions" not in st.session_state:
     st.session_state.active_questions = []
 
 # =========================================================
-# CSS (ЖАҢАРТЫЛҒАН БАСКЫЧ СТИЛДЕРИ)
+# CSS (СУРЕТТЕГІДЕЙ БАТЫРМА СТИЛЬДЕРІ)
 # =========================================================
 
 st.markdown(
     """
 <style>
 .stApp {
-    background: linear-gradient(135deg, #07111f 0%, #0b1b31 50%, #06101d 100%);
-    color: white;
+    background: #ffffff;
+    color: #000000;
 }
 
 .block-container {
     max-width: 1200px;
-    padding-top: 30px;
+    padding-top: 20px;
 }
 
-h1, h2, h3 { color: white; }
-
-.kasym-title {
-    text-align: center;
-    font-size: 55px;
-    font-weight: 900;
-    margin-bottom: 5px;
-    color: #ffffff;
+/* Навигация батырмаларының ортақ стилі */
+div[data-testid="stHorizontalBlock"] button {
+    border-radius: 6px !important;
+    height: 38px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 0px !important;
+    margin: 2px !important;
 }
 
-.kasym-subtitle {
-    text-align: center;
-    font-size: 20px;
-    color: #8fb8ff;
-    margin-bottom: 40px;
-}
-
-.card {
-    background: rgba(20, 39, 65, 0.85);
-    border: 1px solid rgba(100, 160, 255, 0.18);
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 20px;
-}
-
-.subject-card {
-    background: linear-gradient(135deg, #102746, #0b1d35);
-    border: 1px solid #234d80;
-    border-radius: 18px;
-    padding: 22px;
-    margin: 10px 0;
-}
-
-/* 1. Белгиленбеген суроолор: тунук фон, жашыл чек ара жана жашыл текст */
+/* 1. Белгіленбеген (әлі жауап берілмеген) сұрақтар - Ашық көк */
 div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
-    background-color: transparent !important;
-    border: 1.5px solid #00c853 !important;
-    color: #00e676 !important;
+    background-color: #8ccfff !important;
+    color: #000000 !important;
+    border: none !important;
 }
 
-/* 2. Белгиленген (жооп берилген) суроолор: толук жашыл фон */
-div[data-testid="stHorizontalBlock"] button[data-answered="true"] {
-    background-color: #00c853 !important;
-    border: 1.5px solid #00c853 !important;
+/* 2. Жауап берілген сұрақтар - Жасыл */
+div[data-testid="stHorizontalBlock"] button[data-status="answered"] {
+    background-color: #4CAF50 !important;
     color: #ffffff !important;
-    font-weight: bold !important;
+    border: 1px solid #1b5e20 !important;
+}
+
+/* 3. Ағымдағы белсенді сұрақ - Қанық көк + Қара жиек */
+div[data-testid="stHorizontalBlock"] button[kind="primary"] {
+    background-color: #2196F3 !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
 }
 </style>
 """,
@@ -195,17 +162,12 @@ def logout():
 
 
 def top_logout_button():
-    if st.button("🚪 Жалпы шығу", key="top_logout"):
+    if st.button("🚪 Шығу", key="top_logout"):
         logout()
 
 
 def login_page():
-    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.title("🎓 KASYM EDU")
     st.markdown("## 🔐 Кіру")
 
     username = st.text_input("Логин")
@@ -223,41 +185,11 @@ def login_page():
             st.session_state.page = "home"
             st.rerun()
         else:
-            st.error("Логин мен құпия сөзді енгіз.")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def admin_page():
-    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="kasym-subtitle">👑 PRESIDENT PANEL</div>', unsafe_allow_html=True
-    )
-    st.success("Сен Президент режиміндесің.")
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("➕ Сұрақ қосу", use_container_width=True):
-            st.session_state.page = "add_question"
-            st.rerun()
-    with col2:
-        if st.button("📚 Пәндер базасы", use_container_width=True):
-            st.session_state.page = "question_list"
-            st.rerun()
-    with col3:
-        if st.button("👤 Оқушы режимі", use_container_width=True):
-            st.session_state.role = "user"
-            st.session_state.page = "home"
-            st.rerun()
+            st.error("Логин мен құпия сөзді енгізіңіз.")
 
 
 def home_page():
-    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown("## 📚 Пәндер комбинациясы")
-
+    st.title("📚 Пәндер комбинациясы")
     for combination in combinations:
         if st.button(combination, use_container_width=True):
             st.session_state.selected_combination = combination
@@ -281,7 +213,7 @@ def combination_page():
         with cols[i]:
             count = len(questions.get(subject, []))
             if st.button(
-                f"📘 {subject}\n\n{count} сұрақ",
+                f"📘 {subject} ({count} сұрақ)",
                 use_container_width=True,
                 key=f"main_{subject}",
             ):
@@ -331,39 +263,36 @@ def test_page():
     current = st.session_state.current_question
     total = len(subject_questions)
 
-    st.markdown("### Сұрақтар тізімі:")
-
-    cols_per_row = 10 if total >= 10 else total
-    nav_cols = st.columns(cols_per_row)
+    # =========================================================
+    # СУРЕТТЕГІДЕЙ СҰРАҚТАР НЕНАВИГАЦИЯСЫ
+    # =========================================================
+    nav_cols = st.columns(20)
 
     for i in range(total):
-        col_idx = i % cols_per_row
+        col_idx = i % 20
         is_current = i == current
         is_answered = (
             i in st.session_state.user_answers
             and st.session_state.user_answers[i] is not None
         )
 
+        label = f"{i + 1}"
+
         if is_current:
-            label = f"[{i + 1}]"
             btn_type = "primary"
-        elif is_answered:
-            label = f"✓ {i + 1}"
-            btn_type = "secondary"
         else:
-            label = f"{i + 1}"
             btn_type = "secondary"
 
         with nav_cols[col_idx]:
-            # HTML атрибуту аркылуу белгиленген баскычка толук жашыл түс берилет
+            # Жауап берілген сұрақты жасыл түске бояу
             if is_answered and not is_current:
                 st.markdown(
                     f"""
                     <script>
                     var elements = window.parent.document.querySelectorAll('button');
-                    for (var i = 0; i < elements.length; i++) {{
-                        if (elements[i].innerText.includes('✓ {i + 1}')) {{
-                            elements[i].setAttribute('data-answered', 'true');
+                    for (var j = 0; j < elements.length; j++) {{
+                        if (elements[j].innerText.trim() === '{i + 1}') {{
+                            elements[j].setAttribute('data-status', 'answered');
                         }}
                     }}
                     </script>
@@ -384,12 +313,8 @@ def test_page():
 
     question = subject_questions[current]
     st.markdown(f"### Сұрақ {current + 1} / {total}")
-    st.progress((current + 1) / total)
 
-    st.markdown(
-        f'<div class="card"><h3>{question["question"]}</h3></div>',
-        unsafe_allow_html=True,
-    )
+    st.subheader(question["question"])
 
     saved_index = st.session_state.user_answers.get(current, None)
     answer = st.radio(
