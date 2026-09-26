@@ -430,7 +430,7 @@ def prime_minister_page():
     st.success(f"Қош келдіңіз, {st.session_state.full_name}!")
 
     st.markdown("## 📚 Сұрақтар базасын басқару")
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         if st.button("➕ Жеке сұрақ қосу", use_container_width=True):
@@ -438,11 +438,6 @@ def prime_minister_page():
             st.rerun()
 
     with col2:
-        if st.button("📥 Excel/CSV арқылы жүктеу", use_container_width=True):
-            st.session_state.page = "upload_excel"
-            st.rerun()
-
-    with col3:
         if st.button("📚 Сұрақтар базасы", use_container_width=True):
             st.session_state.page = "question_list"
             st.rerun()
@@ -453,76 +448,6 @@ def prime_minister_page():
         st.session_state.role = "user"
         st.session_state.page = "home"
         st.rerun()
-
-# =========================================================
-# EXCEL / CSV арқылы сұрақтарды жүктеу
-# =========================================================
-def upload_excel_page():
-    st.title("📥 Excel немесе CSV файлы арқылы сұрақ жүктеу")
-
-    if st.session_state.role != "prime_minister":
-        st.error("Бұл бөлімге тек Премьер министр кіре алады.")
-        return
-
-    if st.button("← Панельге қайту", use_container_width=True):
-        st.session_state.page = "prime_minister"
-        st.rerun()
-
-    st.markdown("---")
-
-    selected_subject = st.selectbox("Сұрақтар қосылатын пәнді таңдаңыз:", all_subjects)
-
-    st.info(
-        "💡 **Файл талаптары:**\n"
-        "Файлыңызда (Excel немесе CSV) келесі бағандар болуы тиіс:\n"
-        "- `question`: Сұрақтың мәтіні\n"
-        "- `answer1`, `answer2`, `answer3`, `answer4`: 4 жауап нұсқасы\n"
-        "- `correct`: Дұрыс жауаптың нөмірі (1, 2, 3 немесе 4)"
-    )
-
-    uploaded_file = st.file_uploader("Excel (.xlsx) немесе CSV (.csv) файлын таңдаңыз", type=["xlsx", "csv"])
-
-    if uploaded_file is not None:
-        try:
-            if uploaded_file.name.endswith(".csv"):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
-
-            required_cols = {"question", "answer1", "answer2", "answer3", "answer4", "correct"}
-            if not required_cols.issubset(set(df.columns)):
-                st.error("❌ Файлда қажетті бағандар түгел емес! Өтініш, файл құрылымын тексеріңіз.")
-            else:
-                st.write("📋 Жүктелген деректерді алдын ала қарау:")
-                st.dataframe(df.head())
-
-                if st.button("🚀 Сұрақтарды базаға сақтау", use_container_width=True):
-                    added_count = 0
-                    if selected_subject not in questions:
-                        questions[selected_subject] = []
-
-                    for _, row in df.iterrows():
-                        corr_val = int(row["correct"]) - 1  # Index 0-3 аралығына ауыстыру
-                        corr_val = max(0, min(3, corr_val)) # Қателіктерден қорғау
-
-                        new_q = {
-                            "question": str(row["question"]),
-                            "answers": [
-                                str(row["answer1"]),
-                                str(row["answer2"]),
-                                str(row["answer3"]),
-                                str(row["answer4"]),
-                            ],
-                            "correct": corr_val,
-                        }
-                        questions[selected_subject].append(new_q)
-                        added_count += 1
-
-                    save_questions()
-                    st.success(f"🎉 «{selected_subject}» пәніне {added_count} сұрақ сәтті қосылды!")
-
-        except Exception as e:
-            st.error(f"Файлды оқу кезінде қателік шықты: {e}")
 
 # =========================================================
 # ADD QUESTION
@@ -963,13 +888,6 @@ else:
     elif pg == "add_question":
         if st.session_state.role == "prime_minister":
             add_question_page()
-        else:
-            st.session_state.page = "home"
-            st.rerun()
-
-    elif pg == "upload_excel":
-        if st.session_state.role == "prime_minister":
-            upload_excel_page()
         else:
             st.session_state.page = "home"
             st.rerun()
