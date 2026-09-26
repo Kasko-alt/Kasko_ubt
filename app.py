@@ -284,12 +284,9 @@ h1, h2, h3 {
     font-weight: 600 !important;
 }
 
-/* =====================================================
-   АРТҚА БАТЫРМАСЫ
-   ===================================================== */
-
-.back-button {
-    margin-bottom: 15px;
+/* Сұрақтар навигациясы батырмаларының стилі */
+div[data-testid="stHorizontalBlock"] button {
+    border-radius: 8px !important;
 }
 
 </style>
@@ -610,7 +607,7 @@ def combination_page():
 
 
 # =========================================================
-# TEST (ӨЗГЕРТІЛГЕН БӨЛІМ)
+# TEST (СҰРАҚТАР НАВИГАЦИЯСЫ ҚОСЫЛҒАН)
 # =========================================================
 
 
@@ -663,8 +660,38 @@ def test_page():
 
     subject_questions = st.session_state.active_questions
     current = st.session_state.current_question
-
     total = len(subject_questions)
+
+    # =========================================================
+    # СҰРАҚТАР НӨМІРЛЕРІ БОЙЫНША НАВИГАЦИЯ (1, 2, 3...)
+    # =========================================================
+    st.markdown("### Сұрақтар тизімі:")
+    nav_cols = st.columns(min(total, 15))  # Қатарда батырмаларды орналастыру
+
+    for i in range(total):
+        col_idx = i % 15
+        with nav_cols[col_idx]:
+            # Ағымдағы, белгіленген немесе белгіленбеген сұрақты белгілеу
+            if i == current:
+                label = f"[{i + 1}]"
+            elif (
+                i in st.session_state.user_answers
+                and st.session_state.user_answers[i] is not None
+            ):
+                label = f"✓{i + 1}"
+            else:
+                label = f"{i + 1}"
+
+            if st.button(
+                label,
+                key=f"nav_btn_{i}",
+                use_container_width=True,
+                type="primary" if i == current else "secondary",
+            ):
+                st.session_state.current_question = i
+                st.rerun()
+
+    st.markdown("---")
 
     question = subject_questions[current]
 
@@ -683,7 +710,7 @@ def test_page():
         unsafe_allow_html=True,
     )
 
-    # Моңа кадәр сайланган җавап булса, шуны күрсәтү
+    # Алдын ала таңдалған жауапты жүктеу
     saved_index = st.session_state.user_answers.get(current, None)
 
     answer = st.radio(
@@ -693,33 +720,27 @@ def test_page():
         key=f"question_{current}",
     )
 
+    # Жауап таңдалса, бірден session_state-ке сақтаймыз
+    if answer is not None:
+        st.session_state.user_answers[current] = question["answers"].index(
+            answer
+        )
+
     col_back, col_next = st.columns(2)
 
-    # «← Артқа» батырмасы (беренче сорауда булмаса күрсәтелә)
+    # «← Артқа» батырмасы
     with col_back:
         if current > 0:
             if st.button("← Артқа", use_container_width=True):
-                if answer is not None:
-                    st.session_state.user_answers[current] = question[
-                        "answers"
-                    ].index(answer)
                 st.session_state.current_question -= 1
                 st.rerun()
 
-    # «Келесі →» яки «Тестті аяқтау» батырмасы
+    # «Келесі →» немесе «Аяқтау» батырмасы
     with col_next:
         button_label = (
             "Келесі →" if current + 1 < total else "🎯 Тестті аяқтау"
         )
         if st.button(button_label, use_container_width=True):
-            if answer is not None:
-                st.session_state.user_answers[current] = question[
-                    "answers"
-                ].index(answer)
-            else:
-                if current not in st.session_state.user_answers:
-                    st.session_state.user_answers[current] = None
-
             if current + 1 < total:
                 st.session_state.current_question += 1
                 st.rerun()
