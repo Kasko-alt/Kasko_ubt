@@ -2,6 +2,7 @@ import json
 import os
 import datetime
 import hashlib
+import random
 import re
 import streamlit as st
 
@@ -19,13 +20,13 @@ RESULTS_FILE = "results_history.json"
 USERS_FILE = "users.json"
 
 # =========================================================
-# ПАРОЛЬНЫ ХЭШЛАУ
+# ПАРОЛЬДІ ХЭШТЕУ
 # =========================================================
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
-# ПӘННӘР ТЕЗМӘСЕ
+# ПӘНДЕР МЕН КОМБИНАЦИЯЛАР
 # =========================================================
 all_subjects = [
     "Биология",
@@ -42,6 +43,15 @@ all_subjects = [
     "Математикалық сауаттылық",
 ]
 
+combinations = {
+    "Математика - Физика (Инженерлік)": ["Математика", "Физика", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"],
+    "Биология - Химия (Медицина)": ["Биология", "Химия", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"],
+    "География - Математика (Геодезия/Экономика)": ["География", "Математика", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"],
+    "Дүниежүзі тарихы - Ағылшын (Халықаралық қатынастар)": ["Дүниежүзі тарихы", "Ағылшын тілі", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"],
+    "Математика - Информатика (IT / Бағдарламалау)": ["Математика", "Информатика", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"],
+    "Құқық - Дүниежүзі тарихы (Юриспруденция)": ["Құқық", "Дүниежүзі тарихы", "Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық"]
+}
+
 default_questions = {
     "Информатика": [
         {
@@ -49,11 +59,18 @@ default_questions = {
             "answers": ["input()", "print()", "output()", "write()"],
             "correct": 1,
         }
+    ],
+    "Қазақстан тарихы": [
+        {
+            "question": "Қазақ хандығы қашан құрылды?",
+            "answers": ["1465-1466 жж.", "1729 ж.", "1841 ж.", "1916 ж."],
+            "correct": 0,
+        }
     ]
 }
 
 # =========================================================
-# АККАУНТ СИСТЕМАСЫ
+# АККАУНТ ЖҮЙЕСІ
 # =========================================================
 def default_users():
     return [
@@ -94,7 +111,7 @@ def find_user(username, password):
     return None
 
 # =========================================================
-# СҮРАУЛАР МӘГЪЛҮМАТЫ
+# СҰРАҚТАР МЕН НӘТИЖЕЛЕР
 # =========================================================
 def load_questions():
     if os.path.exists(QUESTIONS_FILE):
@@ -122,9 +139,11 @@ if "role" not in st.session_state: st.session_state.role = None
 if "username" not in st.session_state: st.session_state.username = ""
 if "full_name" not in st.session_state: st.session_state.full_name = ""
 if "page" not in st.session_state: st.session_state.page = "login"
+if "test_started" not in st.session_state: st.session_state.test_started = False
+if "test_questions" not in st.session_state: st.session_state.test_questions = []
 
 # =========================================================
-# ТАПШЫ СТИЛЬ (DARK MODE)
+# ТҰРАҚТЫ ҚАРАҢҒЫ РЕЖИМ СТИЛІ (DARK MODE)
 # =========================================================
 st.markdown(
     """
@@ -187,10 +206,11 @@ def logout():
     st.session_state.logged_in = False
     st.session_state.role = None
     st.session_state.page = "login"
+    st.session_state.test_started = False
     st.rerun()
 
 # =========================================================
-# LOGIN
+# LOGIN БЕТІ
 # =========================================================
 def login_page():
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
@@ -260,7 +280,7 @@ def parse_bulk_questions(raw_text):
     return questions_list
 
 # =========================================================
-# СҮРАУЛАРНЫ БАШКАРУ ИНТЕРФЕЙСЫ
+# СҰРАҚТАРДЫ БАСҚАРУ ИНТЕРФЕЙСІ
 # =========================================================
 def render_question_manager():
     tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (Авто-парсер)", "✍️ Жеке сұрақ қосу"])
@@ -324,7 +344,7 @@ def render_question_manager():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# ПРЕМЬЕР-МИНИСТР ПАНЕЛЕ
+# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ
 # =========================================================
 def prime_minister_page():
     if st.button("🚪 Шығу"): logout()
@@ -333,7 +353,7 @@ def prime_minister_page():
     render_question_manager()
 
 # =========================================================
-# ПРЕЗИДЕНТ ПАНЕЛЕ (БАРЛЫК ФУНКЦИЯЛАР МЕНЕН)
+# ПРЕЗИДЕНТ ПАНЕЛІ
 # =========================================================
 def admin_page():
     if st.button("🚪 Шығу"): logout()
@@ -382,16 +402,81 @@ def admin_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# ОҚУШЫНЫҢ БАСТЫ БЕТІ
+# ОҚУШЫНЫҢ БАСТЫ БЕТІ ЖӘНЕ ТЕСТ ТАПСЫРУ БӨЛІМІ
 # =========================================================
 def home_page():
     if st.button("🚪 Шығу"): logout()
     st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Басты бет (Оқушы)</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру бөлімі</div>', unsafe_allow_html=True)
-    
+
+    # Қолданушының таңдаған комбинациясын табу немесе таңдату
+    current_user_obj = None
+    for u in users:
+        if u["username"] == st.session_state.username:
+            current_user_obj = u
+            break
+
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.write(f"Сәлем, **{st.session_state.full_name}**! Тест тапсыру парақтары мен пәндерді осы жерден таңдайсыз.")
+    st.markdown(f"### 👋 Қош келдіңіз, **{st.session_state.full_name}**!")
+    
+    selected_comb = st.selectbox("🎯 ҰБТ Бейіндік пәндер комбинациясын таңдаңыз:", list(combinations.keys()))
+    
+    if st.button("💾 Комбинацияны сақтау", type="primary"):
+        if current_user_obj:
+            current_user_obj["combination"] = selected_comb
+            save_users(users)
+            st.success("✨ Комбинация сақталды!")
+
+    st.markdown("---")
+    st.markdown("### 📝 Тестті бастау")
+    st.write("Таңдалған комбинация бойынша барлық пәндерден тест сұрақтары жүктеледі.")
+
+    if st.button("🚀 Тестті бастау", type="primary", use_container_width=True):
+        active_subjects = combinations.get(selected_comb, all_subjects[:5])
+        test_pool = []
+        for sub in active_subjects:
+            sub_qs = questions.get(sub, [])
+            if sub_qs:
+                test_pool.extend(sub_qs)
+        
+        if test_pool:
+            st.session_state.test_started = True
+            st.session_state.test_questions = test_pool
+            st.rerun()
+        else:
+            st.warning("⚠️ Таңдалған пәндер бойынша әзірге сұрақтар жоқ. Президент немесе Премьер-министр панелі арқылы сұрақтар қосыңыз!")
+    
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Егер тест басталған болса
+    if st.session_state.get("test_started", False):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## 📋 ҰБТ Тест парағы")
+        
+        user_answers = {}
+        for idx, q in enumerate(st.session_state.test_questions):
+            st.markdown(f"**{idx + 1}. {q['question']}**")
+            user_answers[idx] = st.radio(
+                f"Жауапты таңдаңыз ({idx+1}):", 
+                q["answers"], 
+                key=f"q_{idx}", 
+                index=None
+            )
+            st.markdown("---")
+
+        if st.button("✅ Тестті аяқтау және нәтижені көру", type="primary", use_container_width=True):
+            correct_count = 0
+            total_q = len(st.session_state.test_questions)
+            for idx, q in enumerate(st.session_state.test_questions):
+                selected = user_answers.get(idx)
+                if selected and q["answers"][q["correct"]] == selected:
+                    correct_count += 1
+            
+            st.success(f"🎉 Нәтижеңіз: **{correct_count} / {total_q}** дұрыс жауап!")
+            if st.button("🔄 Қайтадан тест тапсыру"):
+                st.session_state.test_started = False
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # РОУТЕР
