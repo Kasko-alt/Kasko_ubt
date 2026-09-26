@@ -1,8 +1,9 @@
 import json
 import os
+import random
 import datetime
 import hashlib
-import re
+import pandas as pd
 import streamlit as st
 
 # =========================================================
@@ -27,6 +28,16 @@ def hash_password(password: str) -> str:
 # =========================================================
 # ПӘНДЕР МЕН КОМБИНАЦИЯЛАР
 # =========================================================
+combinations = [
+    "Биология + Химия",
+    "Физика + Математика",
+    "Информатика + Математика",
+    "Дүниежүзі тарихы + Ағылшын тілі",
+    "Биология + География",
+    "География + Математика",
+    "Дүниежүзі тарихы + Құқық",
+]
+
 all_subjects = [
     "Биология",
     "Химия",
@@ -93,6 +104,15 @@ def find_user(username, password):
             return user
     return None
 
+def username_exists(username):
+    return any(u.get("username") == username for u in users)
+
+def role_name(role):
+    if role == "president": return "Президент"
+    elif role == "prime_minister": return "Премьер министр"
+    elif role == "user": return "Оқушы"
+    return "Белгісіз"
+
 # =========================================================
 # СҰРАҚТАР МЕН НӘТИЖЕЛЕР
 # =========================================================
@@ -122,66 +142,90 @@ if "role" not in st.session_state: st.session_state.role = None
 if "username" not in st.session_state: st.session_state.username = ""
 if "full_name" not in st.session_state: st.session_state.full_name = ""
 if "page" not in st.session_state: st.session_state.page = "login"
+if "theme" not in st.session_state: st.session_state.theme = "Қараңғы (Dark)"
 
 # =========================================================
-# ТҰРАҚТЫ ҚАРАҢҒЫ РЕЖИМ СТИЛІ (DARK MODE)
+# ДИНАМИКАЛЫҚ CSS (Қатесіз жазылған стильдер)
 # =========================================================
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #0B0F19;
-        color: #F3F4F6;
-        font-family: 'Inter', sans-serif;
-    }
-    .kasym-title {
-        font-size: 42px;
-        font-weight: 800;
-        text-align: center;
-        background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0px;
-    }
-    .kasym-subtitle {
-        font-size: 16px;
-        text-align: center;
-        color: #9CA3AF;
-        margin-bottom: 30px;
-        font-weight: 500;
-    }
-    .card {
-        background-color: #1E293B;
-        padding: 24px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        margin-bottom: 20px;
-    }
-    .stButton>button {
-        border-radius: 12px;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background-color: #1E293B;
-        color: #F3F4F6;
-    }
-    .stButton>button:hover {
-        border-color: #6366F1;
-        color: #6366F1;
-    }
-    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
-        background-color: #1E293B !important;
-        border-radius: 10px !important;
-        color: #F3F4F6 !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #0F172A;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+if st.session_state.theme == "Ақшыл (Light)":
+    bg_color = "#F8FAFC"
+    card_bg = "#FFFFFF"
+    text_color = "#1E293B"
+    sub_text = "#64748B"
+    border_color = "rgba(0, 0, 0, 0.08)"
+    input_bg = "#F1F5F9"
+    sidebar_bg = "#F1F5F9"
+else:
+    bg_color = "#0B0F19"
+    card_bg = "#1E293B"
+    text_color = "#F3F4F6"
+    sub_text = "#9CA3AF"
+    border_color = "rgba(255, 255, 255, 0.08)"
+    input_bg = "#1E293B"
+    sidebar_bg = "#0F172A"
+
+css_code = f"""
+<style>
+.stApp {{
+    background-color: {bg_color};
+    color: {text_color};
+    font-family: 'Inter', sans-serif;
+}}
+.kasym-title {{
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+    background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0px;
+}}
+.kasym-subtitle {{
+    font-size: 16px;
+    text-align: center;
+    color: {sub_text};
+    margin-bottom: 30px;
+    font-weight: 500;
+}}
+.card {{
+    background-color: {card_bg};
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid {border_color};
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}}
+.stButton>button {{
+    border-radius: 12px;
+    font-weight: 600;
+    border: 1px solid {border_color};
+}}
+.stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {{
+    background-color: {input_bg} !important;
+    border-radius: 10px !important;
+    color: {text_color} !important;
+    border: 1px solid {border_color} !important;
+}}
+[data-testid="stSidebar"] {{
+    background-color: {sidebar_bg};
+}}
+</style>
+"""
+st.markdown(css_code, unsafe_allow_html=True)
+
+# =========================================================
+# ЖОҒАРҒЫ ПАНЕЛЬ ЖӘНЕ ТЕМА АУЫСТЫРҒЫШ
+# =========================================================
+def top_bar():
+    col1, col2 = st.columns([7, 3])
+    with col2:
+        current_theme_icon = "🌙 Қараңғы" if st.session_state.theme == "Ақшыл (Light)" else "☀️ Ақшыл"
+        if st.button(f"🎨 Режим: {current_theme_icon}", use_container_width=True):
+            if st.session_state.theme == "Ақшыл (Light)":
+                st.session_state.theme = "Қараңғы (Dark)"
+            else:
+                st.session_state.theme = "Ақшыл (Light)"
+            st.rerun()
 
 def logout():
     st.session_state.logged_in = False
@@ -190,9 +234,10 @@ def logout():
     st.rerun()
 
 # =========================================================
-# LOGIN БЕТІ
+# LOGIN
 # =========================================================
 def login_page():
+    top_bar()
     st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
     st.markdown('<div class="kasym-subtitle">Бүгінгі дайындық — ертеңгі грант</div>', unsafe_allow_html=True)
 
@@ -217,140 +262,55 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# АҚЫЛДЫ АВТО-ПАРСЕР ФУНКЦИЯСЫ (Мәтіннен 40+ сұрақты бөліп алу)
-# =========================================================
-def parse_bulk_questions(raw_text):
-    questions_list = []
-    blocks = re.split(r'\n\s*(?=\d+[\.\)])', raw_text)
-    
-    for block in blocks:
-        if not block.strip():
-            continue
-        lines = [line.strip() for line in block.strip().split('\n') if line.strip()]
-        if len(lines) < 5:
-            continue
-            
-        q_text = lines[0]
-        q_text = re.sub(r'^\d+[\.\)]\s*', '', q_text)
-        
-        answers = []
-        correct_index = 0
-        
-        for idx, line in enumerate(lines[1:5]):
-            match = re.match(r'^([A-DА-Гa-dа-г])[\.\)]\s*(.*)', line, re.IGNORECASE)
-            if match:
-                opt_letter = match.group(1).upper()
-                opt_text = match.group(2)
-                answers.append(opt_text)
-                if "*" in line or "(+)" in line or "Дұрыс" in line:
-                    if opt_letter in ['A', 'А']: correct_index = idx
-                    elif opt_letter in ['B', 'Б']: correct_index = idx
-                    elif opt_letter in ['C', 'В']: correct_index = idx
-                    elif opt_letter in ['D', 'Г']: correct_index = idx
-            else:
-                answers.append(line)
-        
-        if len(answers) >= 4:
-            questions_list.append({
-                "question": q_text,
-                "answers": answers[:4],
-                "correct": correct_index
-            })
-            
-    return questions_list
-
-# =========================================================
-# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ (СҰРАҚ ҚОСУ ЖӘНЕ АВТО-ЖҮКТЕУ)
+# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ (СҰРАҚ ҚОСУ)
 # =========================================================
 def prime_minister_page():
+    top_bar()
     if st.button("🚪 Шығу"): logout()
     
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Сұрақтарды басқару панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Жалғызлап немесе 40-50 сұрақты бірден автоматты түрде жүктеңіз</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Жаңа сұрақ қосу</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Базаға жаңа сұрақтар мен нұсқаларды енгізу панелі</div>', unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["⚡ Жылдам массалық жүктеу (Авто-парсер)", "✍️ Жеке сұрақ қосу"])
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects)
+    question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
 
-    with tab1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        selected_subject_bulk = st.selectbox("📚 Пәнді таңдаңыз (Авто-жүктеу):", all_subjects, key="bulk_sub")
-        st.info("💡 **Үлгі формат:**\n1. 2 + 2 өрнегінің мәні?\nA) 2\nB) 4\nC) 5\nD) 3")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        ans1 = st.text_input("А нұсқасы:")
+        ans3 = st.text_input("В нұсқасы:")
+    with col_b:
+        ans2 = st.text_input("Б нұсқасы:")
+        ans4 = st.text_input("Г нұсқасы:")
 
-        raw_text_input = st.text_area(
-            "✍️ Барлық сұрақтарды осында көшіріп қойыңыз (Ctrl + V):", 
-            height=250,
-            placeholder="1. Сұрақ...\nA) ...\nB) ...\nC) ...\nD) ..."
-        )
+    correct_option = st.selectbox("✅ Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
+    correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
 
-        if st.button("🚀 Барлық сұрақтарды бірден базаға қосу", use_container_width=True, type="primary"):
-            if raw_text_input.strip():
-                parsed_questions = parse_bulk_questions(raw_text_input)
-                if parsed_questions:
-                    if selected_subject_bulk not in questions:
-                        questions[selected_subject_bulk] = []
-                    questions[selected_subject_bulk].extend(parsed_questions)
-                    save_questions()
-                    st.success(f"✨ Сәтті! Барлығы **{len(parsed_questions)}** сұрақ автоматты түрде қосылды!")
-                else:
-                    st.error("⚠️ Сұрақтар форматын тану мүмкін болмады. Үлгіге сәйкестігін тексеріңіз.")
-            else:
-                st.warning("⚠️ Мәтін өрісі бос болмауы тиіс!")
-        st.markdown('</div>', unsafe_allow_html=True)
+    if st.button("💾 Сұрақты базаға сақтау", use_container_width=True, type="primary"):
+        if question_text and ans1 and ans2 and ans3 and ans4:
+            new_q = {
+                "question": question_text,
+                "answers": [ans1, ans2, ans3, ans4],
+                "correct": correct_index,
+            }
+            if selected_subject not in questions:
+                questions[selected_subject] = []
+            questions[selected_subject].append(new_q)
+            save_questions()
+            st.success("✨ Сұрақ сәтті сақталды!")
+        else:
+            st.error("⚠️ Барлық өрістерді толық толтырыңыз!")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with tab2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects, key="single_sub")
-        question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
-
-        col_a, col_b = st.columns(2)
-        with col_a:
-            ans1 = st.text_input("А нұсқасы:")
-            ans3 = st.text_input("В нұсқасы:")
-        with col_b:
-            ans2 = st.text_input("Б нұсқасы:")
-            ans4 = st.text_input("Г нұсқасы:")
-
-        correct_option = st.selectbox("✅ Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
-        correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
-
-        if st.button("💾 Сұрақты базаға сақтау", use_container_width=True, type="primary"):
-            if question_text and ans1 and ans2 and ans3 and ans4:
-                new_q = {
-                    "question": question_text,
-                    "answers": [ans1, ans2, ans3, ans4],
-                    "correct": correct_index,
-                }
-                if selected_subject not in questions:
-                    questions[selected_subject] = []
-                questions[selected_subject].append(new_q)
-                save_questions()
-                st.success("✨ Сұрақ сәтті сақталды!")
-            else:
-                st.error("⚠️ Барлық өрістерді толық толтырыңыз!")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# =========================================================
-# ПРЕЗИДЕНТ ПАНЕЛІ
-# =========================================================
 def admin_page():
+    top_bar()
     if st.button("🚪 Шығу"): logout()
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">👑 Президент панелі</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Жүйені басқару және бақылау орталығы</div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.write(f"Қош келдіңіз, **{st.session_state.full_name}**! Мұнда барлық статистика мен қолданушылар тізімі көрсетіледі.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.title("👑 Президент панелі")
 
-# =========================================================
-# ОҚУШЫНЫҢ БАСТЫ БЕТІ
-# =========================================================
 def home_page():
+    top_bar()
     if st.button("🚪 Шығу"): logout()
-    st.markdown('<div class="kasym-title" style="font-size: 32px;">🏠 Басты бет (Оқушы)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">ҰБТ-ға дайындық және тест тапсыру бөлімі</div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.write(f"Сәлем, **{st.session_state.full_name}**! Тест тапсыру парақтары мен пәндерді осы жерден таңдайсыз.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.title("🏠 Басты бет (Оқушы)")
 
 # =========================================================
 # РОУТЕР
