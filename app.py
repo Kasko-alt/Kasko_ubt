@@ -683,27 +683,49 @@ def test_page():
         unsafe_allow_html=True,
     )
 
+    # Моңа кадәр сайланган җавап булса, шуны күрсәтү
+    saved_index = st.session_state.user_answers.get(current, None)
+
     answer = st.radio(
         "Жауапты таңда:",
         question["answers"],
-        index=None,
+        index=saved_index,
         key=f"question_{current}",
     )
 
-    if st.button("Келесі →", use_container_width=True):
-        # Жауап таңдалған болса, индексін сақтаймыз, таңдалмаса - None сақталады
-        if answer is not None:
-            selected_index = question["answers"].index(answer)
-            st.session_state.user_answers[current] = selected_index
-        else:
-            st.session_state.user_answers[current] = None
+    col_back, col_next = st.columns(2)
 
-        if current + 1 < total:
-            st.session_state.current_question += 1
-            st.rerun()
-        else:
-            st.session_state.page = "result"
-            st.rerun()
+    # «← Артқа» батырмасы (беренче сорауда булмаса күрсәтелә)
+    with col_back:
+        if current > 0:
+            if st.button("← Артқа", use_container_width=True):
+                if answer is not None:
+                    st.session_state.user_answers[current] = question[
+                        "answers"
+                    ].index(answer)
+                st.session_state.current_question -= 1
+                st.rerun()
+
+    # «Келесі →» яки «Тестті аяқтау» батырмасы
+    with col_next:
+        button_label = (
+            "Келесі →" if current + 1 < total else "🎯 Тестті аяқтау"
+        )
+        if st.button(button_label, use_container_width=True):
+            if answer is not None:
+                st.session_state.user_answers[current] = question[
+                    "answers"
+                ].index(answer)
+            else:
+                if current not in st.session_state.user_answers:
+                    st.session_state.user_answers[current] = None
+
+            if current + 1 < total:
+                st.session_state.current_question += 1
+                st.rerun()
+            else:
+                st.session_state.page = "result"
+                st.rerun()
 
 
 # =========================================================
