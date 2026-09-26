@@ -5,7 +5,6 @@ import datetime
 import hashlib
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 # =========================================================
 # KASYM EDU CONFIG
@@ -37,12 +36,6 @@ combinations = [
     "Биология + География",
     "География + Математика",
     "Дүниежүзі тарихы + Құқық",
-]
-
-common_subjects = [
-    "Қазақстан тарихы",
-    "Оқу сауаттылығы",
-    "Математикалық сауаттылық",
 ]
 
 all_subjects = [
@@ -141,33 +134,6 @@ def save_questions():
 
 questions = load_questions()
 
-def load_results_history():
-    if os.path.exists(RESULTS_FILE):
-        try:
-            with open(RESULTS_FILE, "r", encoding="utf-8") as file:
-                data = json.load(file)
-                if isinstance(data, list): return data
-        except Exception:
-            pass
-    return []
-
-def save_results_history(history):
-    with open(RESULTS_FILE, "w", encoding="utf-8") as file:
-        json.dump(history, file, ensure_ascii=False, indent=4)
-
-def add_result_to_history(subject, correct, total, percent):
-    username = st.session_state.get("username", "Оқушы")
-    history = load_results_history()
-    history.append({
-        "username": username,
-        "subject": subject,
-        "correct": correct,
-        "total": total,
-        "percent": percent,
-        "date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M"),
-    })
-    save_results_history(history)
-
 # =========================================================
 # SESSION STATE
 # =========================================================
@@ -175,21 +141,13 @@ if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "role" not in st.session_state: st.session_state.role = None
 if "username" not in st.session_state: st.session_state.username = ""
 if "full_name" not in st.session_state: st.session_state.full_name = ""
-if "user_combination" not in st.session_state: st.session_state.user_combination = None
-if "result_saved" not in st.session_state: st.session_state.result_saved = False
 if "page" not in st.session_state: st.session_state.page = "login"
-if "selected_subject" not in st.session_state: st.session_state.selected_subject = None
-if "current_question" not in st.session_state: st.session_state.current_question = 0
-if "user_answers" not in st.session_state: st.session_state.user_answers = {}
-if "active_questions" not in st.session_state: st.session_state.active_questions = []
-if "is_full_ubt" not in st.session_state: st.session_state.is_full_ubt = False
 if "theme" not in st.session_state: st.session_state.theme = "Қараңғы (Dark)"
 
 # =========================================================
-# ДИНАМИКАЛЫҚ CSS (Қараңғы & Көзге жайлы Ақшыл режим)
+# ДИНАМИКАЛЫҚ CSS (Қатесіз жазылған стильдер)
 # =========================================================
 if st.session_state.theme == "Ақшыл (Light)":
-    # Көзді ауыртпайтын жұмсақ палитра (Soft Light Theme)
     bg_color = "#F8FAFC"
     card_bg = "#FFFFFF"
     text_color = "#1E293B"
@@ -198,81 +156,62 @@ if st.session_state.theme == "Ақшыл (Light)":
     input_bg = "#F1F5F9"
     sidebar_bg = "#F1F5F9"
 else:
-    # Премиум қараңғы режим (Dark Theme)
     bg_color = "#0B0F19"
-    card_bg = "linear-gradient(145deg, #1E293B 0%, #0F172A 100%)"
+    card_bg = "#1E293B"
     text_color = "#F3F4F6"
     sub_text = "#9CA3AF"
     border_color = "rgba(255, 255, 255, 0.08)"
     input_bg = "#1E293B"
     sidebar_bg = "#0F172A"
 
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background-color: {bg_color};
-        color: {text_color};
-        font-family: 'Inter', sans-serif;
-    }
-
-    .kasym-title {{
-        font-size: 42px;
-        font-weight: 800;
-        text-align: center;
-        background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0px;
-        letter-spacing: -1px;
-    }}
-    
-    .kasym-subtitle {{
-        font-size: 16px;
-        text-align: center;
-        color: {sub_text};
-        margin-bottom: 30px;
-        font-weight: 500;
-    }}
-
-    .card {{
-        background: {card_bg};
-        padding: 24px;
-        border-radius: 16px;
-        border: 1px solid {border_color};
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-    }}
-
-    .stButton>button {{
-        border-radius: 12px;
-        font-weight: 600;
-        border: 1px solid {border_color};
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }}
-    
-    .stButton>button:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
-        border-color: #6366F1;
-    }}
-
-    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {{
-        background-color: {input_bg} !important;
-        border-radius: 10px !important;
-        color: {text_color} !important;
-        border: 1px solid {border_color} !important;
-    }}
-
-    [data-testid="stSidebar"] {{
-        background-color: {sidebar_bg};
-        border-right: 1px solid {border_color};
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+css_code = f"""
+<style>
+.stApp {{
+    background-color: {bg_color};
+    color: {text_color};
+    font-family: 'Inter', sans-serif;
+}}
+.kasym-title {{
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+    background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0px;
+}}
+.kasym-subtitle {{
+    font-size: 16px;
+    text-align: center;
+    color: {sub_text};
+    margin-bottom: 30px;
+    font-weight: 500;
+}}
+.card {{
+    background-color: {card_bg};
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid {border_color};
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}}
+.stButton>button {{
+    border-radius: 12px;
+    font-weight: 600;
+    border: 1px solid {border_color};
+}}
+.stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {{
+    background-color: {input_bg} !important;
+    border-radius: 10px !important;
+    color: {text_color} !important;
+    border: 1px solid {border_color} !important;
+}}
+[data-testid="stSidebar"] {{
+    background-color: {sidebar_bg};
+}}
+</style>
+"""
+st.markdown(css_code, unsafe_allow_html=True)
 
 # =========================================================
 # ЖОҒАРҒЫ ПАНЕЛЬ ЖӘНЕ ТЕМА АУЫСТЫРҒЫШ
@@ -280,7 +219,6 @@ st.markdown(
 def top_bar():
     col1, col2 = st.columns([7, 3])
     with col2:
-        # Режимді ауыстыру батырмасы
         current_theme_icon = "🌙 Қараңғы" if st.session_state.theme == "Ақшыл (Light)" else "☀️ Ақшыл"
         if st.button(f"🎨 Режим: {current_theme_icon}", use_container_width=True):
             if st.session_state.theme == "Ақшыл (Light)":
@@ -324,23 +262,55 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# БАСТЫ БЕТ (HOME) ЖӘНЕ БАСҚА БӨЛІМДЕР
+# ПРЕМЬЕР-МИНИСТР ПАНЕЛІ (СҰРАҚ ҚОСУ)
 # =========================================================
-def home_page():
+def prime_minister_page():
     top_bar()
     if st.button("🚪 Шығу"): logout()
-    st.markdown('<div class="kasym-title">KASYM EDU</div>', unsafe_allow_html=True)
-    st.markdown('<div class="kasym-subtitle">Қош келдіңіз, оқушы!</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="kasym-title" style="font-size: 32px;">➕ Жаңа сұрақ қосу</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kasym-subtitle">Базаға жаңа сұрақтар мен нұсқаларды енгізу панелі</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    selected_subject = st.selectbox("📚 Пәнді таңдаңыз:", all_subjects)
+    question_text = st.text_area("✍️ Сұрақты толық жазыңыз:", placeholder="Мысалы: Фотосинтез процесі қай органоидта жүреді?")
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        ans1 = st.text_input("А нұсқасы:")
+        ans3 = st.text_input("В нұсқасы:")
+    with col_b:
+        ans2 = st.text_input("Б нұсқасы:")
+        ans4 = st.text_input("Г нұсқасы:")
+
+    correct_option = st.selectbox("✅ Дұрыс жауап қайсысы?", ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"])
+    correct_index = ["А нұсқасы", "Б нұсқасы", "В нұсқасы", "Г нұсқасы"].index(correct_option)
+
+    if st.button("💾 Сұрақты базаға сақтау", use_container_width=True, type="primary"):
+        if question_text and ans1 and ans2 and ans3 and ans4:
+            new_q = {
+                "question": question_text,
+                "answers": [ans1, ans2, ans3, ans4],
+                "correct": correct_index,
+            }
+            if selected_subject not in questions:
+                questions[selected_subject] = []
+            questions[selected_subject].append(new_q)
+            save_questions()
+            st.success("✨ Сұрақ сәтті сақталды!")
+        else:
+            st.error("⚠️ Барлық өрістерді толық толтырыңыз!")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def admin_page():
     top_bar()
     if st.button("🚪 Шығу"): logout()
     st.title("👑 Президент панелі")
 
-def prime_minister_page():
+def home_page():
     top_bar()
     if st.button("🚪 Шығу"): logout()
-    st.title("👨‍💼 Премьер министр панелі")
+    st.title("🏠 Басты бет (Оқушы)")
 
 # =========================================================
 # РОУТЕР
