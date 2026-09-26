@@ -2,6 +2,7 @@ import json
 import os
 import random
 import datetime
+import hashlib
 import streamlit as st
 
 # =========================================================
@@ -16,6 +17,13 @@ st.set_page_config(
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
 USERS_FILE = "users.json"
+
+# =========================================================
+# ҚАУІПСІЗДІК: ПАРОЛЬДІ ХЭШТЕУ ФУНКЦИЯСЫ
+# =========================================================
+def hash_password(password: str) -> str:
+    """Парольді SHA-256 алгоритмі арқылы шифрлайды"""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # =========================================================
 # ПӘНДЕР
@@ -70,13 +78,13 @@ default_questions = {
 }
 
 # =========================================================
-# АККАУНТ ЖҮЙЕСІ
+# АККАУНТ ЖҮЙЕСІ (ШИФРЛАНҒАН)
 # =========================================================
 def default_users():
     return [
         {
             "username": "kas01",
-            "password": "kasko100228550357",
+            "password": hash_password("kasko100228550357"),  # Пароль хэш түрінде сақталады
             "name": "KASYM",
             "role": "president",
         }
@@ -103,11 +111,11 @@ def load_users():
 users = load_users()
 
 def find_user(username, password):
+    hashed_input_password = hash_password(password)
     for user in users:
-        if (
-            user.get("username") == username
-            and user.get("password") == password
-        ):
+        # Ескі жүйеден қалған ашық парольдер болса, оларды да тексеруге мүмкіндік береді
+        stored_password = user.get("password")
+        if user.get("username") == username and (stored_password == hashed_input_password or stored_password == password):
             return user
     return None
 
@@ -386,7 +394,7 @@ def create_user_page():
         else:
             users.append({
                 "username": new_username,
-                "password": new_password,
+                "password": hash_password(new_password),  # Жаңа қолданушының паролі де хэштеледі
                 "name": name,
                 "role": role_value,
             })
