@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 # =========================================================
 # KASYM EDU CONFIG
@@ -675,6 +676,157 @@ def combination_page():
 # TEST
 # =========================================================
 def test_page():
+    # --- СҮЙРЕМЕЛІ (DRAGGABLE) КАЛЬКУЛЯТОР (HTML/JS/CSS) ---
+    calc_html = """
+    <div id="calc-container" style="
+        position: fixed; 
+        top: 80px; 
+        right: 30px; 
+        z-index: 99999; 
+        width: 250px; 
+        background: #1F2937; 
+        border: 2px solid #4F46E5; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
+        font-family: Arial, sans-serif;
+        color: white;
+    ">
+        <div id="calc-header" style="
+            padding: 8px 12px; 
+            cursor: move; 
+            background: #374151; 
+            border-top-left-radius: 10px; 
+            border-top-right-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-weight: bold;
+            user-select: none;
+            font-size: 14px;
+        ">
+            <span>🧮 Калькулятор</span>
+            <div>
+                <button onclick="toggleCalc()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:14px; margin-right: 6px;">_</button>
+                <button onclick="closeCalc()" style="background:none; border:none; color:#EF4444; cursor:pointer; font-weight:bold; font-size:14px;">✕</button>
+            </div>
+        </div>
+
+        <div id="calc-body" style="padding: 10px;">
+            <input type="text" id="calc-display" readonly style="
+                width: 100%; 
+                height: 38px; 
+                background: #111827; 
+                color: #10B981; 
+                font-size: 18px; 
+                text-align: right; 
+                padding: 4px 8px; 
+                border: 1px solid #4B5563; 
+                border-radius: 6px; 
+                margin-bottom: 8px; 
+                box-sizing: border-box;
+                font-weight: bold;
+            " value="0">
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
+                <button onclick="calcClear()" style="background:#EF4444; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">C</button>
+                <button onclick="calcInput('(')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">(</button>
+                <button onclick="calcInput(')')" style="background:#4B5563; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">)</button>
+                <button onclick="calcInput('/')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">÷</button>
+
+                <button onclick="calcInput('7')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">7</button>
+                <button onclick="calcInput('8')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">8</button>
+                <button onclick="calcInput('9')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">9</button>
+                <button onclick="calcInput('*')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">×</button>
+
+                <button onclick="calcInput('4')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">4</button>
+                <button onclick="calcInput('5')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">5</button>
+                <button onclick="calcInput('6')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">6</button>
+                <button onclick="calcInput('-')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
+
+                <button onclick="calcInput('1')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">1</button>
+                <button onclick="calcInput('2')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">2</button>
+                <button onclick="calcInput('3')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">3</button>
+                <button onclick="calcInput('+')" style="background:#4F46E5; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
+
+                <button onclick="calcInput('0')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">0</button>
+                <button onclick="calcInput('.')" style="background:#374151; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">.</button>
+                <button onclick="calcBackspace()" style="background:#F59E0B; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer;">⌫</button>
+                <button onclick="calcCalculate()" style="background:#10B981; color:white; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let display = document.getElementById('calc-display');
+    function calcInput(val) {
+        if (display.value === '0' || display.value === 'Қате') {
+            display.value = val;
+        } else {
+            display.value += val;
+        }
+    }
+    function calcClear() {
+        display.value = '0';
+    }
+    function calcBackspace() {
+        display.value = display.value.slice(0, -1);
+        if (display.value === '') display.value = '0';
+    }
+    function calcCalculate() {
+        try {
+            display.value = eval(display.value);
+        } catch (e) {
+            display.value = 'Қате';
+        }
+    }
+
+    function toggleCalc() {
+        let body = document.getElementById('calc-body');
+        body.style.display = (body.style.display === 'none') ? 'block' : 'none';
+    }
+    function closeCalc() {
+        document.getElementById('calc-container').style.display = 'none';
+    }
+
+    dragElement(document.getElementById("calc-container"));
+
+    function dragElement(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      if (document.getElementById("calc-header")) {
+        document.getElementById("calc-header").onmousedown = dragMouseDown;
+      } else {
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+    </script>
+    """
+    components.html(calc_html, height=0, width=0)
+
     subject = st.session_state.selected_subject
     raw_questions = questions.get(subject, [])
 
