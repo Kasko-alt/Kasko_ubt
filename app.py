@@ -153,30 +153,44 @@ h1, h2, h3, label { color: white !important; }
     z-index: 999999 !important;
 }
 
-div[data-testid="stHorizontalBlock"] button {
-    border-radius: 6px !important;
-    height: 38px !important;
-    font-weight: 600 !important;
-    font-size: 15px !important;
-    padding: 0px !important;
+/* Сұрақтар навигациясы */
+.st-key-question_nav div[data-testid="stHorizontalBlock"] {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
 }
 
-div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
+.st-key-question_nav div[data-testid="column"] {
+    min-width: 0 !important;
+    padding: 0 2px !important;
+}
+
+.st-key-question_nav button {
+    border-radius: 6px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 0 !important;
+    transition: 0.15s ease !important;
+}
+
+.st-key-question_nav button[kind="secondary"] {
     background-color: #8ccfff !important;
     color: #000000 !important;
     border: none !important;
 }
 
-div[data-testid="stHorizontalBlock"] button[data-status="answered"] {
-    background-color: #4CAF50 !important;
-    color: #ffffff !important;
-    border: 1px solid #1b5e20 !important;
-}
-
-div[data-testid="stHorizontalBlock"] button[kind="primary"] {
+.st-key-question_nav button[kind="primary"] {
     background-color: #2196F3 !important;
     color: #000000 !important;
     border: 2px solid #000000 !important;
+}
+
+/* Жауап берілген сұрақ */
+.st-key-question_nav button[data-status="answered"] {
+    background-color: #4CAF50 !important;
+    color: #ffffff !important;
+    border: 1px solid #1b5e20 !important;
 }
 </style>
 """,
@@ -333,43 +347,52 @@ def test_page():
     current = st.session_state.current_question
     total = len(subject_questions)
 
-    nav_cols = st.columns(20 if total >= 20 else total)
+    # Дәл суреттегідей: 20 сұрақтан бір қатар.
+    # 40 сұрақ болса: 1-20 бірінші қатар, 21-40 екінші қатар.
+    questions_per_row = 20 if total >= 20 else total
 
-    for i in range(total):
-        col_idx = i % (20 if total >= 20 else total)
-        is_current = i == current
-        is_answered = (
-            i in st.session_state.user_answers
-            and st.session_state.user_answers[i] is not None
-        )
+    with st.container(key="question_nav"):
+        nav_cols = st.columns(questions_per_row)
 
-        label = f"{i + 1}"
-        btn_type = "primary" if is_current else "secondary"
+        for i in range(total):
+            col_idx = i % questions_per_row
+            is_current = i == current
+            is_answered = (
+                i in st.session_state.user_answers
+                and st.session_state.user_answers[i] is not None
+            )
 
-        with nav_cols[col_idx]:
-            if is_answered and not is_current:
-                st.markdown(
-                    f"""
-                    <script>
-                    var elements = window.parent.document.querySelectorAll('button');
-                    for (var j = 0; j < elements.length; j++) {{
-                        if (elements[j].innerText.trim() === '{i + 1}') {{
-                            elements[j].setAttribute('data-status', 'answered');
-                        }}
-                    }}
-                    </script>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            label = f"{i + 1}"
+            btn_type = "primary" if is_current else "secondary"
 
-            if st.button(
-                label,
-                key=f"nav_btn_{i}",
-                use_container_width=True,
-                type=btn_type,
-            ):
-                st.session_state.current_question = i
-                st.rerun()
+            with nav_cols[col_idx]:
+                if st.button(
+                    label,
+                    key=f"nav_btn_{i}",
+                    use_container_width=True,
+                    type=btn_type,
+                ):
+                    st.session_state.current_question = i
+                    st.rerun()
+
+                # Жауап берілген нөмірді жасылға бояу.
+                if is_answered and not is_current:
+                    st.markdown(
+                        f"""
+                        <script>
+                        (() => {{
+                            const buttons = window.parent.document
+                                .querySelectorAll('.st-key-question_nav button');
+                            buttons.forEach((button) => {{
+                                if (button.innerText.trim() === '{i + 1}') {{
+                                    button.setAttribute('data-status', 'answered');
+                                }}
+                            }});
+                        }})();
+                        </script>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
     st.markdown("---")
 
