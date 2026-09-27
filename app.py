@@ -280,7 +280,7 @@ if "shuffled_test_data" not in st.session_state:
   st.session_state.shuffled_test_data = {}
 
 # =========================================================
-# 6. UI СТИЛЬДЕРІ (DESIGN)
+# 6. UI СТИЛЬДЕРІ (DESIGN) - Нөмірлердің көрінуін түзеу
 # =========================================================
 st.markdown(
     """
@@ -314,31 +314,28 @@ st.markdown(
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
     }
+    /* Батырмалардың жазулары ап-анық көрінуі үшін стиль */
     .stButton>button {
-        border-radius: 10px;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15);
         background-color: #1E293B;
-        color: #F3F4F6;
-        transition: all 0.3s ease;
+        color: #FFFFFF !important;
+        transition: all 0.2s ease;
+        padding: 4px 8px;
     }
     .stButton>button:hover {
         border-color: #6366F1;
-        color: #6366F1;
-        transform: translateY(-2px);
+        background-color: #312E81;
+        color: #FFFFFF !important;
+        transform: translateY(-1px);
     }
     .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
         background-color: #1E293B !important;
         border-radius: 10px !important;
         color: #F3F4F6 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    }
-    /* Горизонталь палитра контейнерін ықшамдау */
-    .palette-container {
-        display: flex;
-        overflow-x: auto;
-        gap: 5px;
-        padding-bottom: 10px;
     }
     </style>
     """,
@@ -734,7 +731,6 @@ def admin_page():
 # 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі кең экранды формат)
 # =========================================================
 def user_page():
-  # Жоғарғы жақ шапка (Аты-жөні және «Алдыңғы пән / Келесі пән» батырмалары)
   col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
   
   with col_top1:
@@ -759,7 +755,6 @@ def user_page():
         st.session_state.current_subject_index += 1
         st.session_state.current_question_index = 0
       else:
-        # Егер соңғы пән болса, соңына апару үшін index-ті соңына қоямыз
         st.session_state.current_subject_index = len(subj_list)
       st.rerun()
 
@@ -826,28 +821,29 @@ def user_page():
         curr_q_idx = st.session_state.current_question_index
         num_qs = len(sub_questions)
 
-        # ҰБТ стиліндегі жоғарғы жақтағы горизонталь палитра батырмалары
         st.markdown(f"**Бөлім: {current_subject}**")
         
-        # Барлық сұрақтардың номерлерін горизонталь тізіп шығару (scrollbar арқылы)
         if "test_answers" not in st.session_state:
           st.session_state.test_answers = {}
         if current_subject not in st.session_state.test_answers:
           st.session_state.test_answers[current_subject] = {}
 
-        cols_palette = st.columns(min(num_qs, 32)) # Элементтер көп болса да сыйғызу үшін
-        for q_i in range(num_qs):
-          col_idx = q_i % len(cols_palette)
-          with cols_palette[col_idx]:
-            is_current = (q_i == curr_q_idx)
-            btn_label = f"[{q_i+1}]" if is_current else str(q_i+1)
-            if st.button(btn_label, key=f"pal_{sub_idx}_{q_i}", use_container_width=True):
-              st.session_state.current_question_index = q_i
-              st.rerun()
+        # Жоғарыдағы сұрақ нөмірлерін қатар етіп тізу (барынша ықшам колонкалар арқылы)
+        cols_per_row = 20
+        for i in range(0, num_qs, cols_per_row):
+          chunk = range(i, min(i + cols_per_row, num_qs))
+          pal_cols = st.columns(len(chunk))
+          for idx, q_i in enumerate(chunk):
+            with pal_cols[idx]:
+              is_current = (q_i == curr_q_idx)
+              # Ағымдағы сұрақ басқа түспен ерекшеленеді
+              btn_type = "primary" if is_current else "secondary"
+              if st.button(str(q_i + 1), key=f"pal_{sub_idx}_{q_i}", use_container_width=True, type=btn_type):
+                st.session_state.current_question_index = q_i
+                st.rerun()
 
         st.markdown("---")
 
-        # Оң жақ жоғары бұрышта «Келесі сұрақ» батырмасы және сұрақ нөмірі
         col_q_title, col_next_q_btn = st.columns([6, 1.5])
         with col_q_title:
           st.markdown(f"#### Сұрақ №{curr_q_idx + 1}")
@@ -862,7 +858,6 @@ def user_page():
               st.session_state.current_question_index = 0
             st.rerun()
 
-        # Сұрақ және нұсқалар
         q = sub_questions[curr_q_idx]
         st.write(q["question"])
 
@@ -882,7 +877,6 @@ def user_page():
         st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
 
     else:
-      # Барлық пәндер аяқталды -> Нәтиже мен қателермен жұмыс
       total_score = 0
       for subject in subj_list:
         sub_questions = st.session_state.shuffled_test_data.get(subject, [])
