@@ -730,10 +730,8 @@ def admin_page():
 # 10. ОҚУШЫ (USER) ПАНЕЛІ (HTML ПАЛИТРА МЕН ТҮССТЕР)
 # =========================================================
 def user_page():
-  col_top1, col_top_prev, col_top_next, col_top_out = st.columns(
-      [3, 1.2, 1.2, 0.8]
-  )
-
+  col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
+  
   with col_top1:
     st.markdown(f"**👤 {st.session_state.full_name}**", unsafe_allow_html=True)
 
@@ -742,16 +740,14 @@ def user_page():
   sub_idx = st.session_state.current_subject_index
 
   with col_top_prev:
-    if st.button(
-        "< Алдыңғы пән", use_container_width=True, disabled=(sub_idx == 0)
-    ):
+    if st.button("< Алдыңғы пән", use_container_width=True, disabled=(sub_idx == 0)):
       if sub_idx > 0:
         st.session_state.current_subject_index -= 1
         st.session_state.current_question_index = 0
         st.rerun()
 
   with col_top_next:
-    is_last_subject = sub_idx >= len(subj_list) - 1
+    is_last_subject = (sub_idx >= len(subj_list) - 1)
     next_subj_label = "Нәтижеге 🏁" if is_last_subject else "Келесі пән >"
     if st.button(next_subj_label, use_container_width=True, type="primary"):
       if not is_last_subject:
@@ -825,7 +821,7 @@ def user_page():
         num_qs = len(sub_questions)
 
         st.markdown(f"**Бөлім: {current_subject}**")
-
+        
         if "test_answers" not in st.session_state:
           st.session_state.test_answers = {}
         if current_subject not in st.session_state.test_answers:
@@ -843,24 +839,21 @@ def user_page():
           except:
             pass
 
-        # HTML палитра (unsafe_allow_html арқылы дұрыс істейді)
-        palette_html = (
-            '<div style="display: flex; flex-wrap: wrap; gap: 6px;'
-            ' margin-bottom: 20px;">'
-        )
+        # HTML палитра арқылы түстерді басқару (Белсенді = Күлгін, Жауап берілген = Жасыл)
+        palette_html = '<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;">'
         for q_i in range(num_qs):
-          bg_color = "#1E293B"
-          border_color = "rgba(255, 255, 255, 0.15)"
-          text_color = "#FFFFFF"
-
-          if q_i == curr_q_idx:
-            bg_color = "#6366F1"  # Активті сұрақ (Күлгін)
-            border_color = "#818CF8"
-          elif q_i in current_sub_ans and current_sub_ans[q_i] is not None:
-            bg_color = "#10B981"  # Жауап берілген сұрақ (Жасыл)
-            border_color = "#34D399"
-
-          palette_html += f"""
+            bg_color = "#1E293B"       
+            border_color = "rgba(255, 255, 255, 0.15)"
+            text_color = "#FFFFFF"
+            
+            if q_i == curr_q_idx:
+                bg_color = "#6366F1"   # Активті сұрақ (Күлгін)
+                border_color = "#818CF8"
+            elif q_i in current_sub_ans and current_sub_ans[q_i] is not None:
+                bg_color = "#10B981"   # Жауап берілген сұрақ (Жасыл)
+                border_color = "#34D399"
+                
+            palette_html += f"""
             <a href="?q_jump={q_i}" target="_self" style="
                 display: inline-flex;
                 align-items: center;
@@ -877,7 +870,7 @@ def user_page():
                 transition: transform 0.1s;
             ">{q_i + 1}</a>
             """
-        palette_html += "</div>"
+        palette_html += '</div>'
         st.markdown(palette_html, unsafe_allow_html=True)
 
         st.markdown("---")
@@ -886,7 +879,7 @@ def user_page():
         with col_q_title:
           st.markdown(f"#### Сұрақ №{curr_q_idx + 1}")
         with col_next_q_btn:
-          is_last_q_in_sub = curr_q_idx == num_qs - 1
+          is_last_q_in_sub = (curr_q_idx == num_qs - 1)
           nxt_label = "Келесі пән >" if is_last_q_in_sub else "Келесі сұрақ >"
           if st.button(nxt_label, type="primary", use_container_width=True):
             if not is_last_q_in_sub:
@@ -908,13 +901,11 @@ def user_page():
             "Жауап нұсқасын таңдаңыз:",
             q["answers"],
             index=default_ix,
-            key=f"radio_q_{sub_idx}_{curr_q_idx}",
+            key=f"radio_q_{sub_idx}_{curr_q_idx}"
         )
 
         if selected_ans is not None:
-          st.session_state.test_answers[current_subject][
-              curr_q_idx
-          ] = selected_ans
+          st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
 
     else:
       total_score = 0
@@ -949,12 +940,12 @@ def user_page():
 
       st.markdown('<div class="card">', unsafe_allow_html=True)
       st.markdown("### 📝 Қателермен жұмыс (Талдау)")
-
+      
       has_mistakes = False
       for subject in subj_list:
         sub_questions = st.session_state.shuffled_test_data.get(subject, [])
         user_sub_ans = st.session_state.test_answers.get(subject, {})
-
+        
         sub_mistakes = []
         for q_idx, q in enumerate(sub_questions):
           chosen = user_sub_ans.get(q_idx)
@@ -967,9 +958,7 @@ def user_page():
           st.markdown(f"#### 📚 Пән: {subject}")
           for idx, (q, chosen, correct_text) in enumerate(sub_mistakes, 1):
             st.markdown(f"**{idx}. {q['question']}**")
-            st.markdown(
-                f"❌ Сіздің жауабыңыз: `{chosen if chosen else 'Жауап берілмеді'}`"
-            )
+            st.markdown(f"❌ Сіздің жауабыңыз: `{chosen if chosen else 'Жауап берілмеді'}`")
             st.markdown(f"✅ Дұрыс жауап: `{correct_text}`")
             st.markdown("---")
 
