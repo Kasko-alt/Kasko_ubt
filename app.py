@@ -315,7 +315,7 @@ st.markdown(
         margin-bottom: 20px;
     }
     .stButton>button {
-        border-radius: 12px;
+        border-radius: 10px;
         font-weight: 600;
         border: 1px solid rgba(255, 255, 255, 0.08);
         background-color: #1E293B;
@@ -333,8 +333,12 @@ st.markdown(
         color: #F3F4F6 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
-    [data-testid="stSidebar"] {
-        background-color: #0F172A;
+    /* Горизонталь палитра контейнерін ықшамдау */
+    .palette-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 5px;
+        padding-bottom: 10px;
     }
     </style>
     """,
@@ -421,7 +425,7 @@ def login_page():
 
 
 # =========================================================
-# ӘДЕМИ СТАТИСТИКА ЖӘНЕ КЕСТЕ
+# СТАТИСТИКА ЖӘНЕ КЕСТЕ
 # =========================================================
 def render_statistics_tab():
   st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
@@ -503,31 +507,25 @@ def parse_bulk_questions(raw_text):
   for block in blocks:
     if not block.strip():
       continue
-
     full_text = " ".join(block.strip().split("\n"))
-
     q_match = re.search(
         r"^\d+[\.\)]\s*(.*?)(?=[A-DА-Гa-dа-г][\.\)]|\bЖауабы:|$)", full_text
     )
     if not q_match:
       continue
     q_text = q_match.group(1).strip()
-
     options = re.findall(
         r"([A-DА-Гa-dа-г])[\.\)]\s*([^A-DА-Гa-dа-г\.\)]+)", full_text
     )
-
     answers = []
     if len(options) >= 4:
       answers = [opt[1].strip() for opt in options[:4]]
-
     correct_index = 0
     ans_match = re.search(r"Жауабы:\s*([A-DА-Гa-dа-г])", full_text, re.IGNORECASE)
     if ans_match:
       corr_letter = ans_match.group(1).upper()
       letter_map = {"A": 0, "А": 0, "B": 1, "Б": 1, "C": 2, "В": 2, "D": 3, "Г": 3}
       correct_index = letter_map.get(corr_letter, 0)
-
     if len(answers) >= 4:
       questions_list.append({
           "question": q_text,
@@ -674,7 +672,6 @@ def admin_page():
     st.markdown(
         "### 📋 Тіркелген қолданушылар тізімі (Қажетсіздерін жоюға болады)"
     )
-
     if not users:
       st.info("Жүйеде қолданушылар жоқ.")
     else:
@@ -698,7 +695,6 @@ def admin_page():
           else:
             st.caption("Басты админ")
         st.markdown("---")
-
     st.markdown("</div>", unsafe_allow_html=True)
 
   with admin_tabs[1]:
@@ -735,25 +731,43 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (Палитра және жанындағы батырмалар)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі кең экранды формат)
 # =========================================================
 def user_page():
-  col1, col2 = st.columns([6, 1])
-  with col1:
-    st.markdown(
-        f'<div class="kasym-title" style="font-size: 32px;">🎓 Қош келдіңіз,'
-        f" {st.session_state.full_name}!</div>",
-        unsafe_allow_html=True,
-    )
-  with col2:
+  # Жоғарғы жақ шапка (Аты-жөні және «Алдыңғы пән / Келесі пән» батырмалары)
+  col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
+  
+  with col_top1:
+    st.markdown(f"**👤 {st.session_state.full_name}**", unsafe_allow_html=True)
+
+  comb_name = st.session_state.active_combination
+  subj_list = combinations[comb_name] if comb_name else []
+  sub_idx = st.session_state.current_subject_index
+
+  with col_top_prev:
+    if st.button("< Алдыңғы пән", use_container_width=True, disabled=(sub_idx == 0)):
+      if sub_idx > 0:
+        st.session_state.current_subject_index -= 1
+        st.session_state.current_question_index = 0
+        st.rerun()
+
+  with col_top_next:
+    is_last_subject = (sub_idx >= len(subj_list) - 1)
+    next_subj_label = "Нәтижеге 🏁" if is_last_subject else "Келесі пән >"
+    if st.button(next_subj_label, use_container_width=True, type="primary"):
+      if not is_last_subject:
+        st.session_state.current_subject_index += 1
+        st.session_state.current_question_index = 0
+      else:
+        # Егер соңғы пән болса, соңына апару үшін index-ті соңына қоямыз
+        st.session_state.current_subject_index = len(subj_list)
+      st.rerun()
+
+  with col_top_out:
     if st.button("🚪 Шығу", use_container_width=True):
       logout()
 
-  st.markdown(
-      '<div class="kasym-subtitle">Оқушы кабинеті және ҰБТ тест'
-      " тапсыру</div>",
-      unsafe_allow_html=True,
-  )
+  st.markdown("---")
 
   if not st.session_state.test_started:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -800,108 +814,59 @@ def user_page():
       st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
   else:
-    comb_name = st.session_state.active_combination
-    subj_list = combinations[comb_name]
-    sub_idx = st.session_state.current_subject_index
-
-    with st.sidebar:
-      st.markdown("### 📌 Тест панелі")
-      st.write(f"**Бағыт:** {comb_name}")
-      st.markdown("---")
-      st.markdown("#### 📚 Пәндер тізімі:")
-      for idx, s_name in enumerate(subj_list):
-        icon = "✅" if idx < sub_idx else ("👉" if idx == sub_idx else "⏳")
-        if st.button(
-            f"{icon} {s_name}", key=f"sidebar_sub_{idx}", use_container_width=True
-        ):
-          st.session_state.current_subject_index = idx
-          st.session_state.current_question_index = 0
-          st.rerun()
-
     if sub_idx < len(subj_list):
       current_subject = subj_list[sub_idx]
       sub_questions = st.session_state.shuffled_test_data.get(
           current_subject, []
       )
 
-      st.markdown(f"### 📚 Пән ({sub_idx + 1}/{len(subj_list)}): {current_subject} (Барлығы: {len(sub_questions)} сұрақ)")
-      st.markdown("---")
-
       if not sub_questions:
         st.info(f"Бұл пөнде ({current_subject}) әзірге сұрақтар жоқ.")
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-          if sub_idx > 0 and st.button("⬅️ Артқы пән"):
-            st.session_state.current_subject_index -= 1
-            st.session_state.current_question_index = 0
-            st.rerun()
-        with col_b2:
-          if st.button("Келесі пән ➡"):
-            st.session_state.current_subject_index += 1
-            st.session_state.current_question_index = 0
-            st.rerun()
       else:
-        # Палитра атауы мен «Алдыңғы / Келесі» батырмаларын бір қатарға (оң жақ бұрышқа) орналастыру
-        col_pal_title, col_btn_prev, col_btn_next = st.columns([4, 1.5, 1.5])
-        
-        with col_pal_title:
-          st.markdown("#### 🧭 Сұрақтар палитрасы:")
-
         curr_q_idx = st.session_state.current_question_index
         num_qs = len(sub_questions)
 
-        with col_btn_prev:
-          if st.button("⬅️ Алдыңғы", use_container_width=True, disabled=(curr_q_idx == 0)):
-            if curr_q_idx > 0:
-              st.session_state.current_question_index -= 1
+        # ҰБТ стиліндегі жоғарғы жақтағы горизонталь палитра батырмалары
+        st.markdown(f"**Бөлім: {current_subject}**")
+        
+        # Барлық сұрақтардың номерлерін горизонталь тізіп шығару (scrollbar арқылы)
+        if "test_answers" not in st.session_state:
+          st.session_state.test_answers = {}
+        if current_subject not in st.session_state.test_answers:
+          st.session_state.test_answers[current_subject] = {}
+
+        cols_palette = st.columns(min(num_qs, 32)) # Элементтер көп болса да сыйғызу үшін
+        for q_i in range(num_qs):
+          col_idx = q_i % len(cols_palette)
+          with cols_palette[col_idx]:
+            is_current = (q_i == curr_q_idx)
+            btn_label = f"[{q_i+1}]" if is_current else str(q_i+1)
+            if st.button(btn_label, key=f"pal_{sub_idx}_{q_i}", use_container_width=True):
+              st.session_state.current_question_index = q_i
               st.rerun()
 
-        with col_btn_next:
-          is_last_question = (curr_q_idx == num_qs - 1)
-          next_btn_label = "Аяқтау 🏁" if is_last_question else "Келесі ➡️"
-          if st.button(next_btn_label, use_container_width=True, type="primary"):
-            if not is_last_question:
+        st.markdown("---")
+
+        # Оң жақ жоғары бұрышта «Келесі сұрақ» батырмасы және сұрақ нөмірі
+        col_q_title, col_next_q_btn = st.columns([6, 1.5])
+        with col_q_title:
+          st.markdown(f"#### Сұрақ №{curr_q_idx + 1}")
+        with col_next_q_btn:
+          is_last_q_in_sub = (curr_q_idx == num_qs - 1)
+          nxt_label = "Келесі пән >" if is_last_q_in_sub else "Келесі сұрақ >"
+          if st.button(nxt_label, type="primary", use_container_width=True):
+            if not is_last_q_in_sub:
               st.session_state.current_question_index += 1
             else:
               st.session_state.current_subject_index += 1
               st.session_state.current_question_index = 0
             st.rerun()
 
-        # Сұрақтар палитрасының сеткасы
-        rows = (num_qs // 10) + (1 if num_qs % 10 != 0 else 0)
-        
-        if "test_answers" not in st.session_state:
-          st.session_state.test_answers = {}
-        if current_subject not in st.session_state.test_answers:
-          st.session_state.test_answers[current_subject] = {}
-
-        current_sub_ans = st.session_state.test_answers[current_subject]
-
-        for r in range(rows):
-          q_cols = st.columns(10)
-          for c in range(10):
-            q_i = r * 10 + c
-            if q_i < num_qs:
-              with q_cols[c]:
-                is_current = q_i == curr_q_idx
-                btn_label = f"[{q_i+1}]" if is_current else str(q_i+1)
-                
-                if st.button(btn_label, key=f"pal_{sub_idx}_{q_i}", use_container_width=True):
-                  st.session_state.current_question_index = q_i
-                  st.rerun()
-
-        st.markdown("---")
-
-        # Жеке бір сұрақты көрсету және жауап беру
-        if curr_q_idx >= num_qs:
-          st.session_state.current_question_index = 0
-          curr_q_idx = 0
-
+        # Сұрақ және нұсқалар
         q = sub_questions[curr_q_idx]
-        
-        st.markdown(f"#### **Сұрақ №{curr_q_idx + 1}**")
         st.write(q["question"])
 
+        current_sub_ans = st.session_state.test_answers[current_subject]
         prev_ans = current_sub_ans.get(curr_q_idx)
         default_ix = 0
         if prev_ans in q["answers"]:
@@ -917,6 +882,7 @@ def user_page():
         st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
 
     else:
+      # Барлық пәндер аяқталды -> Нәтиже мен қателермен жұмыс
       total_score = 0
       for subject in subj_list:
         sub_questions = st.session_state.shuffled_test_data.get(subject, [])
