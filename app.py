@@ -336,7 +336,7 @@ def logout():
 
 
 # =========================================================
-# 7. КІРУ ЖӘНЕ ӨЗ БЕТІМЕН ТІРКЕЛУ БЕТІ (LOGIN & REGISTER)
+# 7. КІРУ ЖӘНЕ ТІРКЕЛУ БЕТІ
 # =========================================================
 def login_page():
   st.markdown(
@@ -381,10 +381,7 @@ def login_page():
       ):
         if reg_name and reg_user and reg_pass:
           if username_exists(reg_user):
-            st.error(
-                "❌ Бұл логин бос емес, басқа логин таңдаңыз немесе жүйеге"
-                " кіріңіз."
-            )
+            st.error("❌ Бұл логин бос емес, басқа логин таңдаңыз.")
           else:
             new_student = {
                 "username": reg_user.strip(),
@@ -395,10 +392,7 @@ def login_page():
             }
             users.append(new_student)
             save_users(users)
-            st.success(
-                "✨ Сәтті тіркелдіңіз! Енді «Жүйеге кіру» бөлімі арқылы"
-                " кіре аласыз."
-            )
+            st.success("✨ Сәтті тіркелдіңіз! Енді кіре аласыз.")
         else:
           st.error("⚠️ Барлық өрістерді толтырыңыз!")
 
@@ -541,9 +535,10 @@ def moderator_page():
 
 
 # =========================================================
-# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ
+# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ — Қолданушыларды жою мүмкіндігімен
 # =========================================================
 def admin_page():
+  global users
   col1, col2 = st.columns([6, 1])
   with col1:
     st.markdown(
@@ -556,30 +551,55 @@ def admin_page():
       logout()
 
   st.markdown(
-      '<div class="kasym-subtitle">Қолданушыларды басқару және оқушылар'
+      '<div class="kasym-subtitle">Қолданушыларды басқару (жою) және оқушылар'
       " статистикасы</div>",
       unsafe_allow_html=True,
   )
 
   admin_tabs = st.tabs([
-      "👥 Қолданушылар тізімі",
+      "👥 Қолданушылар тізімі & Жою",
       "➕ Жаңа қолданушы қосу",
       "📊 Оқушылар статистикасы",
   ])
 
   with admin_tabs[0]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 📋 Тіркелген барлық қолданушылар")
-    for u in users:
-      st.write(
-          f"- **{u.get('name', 'Аты жоқ')}** (@{u.get('username')}) — Ролі:"
-          f" `{u.get('role')}`"
-      )
+    st.markdown(
+        "### 📋 Тіркелген қолданушылар тізімі (Қажетсіздерін жоюға болады)"
+    )
+
+    if not users:
+      st.info("Жүйеде қолданушылар жоқ.")
+    else:
+      for u in list(users):
+        u_name = u.get("name", "Аты жоқ")
+        u_username = u.get("username")
+        u_role = u.get("role")
+
+        col_info, col_del = st.columns([4, 1])
+        with col_info:
+          st.write(
+              f"• **{u_name}** (@{u_username}) — Ролі: `{u_role}`"
+          )
+        with col_del:
+          # Басты админді (kas01) өшіруге тыйым саламыз
+          if u_username != "kas01":
+            if st.button("🗑️ Жою", key=f"del_user_{u_username}"):
+              users = [
+                  x for x in users if x.get("username") != u_username
+              ]
+              save_users(users)
+              st.success(f"@{u_username} логині сәтті жойылды!")
+              st.rerun()
+          else:
+            st.caption("Басты админ")
+        st.markdown("---")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
   with admin_tabs[1]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### ➕ Жаңа қолданушы тіркеу (Админ тарапынан)")
+    st.markdown("### ➕ Жаңа қолданушы қосу")
     new_u = st.text_input("Логин:")
     new_p = st.text_input("Құпия сөз:", type="password")
     new_n = st.text_input("Толық аты-жөні:")
@@ -591,14 +611,15 @@ def admin_page():
           st.error("❌ Бұл логин жүйеде бар!")
         else:
           users.append({
-              "username": new_u,
-              "password": hash_password(new_p),
-              "name": new_n,
+              "username": new_u.strip(),
+              "password": hash_password(new_p.strip()),
+              "name": new_n.strip(),
               "role": new_r,
               "combination": None,
           })
           save_users(users)
           st.success("✨ Қолданушы сәтті тіркелді!")
+          st.rerun()
       else:
         st.error("⚠️ Логин мен құпия сөзді толтырыңыз!")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -608,9 +629,7 @@ def admin_page():
     st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
     history = load_results_history()
     if not history:
-      st.info(
-          "⚠️ Әзірге ешбір оқушы тест тапсырған жоқ немесе нәтижелер сақталмады."
-      )
+      st.info("⚠️ Әзірге ешбір оқушы тест тапсырған жоқ.")
     else:
       for idx, h in enumerate(reversed(history)):
         st.markdown(
@@ -622,7 +641,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (Пән-пәнімен бөліп тапсыру)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ
 # =========================================================
 def user_page():
   col1, col2 = st.columns([6, 1])
@@ -654,6 +673,7 @@ def user_page():
       st.session_state.test_started = True
       st.session_state.current_subject_index = 0
       st.session_state.test_answers = {}
+      st.session_state.result_saved = False
       st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
   else:
@@ -661,7 +681,6 @@ def user_page():
     subj_list = combinations[comb_name]
     sub_idx = st.session_state.current_subject_index
 
-    # Барлық пәндер аяқталды ма тексеру
     if sub_idx < len(subj_list):
       current_subject = subj_list[sub_idx]
       st.markdown(f"### 📚 Пән ({sub_idx + 1}/{len(subj_list)}): {current_subject}")
@@ -693,7 +712,6 @@ def user_page():
             st.session_state.current_subject_index += 1
             st.rerun()
     else:
-      # Нәтижелерді есептеу
       total_score = 0
       for subject in subj_list:
         sub_questions = questions.get(subject, [])
@@ -704,7 +722,6 @@ def user_page():
           if chosen == correct_text:
             total_score += 1
 
-      # Нәтижені тарихқа сақтау (бір рет қана сақталуын қадағалау)
       if not st.session_state.get("result_saved", False):
         history = load_results_history()
         new_result = {
@@ -722,9 +739,7 @@ def user_page():
       st.markdown(
           f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
       )
-      st.info(
-          "Нәтижеңіз администратор базасына автоматты түрде сақталды."
-      )
+      st.info("Нәтижеңіз администратор базасына автоматты түрде сақталды.")
 
       if st.button("🔄 Жаңа тест бастау"):
         st.session_state.test_started = False
