@@ -259,6 +259,8 @@ if "current_subject_index" not in st.session_state:
   st.session_state.current_subject_index = 0
 if "test_answers" not in st.session_state:
   st.session_state.test_answers = {}
+if "shuffled_test_data" not in st.session_state:
+  st.session_state.shuffled_test_data = {}
 
 # =========================================================
 # 6. UI СТИЛЬДЕРІ (DESIGN)
@@ -332,6 +334,7 @@ def logout():
   st.session_state.active_combination = None
   st.session_state.current_subject_index = 0
   st.session_state.test_answers = {}
+  st.session_state.shuffled_test_data = {}
   st.rerun()
 
 
@@ -716,7 +719,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (Жаңартылған Навигация және Палитра)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (Араластыру және Қателермен жұмыспен)
 # =========================================================
 def user_page():
   col1, col2 = st.columns([6, 1])
@@ -749,6 +752,33 @@ def user_page():
       st.session_state.current_subject_index = 0
       st.session_state.test_answers = {}
       st.session_state.result_saved = False
+
+      # Функция 5: Сұрақтар мен нұсқаларды кездейсоқ араластыру (Randomize)
+      shuffled_data = {}
+      for sub in combinations[selected_comb]:
+        sub_qs = questions.get(sub, []).copy()
+        random.shuffle(sub_qs)  # Сұрақтар ретін ауыстыру
+
+        processed_qs = []
+        for q in sub_qs:
+          answers = q["answers"].copy()
+          correct_text = answers[q["correct"]]
+
+          # Нұсқаларды араластыру
+          indexed_answers = list(enumerate(answers))
+          random.shuffle(indexed_answers)
+
+          new_answers = [item[1] for item in indexed_answers]
+          new_correct_idx = new_answers.index(correct_text)
+
+          processed_qs.append({
+              "question": q["question"],
+              "answers": new_answers,
+              "correct": new_correct_idx,
+          })
+        shuffled_data[sub] = processed_qs
+
+      st.session_state.shuffled_test_data = shuffled_data
       st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
   else:
@@ -756,7 +786,7 @@ def user_page():
     subj_list = combinations[comb_name]
     sub_idx = st.session_state.current_subject_index
 
-    # Бүйірлік панельде сұрақтарды жылдам секіру (Palette) және пәндер тізімі
+    # Бүйірлік панель арқылы пәндер арасында ауысу
     with st.sidebar:
       st.markdown("### 📌 Тест панелі")
       st.write(f"**Бағыт:** {comb_name}")
@@ -764,13 +794,17 @@ def user_page():
       st.markdown("#### 📚 Пәндер тізімі:")
       for idx, s_name in enumerate(subj_list):
         icon = "✅" if idx < sub_idx else ("👉" if idx == sub_idx else "⏳")
-        if st.button(f"{icon} {s_name}", key=f"sidebar_sub_{idx}", use_container_width=True):
+        if st.button(
+            f"{icon} {s_name}", key=f"sidebar_sub_{idx}", use_container_width=True
+        ):
           st.session_state.current_subject_index = idx
           st.rerun()
 
     if sub_idx < len(subj_list):
       current_subject = subj_list[sub_idx]
-      sub_questions = questions.get(current_subject, [])
+      sub_questions = st.session_state.shuffled_test_data.get(
+          current_subject, []
+      )
 
       st.markdown(f"### 📚 Пән ({sub_idx + 1}/{len(subj_list)}): {current_subject}")
       st.markdown("---")
@@ -787,13 +821,13 @@ def user_page():
             st.session_state.current_subject_index += 1
             st.rerun()
       else:
-        # Егер сұрақтар бар болса, Форма арқылы көрсетеміз
-        current_sub_answers = st.session_state.test_answers.get(current_subject, {})
-        
+        current_sub_answers = st.session_state.test_answers.get(
+            current_subject, {}
+        )
+
         with st.form(key=f"subject_form_{sub_idx}"):
           subject_answers = {}
           for q_idx, q in enumerate(sub_questions):
-            # Бұрын таңдалған жауапты сақтап қалу үшін индекс табу
             default_ix = 0
             prev_ans = current_sub_answers.get(q_idx)
             if prev_ans in q["answers"]:
@@ -803,22 +837,24 @@ def user_page():
                 f"{q_idx + 1}. {q['question']}",
                 q["answers"],
                 index=default_ix,
-                key=f"q_{sub_idx}_{q_idx}"
+                key=f"q_{sub_idx}_{q_idx}",
             )
             subject_answers[q_idx] = ans
             st.markdown("")
 
           st.markdown("---")
           col_prev, col_next = st.columns(2)
-          
+
           with col_prev:
             back_clicked = False
             if sub_idx > 0:
               back_clicked = st.form_submit_button("⬅️ Артқа")
-          
+
           with col_next:
             next_clicked = st.form_submit_button(
-                "Келесі пән ➡" if sub_idx < len(subj_list) - 1 else "Тестті аяқтау 🏁"
+                "Келесі пән ➡"
+                if sub_idx < len(subj_list) - 1
+                else "Тестті аяқтау 🏁"
             )
 
           if next_clicked:
@@ -833,7 +869,7 @@ def user_page():
       # Нәтижелерді есептеу және сақтау
       total_score = 0
       for subject in subj_list:
-        sub_questions = questions.get(subject, [])
+        sub_questions = st.session_state.shuffled_test_data.get(subject, [])
         user_sub_ans = st.session_state.test_answers.get(subject, {})
         for q_idx, q in enumerate(sub_questions):
           chosen = user_sub_ans.get(q_idx)
@@ -859,14 +895,47 @@ def user_page():
           f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
       )
       st.info("Нәтижеңіз администратор базасына автоматты түрде сақталды.")
+      st.markdown("</div>", unsafe_allow_html=True)
 
-      if st.button("🔄 Жаңа тест бастау"):
+      # Функция 1: Қателермен жұмыс (Review / Mistake Analysis)
+      st.markdown(
+          '<div class="card">', unsafe_allow_html=True
+      )
+      st.markdown("### 📝 Қателермен жұмыс (Талдау)")
+      
+      has_mistakes = False
+      for subject in subj_list:
+        sub_questions = st.session_state.shuffled_test_data.get(subject, [])
+        user_sub_ans = st.session_state.test_answers.get(subject, {})
+        
+        sub_mistakes = []
+        for q_idx, q in enumerate(sub_questions):
+          chosen = user_sub_ans.get(q_idx)
+          correct_text = q["answers"][q["correct"]]
+          if chosen != correct_text:
+            sub_mistakes.append((q, chosen, correct_text))
+
+        if sub_mistakes:
+          has_mistakes = True
+          st.markdown(f"#### 📚 Пән: {subject}")
+          for idx, (q, chosen, correct_text) in enumerate(sub_mistakes, 1):
+            st.markdown(f"**{idx}. {q['question']}**")
+            st.markdown(f"❌ Сіздің жауабыңыз: `{chosen if chosen else 'Жауап берілмеді'}`")
+            st.markdown(f"✅ Дұрыс жауап: `{correct_text}`")
+            st.markdown("---")
+
+      if not has_mistakes:
+        st.success("🌟 Керемет! Барлық сұраққа дұрыс жауап бердіңіз!")
+
+      st.markdown("</div>", unsafe_allow_html=True)
+
+      if st.button("🔄 Жаңа тест бастау", use_container_width=True):
         st.session_state.test_started = False
         st.session_state.current_subject_index = 0
         st.session_state.test_answers = {}
+        st.session_state.shuffled_test_data = {}
         st.session_state.result_saved = False
         st.rerun()
-      st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================================================
