@@ -136,7 +136,7 @@ default_questions = {
 
 
 # =========================================================
-# 4. ДЕРЕКТЕРДІ БАСҚАРУ (USERS, QUESTIONS, RESULTS)
+# 4. ДЕРЕКТЕРДІ БАСҚАРУ
 # =========================================================
 def default_users():
   return [{
@@ -255,6 +255,8 @@ if "test_started" not in st.session_state:
   st.session_state.test_started = False
 if "active_combination" not in st.session_state:
   st.session_state.active_combination = None
+if "current_subject_index" not in st.session_state:
+  st.session_state.current_subject_index = 0
 if "test_answers" not in st.session_state:
   st.session_state.test_answers = {}
 
@@ -328,12 +330,13 @@ def logout():
   st.session_state.full_name = ""
   st.session_state.test_started = False
   st.session_state.active_combination = None
+  st.session_state.current_subject_index = 0
   st.session_state.test_answers = {}
   st.rerun()
 
 
 # =========================================================
-# 7. КІРУ БЕТІ (LOGIN PAGE)
+# 7. КІРУ ЖӘНЕ ӨЗ БЕТІМЕН ТІРКЕЛУ БЕТІ (LOGIN & REGISTER)
 # =========================================================
 def login_page():
   st.markdown(
@@ -347,30 +350,63 @@ def login_page():
   c1, c2, c3 = st.columns([1, 1.2, 1])
   with c2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(
-        "<h3 style='text-align: center; margin-bottom: 20px;'>🔐 Жүйеге"
-        " кіру</h3>",
-        unsafe_allow_html=True,
-    )
-    username = st.text_input("Логин", key="login_username")
-    password = st.text_input("Құпия сөз", type="password", key="login_password")
+    tab_login, tab_register = st.tabs(["🔐 Жүйеге кіру", "📝 Тіркелу"])
 
-    if st.button("Кіру →", use_container_width=True, type="primary"):
-      user = find_user(username.strip(), password.strip())
-      if user:
-        st.session_state.logged_in = True
-        st.session_state.username = user["username"]
-        st.session_state.full_name = user.get("name", "")
-        st.session_state.role = user.get("role", "user")
-        st.rerun()
-      else:
-        st.error("❌ Логин немесе құпия сөз қате.")
+    with tab_login:
+      username = st.text_input("Логин", key="login_username")
+      password = st.text_input(
+          "Құпия сөз", type="password", key="login_password"
+      )
+
+      if st.button("Кіру →", use_container_width=True, type="primary"):
+        user = find_user(username.strip(), password.strip())
+        if user:
+          st.session_state.logged_in = True
+          st.session_state.username = user["username"]
+          st.session_state.full_name = user.get("name", "")
+          st.session_state.role = user.get("role", "user")
+          st.rerun()
+        else:
+          st.error("❌ Логин немесе құпия сөз қате.")
+
+    with tab_register:
+      reg_name = st.text_input("Толық аты-жөніңіз:")
+      reg_user = st.text_input("Жаңа логин таңдаңыз:")
+      reg_pass = st.text_input(
+          "Құпия сөз ойлап табыңыз:", type="password", key="reg_pass"
+      )
+
+      if st.button(
+          "Тіркелуді аяқтау", use_container_width=True, type="primary"
+      ):
+        if reg_name and reg_user and reg_pass:
+          if username_exists(reg_user):
+            st.error(
+                "❌ Бұл логин бос емес, басқа логин таңдаңыз немесе жүйеге"
+                " кіріңіз."
+            )
+          else:
+            new_student = {
+                "username": reg_user.strip(),
+                "password": hash_password(reg_pass.strip()),
+                "name": reg_name.strip(),
+                "role": "user",
+                "combination": None,
+            }
+            users.append(new_student)
+            save_users(users)
+            st.success(
+                "✨ Сәтті тіркелдіңіз! Енді «Жүйеге кіру» бөлімі арқылы"
+                " кіре аласыз."
+            )
+        else:
+          st.error("⚠️ Барлық өрістерді толтырыңыз!")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================================================
-# 8. МОДЕРАТОР ПАНЕЛІ (Сұрақтарды басқару)
+# 8. МОДЕРАТОР ПАНЕЛІ
 # =========================================================
 def parse_bulk_questions(raw_text):
   questions_list = []
@@ -505,7 +541,7 @@ def moderator_page():
 
 
 # =========================================================
-# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ — Тек басқару және статистика
+# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ
 # =========================================================
 def admin_page():
   col1, col2 = st.columns([6, 1])
@@ -543,7 +579,7 @@ def admin_page():
 
   with admin_tabs[1]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### ➕ Жаңа қолданушы тіркеу")
+    st.markdown("### ➕ Жаңа қолданушы тіркеу (Админ тарапынан)")
     new_u = st.text_input("Логин:")
     new_p = st.text_input("Құпия сөз:", type="password")
     new_n = st.text_input("Толық аты-жөні:")
@@ -586,7 +622,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (Тест тапсыру және нәтиже сақтау)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (Пән-пәнімен бөліп тапсыру)
 # =========================================================
 def user_page():
   col1, col2 = st.columns([6, 1])
@@ -616,60 +652,91 @@ def user_page():
     if st.button("🚀 Тестті бастау", type="primary", use_container_width=True):
       st.session_state.active_combination = selected_comb
       st.session_state.test_started = True
+      st.session_state.current_subject_index = 0
       st.session_state.test_answers = {}
       st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
   else:
     comb_name = st.session_state.active_combination
     subj_list = combinations[comb_name]
+    sub_idx = st.session_state.current_subject_index
 
-    st.markdown(
-        f"### 📝 Таңдалған комбинация: {comb_name}"
-    )
-
-    total_score = 0
-    all_q_count = 0
-
-    for subject in subj_list:
-      st.markdown(f"#### 📚 Пән: {subject}")
-      sub_questions = questions.get(subject, [])
-      if not sub_questions:
-        st.info(f"Бұл пөнде ({subject}) әзірге сұрақтар жоқ.")
-        continue
-
-      for q_idx, q in enumerate(sub_questions):
-        all_q_count += 1
-        key_name = f"{subject}_{q_idx}"
-        user_ans = st.radio(
-            f"{q_idx+1}. {q['question']}", q["answers"], key=key_name
-        )
-        correct_ans_text = q["answers"][q["correct"]]
-        if user_ans == correct_ans_text:
-          total_score += 1
+    # Барлық пәндер аяқталды ма тексеру
+    if sub_idx < len(subj_list):
+      current_subject = subj_list[sub_idx]
+      st.markdown(f"### 📚 Пән ({sub_idx + 1}/{len(subj_list)}): {current_subject}")
       st.markdown("---")
 
-    if st.button("🏁 Тестті аяқтау және нәтижені сақтау", type="primary"):
-      history = load_results_history()
-      new_result = {
-          "username": st.session_state.username,
-          "name": st.session_state.full_name,
-          "combination": comb_name,
-          "score": total_score,
-          "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-      }
-      history.append(new_result)
-      save_results_history(history)
+      sub_questions = questions.get(current_subject, [])
+      if not sub_questions:
+        st.info(f"Бұл пөнде ({current_subject}) әзірге сұрақтар жоқ.")
+        if st.button("Келесі пәнге өту ➡"):
+          st.session_state.current_subject_index += 1
+          st.rerun()
+      else:
+        with st.form(key=f"subject_form_{sub_idx}"):
+          subject_answers = {}
+          for q_idx, q in enumerate(sub_questions):
+            ans = st.radio(
+                f"{q_idx + 1}. {q['question']}", q["answers"], key=f"q_{sub_idx}_{q_idx}"
+            )
+            subject_answers[q_idx] = ans
+            st.markdown("")
 
-      st.success(
-          f"🎉 Тест аяқталды! Сіздің жинаған ұпайыңыз: **{total_score}**"
+          submitted = st.form_submit_button(
+              "Келесі пәнге өту ➡"
+              if sub_idx < len(subj_list) - 1
+              else "Тестті аяқтау 🏁"
+          )
+          if submitted:
+            st.session_state.test_answers[current_subject] = subject_answers
+            st.session_state.current_subject_index += 1
+            st.rerun()
+    else:
+      # Нәтижелерді есептеу
+      total_score = 0
+      for subject in subj_list:
+        sub_questions = questions.get(subject, [])
+        user_sub_ans = st.session_state.test_answers.get(subject, {})
+        for q_idx, q in enumerate(sub_questions):
+          chosen = user_sub_ans.get(q_idx)
+          correct_text = q["answers"][q["correct"]]
+          if chosen == correct_text:
+            total_score += 1
+
+      # Нәтижені тарихқа сақтау (бір рет қана сақталуын қадағалау)
+      if not st.session_state.get("result_saved", False):
+        history = load_results_history()
+        new_result = {
+            "username": st.session_state.username,
+            "name": st.session_state.full_name,
+            "combination": comb_name,
+            "score": total_score,
+            "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        }
+        history.append(new_result)
+        save_results_history(history)
+        st.session_state.result_saved = True
+
+      st.markdown('<div class="card">', unsafe_allow_html=True)
+      st.markdown(
+          f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
       )
+      st.info(
+          "Нәтижеңіз администратор базасына автоматты түрде сақталды."
+      )
+
       if st.button("🔄 Жаңа тест бастау"):
         st.session_state.test_started = False
+        st.session_state.current_subject_index = 0
+        st.session_state.test_answers = {}
+        st.session_state.result_saved = False
         st.rerun()
+      st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================================================
-# 11. РОУТЕР (БАСТЫ БАҒДАРЛАМА)
+# 11. РОУТЕР
 # =========================================================
 def main():
   if not st.session_state.logged_in:
