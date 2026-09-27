@@ -280,7 +280,7 @@ if "shuffled_test_data" not in st.session_state:
   st.session_state.shuffled_test_data = {}
 
 # =========================================================
-# 6. UI СТИЛЬДЕРІ (DESIGN) - Нөмірлердің көрінуін түзеу
+# 6. UI СТИЛЬДЕРІ (DESIGN)
 # =========================================================
 st.markdown(
     """
@@ -314,7 +314,6 @@ st.markdown(
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
     }
-    /* Батырмалардың жазулары ап-анық көрінуі үшін стиль */
     .stButton>button {
         border-radius: 8px;
         font-weight: 700;
@@ -828,7 +827,6 @@ def user_page():
         if current_subject not in st.session_state.test_answers:
           st.session_state.test_answers[current_subject] = {}
 
-        # Жоғарыдағы сұрақ нөмірлерін қатар етіп тізу (барынша ықшам колонкалар арқылы)
         cols_per_row = 20
         for i in range(0, num_qs, cols_per_row):
           chunk = range(i, min(i + cols_per_row, num_qs))
@@ -836,7 +834,6 @@ def user_page():
           for idx, q_i in enumerate(chunk):
             with pal_cols[idx]:
               is_current = (q_i == curr_q_idx)
-              # Ағымдағы сұрақ басқа түспен ерекшеленеді
               btn_type = "primary" if is_current else "secondary"
               if st.button(str(q_i + 1), key=f"pal_{sub_idx}_{q_i}", use_container_width=True, type=btn_type):
                 st.session_state.current_question_index = q_i
@@ -863,7 +860,9 @@ def user_page():
 
         current_sub_ans = st.session_state.test_answers[current_subject]
         prev_ans = current_sub_ans.get(curr_q_idx)
-        default_ix = 0
+        
+        # Егер бұрын жауап берілмесе, индексті None етіп береміз (ешқайсысы белгіленбейді)
+        default_ix = None
         if prev_ans in q["answers"]:
           default_ix = q["answers"].index(prev_ans)
 
@@ -874,7 +873,8 @@ def user_page():
             key=f"radio_q_{sub_idx}_{curr_q_idx}"
         )
 
-        st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
+        if selected_ans is not None:
+          st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
 
     else:
       total_score = 0
