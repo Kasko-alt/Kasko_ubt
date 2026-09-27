@@ -280,7 +280,7 @@ if "shuffled_test_data" not in st.session_state:
   st.session_state.shuffled_test_data = {}
 
 # =========================================================
-# 6. UI СТИЛЬДЕРІ (DESIGN)
+# 6. UI СТИЛЬДЕРІ (DESIGN) - Нөмірлердің көрінуін түзеу
 # =========================================================
 st.markdown(
     """
@@ -314,6 +314,7 @@ st.markdown(
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
     }
+    /* Батырмалардың жазулары ап-анық көрінуі үшін стиль */
     .stButton>button {
         border-radius: 8px;
         font-weight: 700;
@@ -727,7 +728,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (HTML ПАЛИТРА МЕН ТҮССТЕР)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі кең экранды формат)
 # =========================================================
 def user_page():
   col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
@@ -827,51 +828,19 @@ def user_page():
         if current_subject not in st.session_state.test_answers:
           st.session_state.test_answers[current_subject] = {}
 
-        current_sub_ans = st.session_state.test_answers[current_subject]
-
-        # Query params арқылы сұраққа өтуді ұстау
-        if "q_jump" in st.query_params:
-          try:
-            target_q = int(st.query_params["q_jump"])
-            st.session_state.current_question_index = target_q
-            del st.query_params["q_jump"]
-            st.rerun()
-          except:
-            pass
-
-        # HTML палитра арқылы түстерді басқару (Белсенді = Күлгін, Жауап берілген = Жасыл)
-        palette_html = '<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;">'
-        for q_i in range(num_qs):
-            bg_color = "#1E293B"       
-            border_color = "rgba(255, 255, 255, 0.15)"
-            text_color = "#FFFFFF"
-            
-            if q_i == curr_q_idx:
-                bg_color = "#6366F1"   # Активті сұрақ (Күлгін)
-                border_color = "#818CF8"
-            elif q_i in current_sub_ans and current_sub_ans[q_i] is not None:
-                bg_color = "#10B981"   # Жауап берілген сұрақ (Жасыл)
-                border_color = "#34D399"
-                
-            palette_html += f"""
-            <a href="?q_jump={q_i}" target="_self" style="
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 38px;
-                height: 38px;
-                background-color: {bg_color};
-                color: {text_color};
-                border: 1px solid {border_color};
-                border-radius: 8px;
-                text-decoration: none;
-                font-weight: 700;
-                font-size: 14px;
-                transition: transform 0.1s;
-            ">{q_i + 1}</a>
-            """
-        palette_html += '</div>'
-        st.markdown(palette_html, unsafe_allow_html=True)
+        # Жоғарыдағы сұрақ нөмірлерін қатар етіп тізу (барынша ықшам колонкалар арқылы)
+        cols_per_row = 20
+        for i in range(0, num_qs, cols_per_row):
+          chunk = range(i, min(i + cols_per_row, num_qs))
+          pal_cols = st.columns(len(chunk))
+          for idx, q_i in enumerate(chunk):
+            with pal_cols[idx]:
+              is_current = (q_i == curr_q_idx)
+              # Ағымдағы сұрақ басқа түспен ерекшеленеді
+              btn_type = "primary" if is_current else "secondary"
+              if st.button(str(q_i + 1), key=f"pal_{sub_idx}_{q_i}", use_container_width=True, type=btn_type):
+                st.session_state.current_question_index = q_i
+                st.rerun()
 
         st.markdown("---")
 
@@ -892,8 +861,9 @@ def user_page():
         q = sub_questions[curr_q_idx]
         st.write(q["question"])
 
+        current_sub_ans = st.session_state.test_answers[current_subject]
         prev_ans = current_sub_ans.get(curr_q_idx)
-        default_ix = None
+        default_ix = 0
         if prev_ans in q["answers"]:
           default_ix = q["answers"].index(prev_ans)
 
@@ -904,8 +874,7 @@ def user_page():
             key=f"radio_q_{sub_idx}_{curr_q_idx}"
         )
 
-        if selected_ans is not None:
-          st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
+        st.session_state.test_answers[current_subject][curr_q_idx] = selected_ans
 
     else:
       total_score = 0
