@@ -400,7 +400,7 @@ def login_page():
 
 
 # =========================================================
-# ӘДЕМИ СТАТИСТИКА ЖӘНЕ КЕСТЕ (UI ӨЗГЕРТІЛДІ)
+# ӘДЕМИ СТАТИСТИКА ЖӘНЕ КЕСТЕ
 # =========================================================
 def render_statistics_tab():
   st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
@@ -410,7 +410,6 @@ def render_statistics_tab():
     st.info("⚠️ Әзірге ешбір оқушы тест тапсырған жоқ.")
     return
 
-  # Жалпы метрикалар көрсеткіші (Жоғарғы панель)
   total_tests = len(history)
   avg_score = (
       sum(int(h.get("score", 0) or 0) for h in history) / total_tests
@@ -426,7 +425,6 @@ def render_statistics_tab():
 
   st.markdown("---")
 
-  # Іздеу және сүзу элементтері
   sc1, sc2 = st.columns(2)
   with sc1:
     search_query = (
@@ -443,7 +441,6 @@ def render_statistics_tab():
         key="stat_comb_filter",
     )
 
-  # Сүзгіні қолдану және мәндерді қорғау (None қателігін жою)
   filtered_history = []
   for h in history:
     name = h.get("name") or "Аты жоқ"
@@ -469,7 +466,6 @@ def render_statistics_tab():
   if not filtered_history:
     st.warning("⚠️ Іздеу шарттарына сәйкес ешбір нәтиже табылмады.")
   else:
-    # Streamlit кестесі (Dataframe) арқылы өте әдемі әрі заманауи етіп шығару
     st.dataframe(
         filtered_history,
         use_container_width=True,
@@ -478,34 +474,45 @@ def render_statistics_tab():
 
 
 # =========================================================
-# 8. МОДЕРАТОР ПАНЕЛІ
+# 8. МОДЕРАТОР ПАНЕЛІ (Жаңартылған parse_bulk_questions функциясымен)
 # =========================================================
 def parse_bulk_questions(raw_text):
+  import re
+
   questions_list = []
-  blocks = re.split(r"\n\s*(?=\d+[\.\)])", raw_text)
+  # Сандар аркылуу (мысалы: 1., 2. ж.б.) автоматтык түрде бөлүү
+  blocks = re.split(r"(?=\b\d+[\.\)]\s)", raw_text)
   for block in blocks:
     if not block.strip():
       continue
-    lines = [
-        line.strip() for line in block.strip().split("\n") if line.strip()
-    ]
-    if len(lines) < 5:
+
+    full_text = " ".join(block.strip().split("\n"))
+
+    # Сурақ мәтінін табу
+    q_match = re.search(
+        r"^\d+[\.\)]\s*(.*?)(?=[A-DА-Гa-dа-г][\.\)]|\bЖауабы:|$)", full_text
+    )
+    if not q_match:
       continue
-    q_text = lines[0]
-    q_text = re.sub(r"^\d+[\.\)]\s*", "", q_text)
+    q_text = q_match.group(1).strip()
+
+    # Нұсқаларды табу (A, B, C, D немесе А, Б, В, Г)
+    options = re.findall(
+        r"([A-DА-Гa-dа-г])[\.\)]\s*([^A-DА-Гa-dа-г\.\)]+)", full_text
+    )
+
     answers = []
+    if len(options) >= 4:
+      answers = [opt[1].strip() for opt in options[:4]]
+
+    # Дұрыс жауапты табу
     correct_index = 0
-    for idx, line in enumerate(lines[1:5]):
-      match = re.match(r"^([A-DА-Гa-dа-г])[\.\)]\s*(.*)", line, re.IGNORECASE)
-      if match:
-        opt_letter = match.group(1).upper()
-        opt_text = match.group(2)
-        answers.append(opt_text)
-        if "*" in line or "(+)" in line or "Дұрыс" in line:
-          if opt_letter in ["A", "А", "B", "Б", "C", "В", "D", "Г"]:
-            correct_index = idx
-      else:
-        answers.append(line)
+    ans_match = re.search(r"Жауабы:\s*([A-DА-Гa-dа-г])", full_text, re.IGNORECASE)
+    if ans_match:
+      corr_letter = ans_match.group(1).upper()
+      letter_map = {"A": 0, "А": 0, "B": 1, "Б": 1, "C": 2, "В": 2, "D": 3, "Г": 3}
+      correct_index = letter_map.get(corr_letter, 0)
+
     if len(answers) >= 4:
       questions_list.append({
           "question": q_text,
@@ -556,7 +563,7 @@ def moderator_page():
           save_questions()
           st.success(f"✨ Сәтті! {len(parsed)} сұрақ қосылды.")
         else:
-          st.error("⚠️ Формат қате.")
+          st.error("⚠️ Формат қате немесе сұрақтар танылмады.")
       else:
         st.warning("Өріс бос.")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -807,7 +814,7 @@ def user_page():
         save_results_history(history)
         st.session_state.result_saved = True
 
-      st.markdown('<div class="card">', unsafe_add_html=True)
+      st.markdown('<div class="card">', unsafe_allow_html=True)
       st.markdown(
           f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
       )
@@ -819,7 +826,7 @@ def user_page():
         st.session_state.test_answers = {}
         st.session_state.result_saved = False
         st.rerun()
-      st.markdown("</div>", unsafe_add_html=True)
+      st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================================================
