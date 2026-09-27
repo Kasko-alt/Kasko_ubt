@@ -400,7 +400,7 @@ def login_page():
 
 
 # =========================================================
-# СТАТИСТИКАНЫ КӨРСЕТУ ЖӘНЕ СҮЗГІЛЕУ ФУНКЦИЯСЫ (ОРТАҚ)
+# ӘДЕМИ СТАТИСТИКА ЖӘНЕ КЕСТЕ (UI ӨЗГЕРТІЛДІ)
 # =========================================================
 def render_statistics_tab():
   st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
@@ -410,7 +410,23 @@ def render_statistics_tab():
     st.info("⚠️ Әзірге ешбір оқушы тест тапсырған жоқ.")
     return
 
-  # Іздеу және сүзу (Filter & Search) элементтері
+  # Жалпы метрикалар көрсеткіші (Жоғарғы панель)
+  total_tests = len(history)
+  avg_score = (
+      sum(int(h.get("score", 0) or 0) for h in history) / total_tests
+      if total_tests > 0
+      else 0
+  )
+
+  col_m1, col_m2 = st.columns(2)
+  with col_m1:
+    st.metric(label="📈 Барлық тапсырылған тесттер", value=total_tests)
+  with col_m2:
+    st.metric(label="⭐ Орташа ұпай", value=f"{avg_score:.1f}")
+
+  st.markdown("---")
+
+  # Іздеу және сүзу элементтері
   sc1, sc2 = st.columns(2)
   with sc1:
     search_query = (
@@ -427,34 +443,42 @@ def render_statistics_tab():
         key="stat_comb_filter",
     )
 
-  # Сүзгіні қолдану
+  # Сүзгіні қолдану және мәндерді қорғау (None қателігін жою)
   filtered_history = []
   for h in history:
-    match_search = (
-        search_query in h.get("name", "").lower()
-        or search_query in h.get("username", "").lower()
-    )
-    match_comb = (
-        comb_filter == "Барлығы" or h.get("combination") == comb_filter
-    )
+    name = h.get("name") or "Аты жоқ"
+    uname = h.get("username") or "белгісіз"
+    comb = h.get("combination") or "Көрсетілмеген"
+    score = h.get("score") if h.get("score") is not None else 0
+    date = h.get("date") or "Уақыты белгісіз"
+
+    match_search = search_query in name.lower() or search_query in uname.lower()
+    match_comb = comb_filter == "Барлығы" or comb == comb_filter
+
     if match_search and match_comb:
-      filtered_history.append(h)
+      filtered_history.append({
+          "Аты-жөні": name,
+          "Логин": f"@{uname}",
+          "Комбинация": comb,
+          "Ұпай": score,
+          "Күні": date,
+      })
 
   st.caption(f"Табылған нәтижелер саны: {len(filtered_history)}")
 
   if not filtered_history:
     st.warning("⚠️ Іздеу шарттарына сәйкес ешбір нәтиже табылмады.")
   else:
-    for idx, h in enumerate(reversed(filtered_history)):
-      st.markdown(
-          f"**{idx+1}. Оқушы:** {h.get('name')} (@{h.get('username')}) |"
-          f" **Комбинация:** {h.get('combination')} | **Ұпай:**"
-          f" `{h.get('score')}` | **Күні:** {h.get('date')}"
-      )
+    # Streamlit кестесі (Dataframe) арқылы өте әдемі әрі заманауи етіп шығару
+    st.dataframe(
+        filtered_history,
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 # =========================================================
-# 8. МОДЕРАТОР ПАНЕЛІ (Статистиканы көру мүмкіндігімен)
+# 8. МОДЕРАТОР ПАНЕЛІ
 # =========================================================
 def parse_bulk_questions(raw_text):
   questions_list = []
@@ -596,7 +620,7 @@ def moderator_page():
 
 
 # =========================================================
-# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ (Іздеу және сүзу мүмкіндігімен)
+# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ
 # =========================================================
 def admin_page():
   global users
@@ -783,7 +807,7 @@ def user_page():
         save_results_history(history)
         st.session_state.result_saved = True
 
-      st.markdown('<div class="card">', unsafe_allow_html=True)
+      st.markdown('<div class="card">', unsafe_add_html=True)
       st.markdown(
           f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
       )
@@ -795,7 +819,7 @@ def user_page():
         st.session_state.test_answers = {}
         st.session_state.result_saved = False
         st.rerun()
-      st.markdown("</div>", unsafe_allow_html=True)
+      st.markdown("</div>", unsafe_add_html=True)
 
 
 # =========================================================
