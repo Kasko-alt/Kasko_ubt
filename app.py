@@ -280,7 +280,7 @@ if "shuffled_test_data" not in st.session_state:
   st.session_state.shuffled_test_data = {}
 
 # =========================================================
-# 6. UI СТИЛЬДЕРІ (DESIGN)
+# 6. UI СТИЛЬДЕРІ (DESIGN) - ҰБТ Палитрасымен толықтырылды
 # =========================================================
 st.markdown(
     """
@@ -727,7 +727,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі кең экранды формат)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі палитра түстерімен)
 # =========================================================
 def user_page():
   col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
@@ -827,15 +827,40 @@ def user_page():
         if current_subject not in st.session_state.test_answers:
           st.session_state.test_answers[current_subject] = {}
 
+        current_sub_ans = st.session_state.test_answers[current_subject]
+
+        # Қатысушылар палитрасы үшін динамикалық CSS (Белсенді = күлгін, Жауап берілген = жасыл)
+        palette_css = "<style>"
+        for q_i in range(num_qs):
+          btn_key_sel = f"p_btn_{sub_idx}_{q_i}"
+          if q_i == curr_q_idx:
+            # Белсенді сұрақ (Күлгін)
+            palette_css += f"""
+            div[data-testid="stHorizontalBlock"] button[kind="secondary"]:has(div:contains("{q_i + 1}")) {{
+                background-color: #6366F1 !important;
+                border-color: #818CF8 !important;
+                color: #FFFFFF !important;
+            }}
+            """
+          elif q_i in current_sub_ans and current_sub_ans[q_i] is not None:
+            # Жауап берілген сұрақ (Жасыл)
+            palette_css += f"""
+            div[data-testid="stHorizontalBlock"] button[kind="secondary"]:has(div:contains("{q_i + 1}")) {{
+                background-color: #10B981 !important;
+                border-color: #34D399 !important;
+                color: #FFFFFF !important;
+            }}
+            """
+        palette_css += "</style>"
+        st.markdown(palette_css, unsafe_allow_html=True)
+
         cols_per_row = 20
         for i in range(0, num_qs, cols_per_row):
           chunk = range(i, min(i + cols_per_row, num_qs))
           pal_cols = st.columns(len(chunk))
           for idx, q_i in enumerate(chunk):
             with pal_cols[idx]:
-              is_current = (q_i == curr_q_idx)
-              btn_type = "primary" if is_current else "secondary"
-              if st.button(str(q_i + 1), key=f"pal_{sub_idx}_{q_i}", use_container_width=True, type=btn_type):
+              if st.button(str(q_i + 1), key=f"pal_{sub_idx}_{q_i}", use_container_width=True):
                 st.session_state.current_question_index = q_i
                 st.rerun()
 
@@ -858,10 +883,7 @@ def user_page():
         q = sub_questions[curr_q_idx]
         st.write(q["question"])
 
-        current_sub_ans = st.session_state.test_answers[current_subject]
         prev_ans = current_sub_ans.get(curr_q_idx)
-        
-        # Егер бұрын жауап берілмесе, индексті None етіп береміз (ешқайсысы белгіленбейді)
         default_ix = None
         if prev_ans in q["answers"]:
           default_ix = q["answers"].index(prev_ans)
