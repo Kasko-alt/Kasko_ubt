@@ -400,7 +400,61 @@ def login_page():
 
 
 # =========================================================
-# 8. МОДЕРАТОР ПАНЕЛІ
+# СТАТИСТИКАНЫ КӨРСЕТУ ЖӘНЕ СҮЗГІЛЕУ ФУНКЦИЯСЫ (ОРТАҚ)
+# =========================================================
+def render_statistics_tab():
+  st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
+  history = load_results_history()
+
+  if not history:
+    st.info("⚠️ Әзірге ешбір оқушы тест тапсырған жоқ.")
+    return
+
+  # Іздеу және сүзу (Filter & Search) элементтері
+  sc1, sc2 = st.columns(2)
+  with sc1:
+    search_query = (
+        st.text_input(
+            "🔍 Оқушының аты немесе логині бойынша іздеу:", key="stat_search"
+        )
+        .strip()
+        .lower()
+    )
+  with sc2:
+    comb_filter = st.selectbox(
+        "🎯 Комбинация бойынша сүзу:",
+        ["Барлығы"] + list(combinations.keys()),
+        key="stat_comb_filter",
+    )
+
+  # Сүзгіні қолдану
+  filtered_history = []
+  for h in history:
+    match_search = (
+        search_query in h.get("name", "").lower()
+        or search_query in h.get("username", "").lower()
+    )
+    match_comb = (
+        comb_filter == "Барлығы" or h.get("combination") == comb_filter
+    )
+    if match_search and match_comb:
+      filtered_history.append(h)
+
+  st.caption(f"Табылған нәтижелер саны: {len(filtered_history)}")
+
+  if not filtered_history:
+    st.warning("⚠️ Іздеу шарттарына сәйкес ешбір нәтиже табылмады.")
+  else:
+    for idx, h in enumerate(reversed(filtered_history)):
+      st.markdown(
+          f"**{idx+1}. Оқушы:** {h.get('name')} (@{h.get('username')}) |"
+          f" **Комбинация:** {h.get('combination')} | **Ұпай:**"
+          f" `{h.get('score')}` | **Күні:** {h.get('date')}"
+      )
+
+
+# =========================================================
+# 8. МОДЕРАТОР ПАНЕЛІ (Статистиканы көру мүмкіндігімен)
 # =========================================================
 def parse_bulk_questions(raw_text):
   questions_list = []
@@ -450,14 +504,16 @@ def moderator_page():
       logout()
 
   st.markdown(
-      '<div class="kasym-subtitle">Сұрақтар базасын құру және өңдеу</div>',
+      '<div class="kasym-subtitle">Сұрақтар базасы және оқушылар'
+      " статистикасы</div>",
       unsafe_allow_html=True,
   )
 
-  tab1, tab2, tab3 = st.tabs([
+  tab1, tab2, tab3, tab4 = st.tabs([
       "⚡ Массалық жүктеу",
       "✍️ Жеке сұрақ қосу",
       "🗑️ Сұрақтарды жою",
+      "📊 Оқушылар статистикасы",
   ])
 
   with tab1:
@@ -533,9 +589,14 @@ def moderator_page():
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
+  with tab4:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_statistics_tab()
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 # =========================================================
-# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ — Қолданушыларды жою мүмкіндігімен
+# 9. ӘКІМШІ (ADMIN) ПАНЕЛІ (Іздеу және сүзу мүмкіндігімен)
 # =========================================================
 def admin_page():
   global users
@@ -551,8 +612,8 @@ def admin_page():
       logout()
 
   st.markdown(
-      '<div class="kasym-subtitle">Қолданушыларды басқару (жою) және оқушылар'
-      " статистикасы</div>",
+      '<div class="kasym-subtitle">Қолданушыларды басқару және іздеу жүйесі бар'
+      " статистика</div>",
       unsafe_allow_html=True,
   )
 
@@ -578,11 +639,8 @@ def admin_page():
 
         col_info, col_del = st.columns([4, 1])
         with col_info:
-          st.write(
-              f"• **{u_name}** (@{u_username}) — Ролі: `{u_role}`"
-          )
+          st.write(f"• **{u_name}** (@{u_username}) — Ролі: `{u_role}`")
         with col_del:
-          # Басты админді (kas01) өшіруге тыйым саламыз
           if u_username != "kas01":
             if st.button("🗑️ Жою", key=f"del_user_{u_username}"):
               users = [
@@ -626,17 +684,7 @@ def admin_page():
 
   with admin_tabs[2]:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 📊 Оқушылардың тест нәтижелері мен статистикасы")
-    history = load_results_history()
-    if not history:
-      st.info("⚠️ Әзірге ешбір оқушы тест тапсырған жоқ.")
-    else:
-      for idx, h in enumerate(reversed(history)):
-        st.markdown(
-            f"**{idx+1}. Оқушы:** {h.get('name')} (@{h.get('username')}) |"
-            f" **Комбинация:** {h.get('combination')} | **Ұпай:**"
-            f" `{h.get('score')}` | **Күні:** {h.get('date')}"
-        )
+    render_statistics_tab()
     st.markdown("</div>", unsafe_allow_html=True)
 
 
