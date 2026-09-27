@@ -827,9 +827,7 @@ def user_page():
       else:
         # Навигациялық палитра (Сұрақ нөмірлері сеткасы)
         st.markdown("#### 🧭 Сұрақтар палитрасы:")
-        cols = st.minimax if hasattr(st, "columns") else None
         
-        # Кнопкаларды қатар етіп шығару (бір жолға 10 сұрақтан)
         num_qs = len(sub_questions)
         rows = (num_qs // 10) + (1 if num_qs % 10 != 0 else 0)
         
@@ -847,11 +845,8 @@ def user_page():
             q_i = r * 10 + c
             if q_i < num_qs:
               with q_cols[c]:
-                is_answered = q_i in current_sub_ans and current_sub_ans[q_i]
                 is_current = q_i == curr_q_idx
-                
                 btn_label = f"[{q_i+1}]" if is_current else str(q_i+1)
-                btn_type = "primary" if is_current else "secondary"
                 
                 if st.button(btn_label, key=f"pal_{sub_idx}_{q_i}", use_container_width=True):
                   st.session_state.current_question_index = q_i
