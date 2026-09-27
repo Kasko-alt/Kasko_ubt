@@ -474,13 +474,12 @@ def render_statistics_tab():
 
 
 # =========================================================
-# 8. МОДЕРАТОР ПАНЕЛІ (Жаңартылған parse_bulk_questions функциясымен)
+# 8. МОДЕРАТОР ПАНЕЛІ
 # =========================================================
 def parse_bulk_questions(raw_text):
   import re
 
   questions_list = []
-  # Сандар аркылуу (мысалы: 1., 2. ж.б.) автоматтык түрде бөлүү
   blocks = re.split(r"(?=\b\d+[\.\)]\s)", raw_text)
   for block in blocks:
     if not block.strip():
@@ -488,7 +487,6 @@ def parse_bulk_questions(raw_text):
 
     full_text = " ".join(block.strip().split("\n"))
 
-    # Сурақ мәтінін табу
     q_match = re.search(
         r"^\d+[\.\)]\s*(.*?)(?=[A-DА-Гa-dа-г][\.\)]|\bЖауабы:|$)", full_text
     )
@@ -496,7 +494,6 @@ def parse_bulk_questions(raw_text):
       continue
     q_text = q_match.group(1).strip()
 
-    # Нұсқаларды табу (A, B, C, D немесе А, Б, В, Г)
     options = re.findall(
         r"([A-DА-Гa-dа-г])[\.\)]\s*([^A-DА-Гa-dа-г\.\)]+)", full_text
     )
@@ -505,7 +502,6 @@ def parse_bulk_questions(raw_text):
     if len(options) >= 4:
       answers = [opt[1].strip() for opt in options[:4]]
 
-    # Дұрыс жауапты табу
     correct_index = 0
     ans_match = re.search(r"Жауабы:\s*([A-DА-Гa-dа-г])", full_text, re.IGNORECASE)
     if ans_match:
@@ -720,7 +716,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ
+# 10. ОҚУШЫ (USER) ПАНЕЛІ (Жаңартылған Навигация және Палитра)
 # =========================================================
 def user_page():
   col1, col2 = st.columns([6, 1])
@@ -760,37 +756,81 @@ def user_page():
     subj_list = combinations[comb_name]
     sub_idx = st.session_state.current_subject_index
 
+    # Бүйірлік панельде сұрақтарды жылдам секіру (Palette) және пәндер тізімі
+    with st.sidebar:
+      st.markdown("### 📌 Тест панелі")
+      st.write(f"**Бағыт:** {comb_name}")
+      st.markdown("---")
+      st.markdown("#### 📚 Пәндер тізімі:")
+      for idx, s_name in enumerate(subj_list):
+        icon = "✅" if idx < sub_idx else ("👉" if idx == sub_idx else "⏳")
+        if st.button(f"{icon} {s_name}", key=f"sidebar_sub_{idx}", use_container_width=True):
+          st.session_state.current_subject_index = idx
+          st.rerun()
+
     if sub_idx < len(subj_list):
       current_subject = subj_list[sub_idx]
+      sub_questions = questions.get(current_subject, [])
+
       st.markdown(f"### 📚 Пән ({sub_idx + 1}/{len(subj_list)}): {current_subject}")
       st.markdown("---")
 
-      sub_questions = questions.get(current_subject, [])
       if not sub_questions:
         st.info(f"Бұл пөнде ({current_subject}) әзірге сұрақтар жоқ.")
-        if st.button("Келесі пәнге өту ➡"):
-          st.session_state.current_subject_index += 1
-          st.rerun()
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+          if sub_idx > 0 and st.button("⬅️ Артқы пән"):
+            st.session_state.current_subject_index -= 1
+            st.rerun()
+        with col_b2:
+          if st.button("Келесі пән ➡"):
+            st.session_state.current_subject_index += 1
+            st.rerun()
       else:
+        # Егер сұрақтар бар болса, Форма арқылы көрсетеміз
+        current_sub_answers = st.session_state.test_answers.get(current_subject, {})
+        
         with st.form(key=f"subject_form_{sub_idx}"):
           subject_answers = {}
           for q_idx, q in enumerate(sub_questions):
+            # Бұрын таңдалған жауапты сақтап қалу үшін индекс табу
+            default_ix = 0
+            prev_ans = current_sub_answers.get(q_idx)
+            if prev_ans in q["answers"]:
+              default_ix = q["answers"].index(prev_ans)
+
             ans = st.radio(
-                f"{q_idx + 1}. {q['question']}", q["answers"], key=f"q_{sub_idx}_{q_idx}"
+                f"{q_idx + 1}. {q['question']}",
+                q["answers"],
+                index=default_ix,
+                key=f"q_{sub_idx}_{q_idx}"
             )
             subject_answers[q_idx] = ans
             st.markdown("")
 
-          submitted = st.form_submit_button(
-              "Келесі пәнге өту ➡"
-              if sub_idx < len(subj_list) - 1
-              else "Тестті аяқтау 🏁"
-          )
-          if submitted:
+          st.markdown("---")
+          col_prev, col_next = st.columns(2)
+          
+          with col_prev:
+            back_clicked = False
+            if sub_idx > 0:
+              back_clicked = st.form_submit_button("⬅️ Артқа")
+          
+          with col_next:
+            next_clicked = st.form_submit_button(
+                "Келесі пән ➡" if sub_idx < len(subj_list) - 1 else "Тестті аяқтау 🏁"
+            )
+
+          if next_clicked:
             st.session_state.test_answers[current_subject] = subject_answers
             st.session_state.current_subject_index += 1
             st.rerun()
+          elif back_clicked:
+            st.session_state.test_answers[current_subject] = subject_answers
+            st.session_state.current_subject_index -= 1
+            st.rerun()
     else:
+      # Нәтижелерді есептеу және сақтау
       total_score = 0
       for subject in subj_list:
         sub_questions = questions.get(subject, [])
