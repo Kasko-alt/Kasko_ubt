@@ -882,7 +882,7 @@ def user_page():
             st.session_state.result_saved = False
 
             shuffled_data = {}
-            for sub in combinations[selected_comb]:
+            for sub in combinations[assigned_combination]:
                 sub_qs = questions.get(sub, []).copy()
                 random.shuffle(sub_qs)
 
