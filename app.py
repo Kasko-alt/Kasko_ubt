@@ -867,7 +867,7 @@ def user_page():
         with col_top_next:
             is_last_subject = sub_idx >= len(subj_list) - 1
             next_subj_label = "Нәтижеге 🏁" if is_last_subject else "Келесі пән >"
-            if st.button(next_subj_label, use_container_width=True, type="primary"):
+            if st.button(next_subj_label, use_container_width=True, type="primary", key=f"top_next_subj_{sub_idx}"):
                 if not is_last_subject:
                     st.session_state.current_subject_index += 1
                     st.session_state.current_question_index = 0
@@ -927,7 +927,6 @@ def user_page():
                     nxt_label = (
                         "Келесі пән >" if is_last_q_in_sub else "Келесі сұрақ >"
                     )
-                    # Қатені түзету үшін бірегей key қосылды
                     if st.button(nxt_label, type="primary", use_container_width=True, key=f"next_btn_{sub_idx}_{curr_q_idx}"):
                         if not is_last_q_in_sub:
                             st.session_state.current_question_index += 1
@@ -943,14 +942,18 @@ def user_page():
                 if current_subject not in st.session_state.test_answers:
                     st.session_state.test_answers[current_subject] = {}
                 
+                # st.radio index мәні None болмауын қатаң қадағалайтын түзету
+                saved_ans_idx = st.session_state.test_answers[current_subject].get(curr_q_idx)
+                radio_index = saved_ans_idx if saved_ans_idx is not None else 0
+
                 selected_option = st.radio(
                     "Жауапты таңдаңыз:",
                     q_data["answers"],
                     key=f"radio_{sub_idx}_{curr_q_idx}",
-                    index=st.session_state.test_answers[current_subject].get(curr_q_idx, None)
+                    index=radio_index
                 )
                 
-                if selected_option is not None:
+                if selected_option:
                     chosen_idx = q_data["answers"].index(selected_option)
                     st.session_state.test_answers[current_subject][curr_q_idx] = chosen_idx
         else:
@@ -982,7 +985,7 @@ def user_page():
                 st.session_state.result_saved = True
                 st.success("✨ Нәтижеңіз жеке кабинетке сақталды!")
                 
-            if st.button("🔄 Басты бетке қайту", type="primary"):
+            if st.button("🔄 Басты бетке қайту", type="primary", key="return_home_btn"):
                 st.session_state.test_started = False
                 st.session_state.current_subject_index = 0
                 st.session_state.current_question_index = 0
