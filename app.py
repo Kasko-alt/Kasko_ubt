@@ -888,7 +888,7 @@ def user_page():
             )
 
             if not sub_questions:
-                st.info(f"Бұл пөнде ({current_subject}) әзірге сұрақтар жоқ.")
+                st.info(f"Бұл пәнде ({current_subject}) әзірге сұрақтар жоқ.")
             else:
                 curr_q_idx = st.session_state.current_question_index
                 num_qs = len(sub_questions)
@@ -927,115 +927,70 @@ def user_page():
                     nxt_label = (
                         "Келесі пән >" if is_last_q_in_sub else "Келесі сұрақ >"
                     )
-                    if st.button(nxt_label, type="primary", use_container_width=True):
+                    # Қатені түзету үшін бірегей key қосылды
+                    if st.button(nxt_label, type="primary", use_container_width=True, key=f"next_btn_{sub_idx}_{curr_q_idx}"):
                         if not is_last_q_in_sub:
                             st.session_state.current_question_index += 1
                         else:
                             st.session_state.current_subject_index += 1
                             st.session_state.current_question_index = 0
                         st.rerun()
-
-                q = sub_questions[curr_q_idx]
-                st.write(q["question"])
-
-                current_sub_ans = st.session_state.test_answers[current_subject]
-                prev_ans = current_sub_ans.get(curr_q_idx)
-
-                default_ix = None
-                if prev_ans in q["answers"]:
-                    default_ix = q["answers"].index(prev_ans)
-
-                selected_ans = st.radio(
-                    "Жауап нұсқасын таңдаңыз:",
-                    q["answers"],
-                    index=default_ix,
-                    key=f"radio_q_{sub_idx}_{curr_q_idx}",
+                
+                # Қазіргі сұрақты көрсету және жауапты қабылдау
+                q_data = sub_questions[curr_q_idx]
+                st.markdown(f"**{q_data['question']}**")
+                
+                if current_subject not in st.session_state.test_answers:
+                    st.session_state.test_answers[current_subject] = {}
+                
+                selected_option = st.radio(
+                    "Жауапты таңдаңыз:",
+                    q_data["answers"],
+                    key=f"radio_{sub_idx}_{curr_q_idx}",
+                    index=st.session_state.test_answers[current_subject].get(curr_q_idx, None)
                 )
-
-                if selected_ans is not None:
-                    st.session_state.test_answers[current_subject][
-                        curr_q_idx
-                    ] = selected_ans
-
+                
+                if selected_option is not None:
+                    chosen_idx = q_data["answers"].index(selected_option)
+                    st.session_state.test_answers[current_subject][curr_q_idx] = chosen_idx
         else:
+            # Тест аяқталды, нәтижені есептеу және сақтау
+            st.markdown("### 🏆 Тест аяқталды!")
             total_score = 0
-            for subject in subj_list:
-                sub_questions = st.session_state.shuffled_test_data.get(
-                    subject, []
-                )
-                user_sub_ans = st.session_state.test_answers.get(subject, {})
-                for q_idx, q in enumerate(sub_questions):
-                    chosen = user_sub_ans.get(q_idx)
-                    correct_text = q["answers"][q["correct"]]
-                    if chosen == correct_text:
+            max_possible_score = 0
+            
+            for sub in subj_list:
+                sub_qs = st.session_state.shuffled_test_data.get(sub, [])
+                max_possible_score += len(sub_qs)
+                sub_ans = st.session_state.test_answers.get(sub, {})
+                for idx, q in enumerate(sub_qs):
+                    if sub_ans.get(idx) == q["correct"]:
                         total_score += 1
-
+                        
+            st.metric("Сіз жинаған жалпы ұпай:", f"{total_score} / {max_possible_score}")
+            
             if not st.session_state.get("result_saved", False):
                 history = load_results_history()
-                new_result = {
+                history.append({
                     "username": st.session_state.username,
                     "name": st.session_state.full_name,
                     "combination": comb_name,
                     "score": total_score,
-                    "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                }
-                history.append(new_result)
+                    "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                })
                 save_results_history(history)
                 st.session_state.result_saved = True
-
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown(
-                f"### 🎉 Тест аяқталды! Жинаған ұпайыңыз: **{total_score}**"
-            )
-            st.info("Нәтижеңіз администратор базасына автоматты түрде сақталды.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("### 📝 Қателермен жұмыс (Талдау)")
-
-            has_mistakes = False
-            for subject in subj_list:
-                sub_questions = st.session_state.shuffled_test_data.get(
-                    subject, []
-                )
-                user_sub_ans = st.session_state.test_answers.get(subject, {})
-
-                for q_idx, q in enumerate(sub_questions):
-                    chosen = user_sub_ans.get(q_idx)
-                    correct_text = q["answers"][q["correct"]]
-                    if chosen != correct_text:
-                        has_mistakes = True
-                        st.markdown(
-                            f"**📚 Пән:** `{subject}` | **Сұрақ №{q_idx + 1}`"
-                        )
-                        st.write(f"❓ {q['question']}")
-                        st.markdown(
-                            f"❌ Сіздің жауабыңыз:"
-                            f" `{chosen if chosen else 'Жауап берілмеді'}`"
-                        )
-                        st.markdown(f"✅ Дұрыс жауап: `{correct_text}`")
-                        st.markdown("---")
-
-            if not has_mistakes:
-                st.success("🏆 Керемет! Барлық сұраққа дұрыс жауап бердіңіз!")
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            if st.button(
-                "🔄 Жаңа тест тапсыру", type="primary", use_container_width=True
-            ):
+                st.success("✨ Нәтижеңіз жеке кабинетке сақталды!")
+                
+            if st.button("🔄 Басты бетке қайту", type="primary"):
                 st.session_state.test_started = False
-                st.session_state.active_combination = None
                 st.session_state.current_subject_index = 0
                 st.session_state.current_question_index = 0
-                st.session_state.test_answers = {}
-                st.session_state.shuffled_test_data = {}
-                st.session_state.result_saved = False
                 st.rerun()
 
 
 # =========================================================
-# 11. НЕГІЗГІ БАҒДАРЛАМА ЛОГИКАСЫ (ROUTER)
+# 11. НЕГІЗГІ (MAIN) ФУНКЦИЯ
 # =========================================================
 def main():
     if not st.session_state.logged_in:
