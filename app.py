@@ -727,7 +727,7 @@ def admin_page():
 
 
 # =========================================================
-# 10. ОҚУШЫ (USER) ПАНЕЛІ (ҰБТ стиліндегі кең экранды формат)
+# 10. ОҚУШЫ (USER) ПАНЕЛІ
 # =========================================================
 def user_page():
     col_top1, col_top_prev, col_top_next, col_top_out = st.columns([3, 1.2, 1.2, 0.8])
@@ -914,56 +914,36 @@ def user_page():
                 sub_questions = st.session_state.shuffled_test_data.get(subject, [])
                 user_sub_ans = st.session_state.test_answers.get(subject, {})
                 
-                sub_mistakes = []
                 for q_idx, q in enumerate(sub_questions):
                     chosen = user_sub_ans.get(q_idx)
                     correct_text = q["answers"][q["correct"]]
                     if chosen != correct_text:
-                        sub_mistakes.append((q, chosen, correct_text))
-
-                if sub_mistakes:
-                    has_mistakes = True
-                    st.markdown(f"#### 📚 Пән: {subject}")
-                    for idx, (q, chosen, correct_text) in enumerate(sub_mistakes, 1):
-                        st.markdown(f"**{idx}. {q['question']}**")
-                        st.markdown(f"❌ Сіздің жауабыңыз: `{chosen if chosen else 'Жауап берілмеді'}`")
+                        has_mistakes = True
+                        st.markdown(f"**Пән:** `{subject}` | **Сұрақ №{q_idx + 1}**")
+                        st.write(f"❓ {q['question']}")
+                        st.markdown(f"❌ Сіздің жауабыңыз: `{chosen if chosen else 'Белгіленбеді'}`")
                         st.markdown(f"✅ Дұрыс жауап: `{correct_text}`")
                         st.markdown("---")
-
+            
             if not has_mistakes:
-                st.success("🌟 Керемет! Барлық сұраққа дұрыс жауап бердіңіз!")
-
+                st.success(" керемет! Барлық сұрақтарға дұрыс жауап бердіңіз! 🔥")
+                
             st.markdown("</div>", unsafe_allow_html=True)
-
-            if st.button("🔄 Жаңа тест бастау", use_container_width=True):
-                st.session_state.test_started = False
-                st.session_state.current_subject_index = 0
-                st.session_state.current_question_index = 0
-                st.session_state.test_answers = {}
-                st.session_state.shuffled_test_data = {}
-                st.session_state.result_saved = False
-                st.rerun()
 
 
 # =========================================================
-# 11. РОУТЕР
+# 11. НЕГІЗГІ ҚОСУШЫ НҮКТЕ (MAIN ROUTER)
 # =========================================================
 def main():
     if not st.session_state.logged_in:
         login_page()
     else:
-        role = st.session_state.get("role", "user")
-
-        if role == "admin":
+        if st.session_state.role == "admin":
             admin_page()
-        elif role == "moderator":
+        elif st.session_state.role == "moderator":
             moderator_page()
-        elif role == "user":
-            user_page()
         else:
-            st.warning(f"⚠️ Белгісіз рөл анықталды: {role}")
-            if st.button("🚪 Шығу және қайта кіру"):
-                logout()
+            user_page()
 
 
 if __name__ == "__main__":
