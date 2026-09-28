@@ -675,12 +675,41 @@ def admin_page():
                 u_name = u.get("name", "Аты жоқ")
                 u_username = u.get("username")
                 u_role = u.get("role")
+                current_combination = u.get("combination")
 
-                col_info, col_del = st.columns([4, 1])
-                with col_info:
-                    st.write(f"• **{u_name}** (@{u_username}) — Ролі: `{u_role}`")
-                with col_del:
-                    if u_username != "kas01":
+                st.markdown(f"**{u_name}**  ·  `@{u_username}`  ·  Рөлі: `{u_role}`")
+
+                # Президент оқушының комбинациясын осы жерден өзгерте алады.
+                if u_role == "user":
+                    comb_options = list(combinations.keys())
+                    current_index = (
+                        comb_options.index(current_combination)
+                        if current_combination in comb_options
+                        else 0
+                    )
+
+                    col_comb, col_save, col_del = st.columns([4, 1.2, 1.2])
+                    with col_comb:
+                        selected_combination = st.selectbox(
+                            "🎯 Бекітілген комбинация",
+                            comb_options,
+                            index=current_index,
+                            key=f"user_comb_{u_username}",
+                        )
+                    with col_save:
+                        st.write("")
+                        st.write("")
+                        if st.button("💾 Сақтау", key=f"save_comb_{u_username}"):
+                            for item in users:
+                                if item.get("username") == u_username:
+                                    item["combination"] = selected_combination
+                                    break
+                            save_users(users)
+                            st.success("Комбинация сақталды!")
+                            st.rerun()
+                    with col_del:
+                        st.write("")
+                        st.write("")
                         if st.button("🗑️ Жою", key=f"del_user_{u_username}"):
                             users = [
                                 x for x in users if x.get("username") != u_username
@@ -688,8 +717,29 @@ def admin_page():
                             save_users(users)
                             st.success(f"@{u_username} логині сәтті жойылды!")
                             st.rerun()
+
+                    if current_combination:
+                        st.caption(f"Қазір бекітілгені: {current_combination}")
                     else:
-                        st.caption("Басты админ")
+                        st.warning("⚠️ Бұл оқушыға әлі комбинация бекітілмеген.")
+                else:
+                    col_info, col_del = st.columns([4, 1])
+                    with col_info:
+                        if u_role == "admin":
+                            st.caption("👑 Администратор")
+                        elif u_role == "moderator":
+                            st.caption("📝 Модератор / Премьер министр")
+                    with col_del:
+                        if u_username != "kas01":
+                            if st.button("🗑️ Жою", key=f"del_user_{u_username}"):
+                                users = [
+                                    x for x in users if x.get("username") != u_username
+                                ]
+                                save_users(users)
+                                st.success(f"@{u_username} логині сәтті жойылды!")
+                                st.rerun()
+                        else:
+                            st.caption("Басты админ")
                 st.markdown("---")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -701,6 +751,15 @@ def admin_page():
         new_n = st.text_input("Толық аты-жөні:")
         new_r = st.selectbox("Ролі:", ["user", "moderator", "admin"])
 
+        new_combination = None
+        if new_r == "user":
+            new_combination = st.selectbox(
+                "🎯 Оқушының комбинациясы:",
+                list(combinations.keys()),
+                key="new_user_combination",
+            )
+            st.caption("Бұл комбинация оқушыға бекітіледі. Оқушы кейін оны өзі өзгерте алмайды.")
+
         if st.button("Қолданушыны сақтау", type="primary"):
             if new_u and new_p:
                 if username_exists(new_u):
@@ -711,7 +770,7 @@ def admin_page():
                         "password": hash_password(new_p.strip()),
                         "name": new_n.strip(),
                         "role": new_r,
-                        "combination": None,
+                        "combination": new_combination,
                     })
                     save_users(users)
                     st.success("✨ Қолданушы сәтті тіркелді!")
@@ -795,12 +854,27 @@ def user_page():
         # --- ТЕСТТІ БАСТАУ БӨЛІМІ ---
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 🎯 Жаңа тест тапсыру")
-        selected_comb = st.selectbox(
-            "Мамандық бағытын таңдаңыз:", list(combinations.keys())
-        )
 
-        if st.button("🚀 Тестті бастау", type="primary", use_container_width=True):
-            st.session_state.active_combination = selected_comb
+        # Оқушының комбинациясы админ арқылы алдын ала бекітіледі.
+        current_user = next(
+            (u for u in users if u.get("username") == st.session_state.username),
+            None,
+        )
+        assigned_combination = (current_user or {}).get("combination")
+
+        if assigned_combination and assigned_combination in combinations:
+            st.success(f"🎯 Сізге бекітілген бағыт: **{assigned_combination}**")
+            st.caption("Бұл бағытты оқушы өзі өзгерте алмайды. Өзгерту үшін администраторға жүгініңіз.")
+        else:
+            st.warning("⚠️ Сізге әлі тест бағыты бекітілмеген. Администратор комбинацияны бекіткеннен кейін тест тапсыра аласыз.")
+
+        if st.button(
+            "🚀 Тестті бастау",
+            type="primary",
+            use_container_width=True,
+            disabled=not (assigned_combination and assigned_combination in combinations),
+        ):
+            st.session_state.active_combination = assigned_combination
             st.session_state.test_started = True
             st.session_state.current_subject_index = 0
             st.session_state.current_question_index = 0
