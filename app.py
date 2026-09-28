@@ -1016,18 +1016,18 @@ def user_page():
                 if current_subject not in st.session_state.test_answers:
                     st.session_state.test_answers[current_subject] = {}
                 
-                # st.radio index мәні None болмауын қатаң қадағалайтын түзету
+                # Егер оқушы бұрын жауап берген болса — сол жауап сақталады.
+                # Жаңа сұрақта ешбір жауап автоматты түрде белгіленбейді.
                 saved_ans_idx = st.session_state.test_answers[current_subject].get(curr_q_idx)
-                radio_index = saved_ans_idx if saved_ans_idx is not None else 0
 
                 selected_option = st.radio(
                     "Жауапты таңдаңыз:",
                     q_data["answers"],
                     key=f"radio_{sub_idx}_{curr_q_idx}",
-                    index=radio_index
+                    index=saved_ans_idx if saved_ans_idx is not None else None
                 )
-                
-                if selected_option:
+
+                if selected_option is not None:
                     chosen_idx = q_data["answers"].index(selected_option)
                     st.session_state.test_answers[current_subject][curr_q_idx] = chosen_idx
         else:
