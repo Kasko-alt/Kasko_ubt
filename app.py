@@ -1132,6 +1132,77 @@ def user_page():
                 })
             st.dataframe(result_table, use_container_width=True, hide_index=True)
 
+            # =====================================================
+            # №7 — ДҰРЫС / ҚАТЕ ЖАУАПТАРДЫ ТОЛЫҚ ҚАРАУ
+            # =====================================================
+            question_review = {}
+
+            st.markdown("---")
+            st.markdown("### 🔎 Сұрақтарды толық талдау")
+            st.caption(
+                "Әр пәнді ашып, қай сұраққа қалай жауап бергеніңізді, "
+                "дұрыс жауапты және жауап берілмеген сұрақтарды көре аласыз."
+            )
+
+            for sub in subj_list:
+                sub_qs = st.session_state.shuffled_test_data.get(sub, [])
+                sub_ans = st.session_state.test_answers.get(sub, {})
+                subject_review = []
+
+                with st.expander(f"📚 {sub} — {len(sub_qs)} сұрақ", expanded=False):
+                    for q_idx, q in enumerate(sub_qs):
+                        selected_idx = sub_ans.get(q_idx)
+                        correct_idx = q.get("correct")
+                        answers = q.get("answers", [])
+
+                        if selected_idx is None:
+                            status = "⚪ Жауап берілмеді"
+                        elif selected_idx == correct_idx:
+                            status = "✅ Дұрыс"
+                        else:
+                            status = "❌ Қате"
+
+                        selected_text = (
+                            answers[selected_idx]
+                            if selected_idx is not None and 0 <= selected_idx < len(answers)
+                            else "Жауап берілмеді"
+                        )
+                        correct_text = (
+                            answers[correct_idx]
+                            if correct_idx is not None and 0 <= correct_idx < len(answers)
+                            else "Көрсетілмеген"
+                        )
+
+                        st.markdown(f"#### {q_idx + 1}. {status}")
+                        st.markdown(f"**{q.get('question', '')}**")
+                        st.markdown(f"📝 **Сіздің жауабыңыз:** {selected_text}")
+                        st.markdown(f"🎯 **Дұрыс жауап:** {correct_text}")
+
+                        # Барлық жауап нұсқаларын да көрсетеміз
+                        for option_idx, option_text in enumerate(answers):
+                            if option_idx == correct_idx:
+                                prefix = "🟢"
+                            elif option_idx == selected_idx:
+                                prefix = "🔴"
+                            else:
+                                prefix = "⚪"
+                            st.write(f"{prefix} {option_text}")
+
+                        st.markdown("---")
+
+                        subject_review.append({
+                            "question_number": q_idx + 1,
+                            "question": q.get("question", ""),
+                            "answers": answers,
+                            "selected_answer": selected_text,
+                            "correct_answer": correct_text,
+                            "selected_index": selected_idx,
+                            "correct_index": correct_idx,
+                            "status": status,
+                        })
+
+                question_review[sub] = subject_review
+
             if not st.session_state.get("result_saved", False):
                 history = load_results_history()
                 history.append({
@@ -1141,6 +1212,7 @@ def user_page():
                     "score": total_score,
                     "max_score": total_max_points,
                     "subject_results": subject_results,
+                    "question_review": question_review,
                     "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                 })
                 save_results_history(history)
