@@ -278,6 +278,8 @@ if "test_answers" not in st.session_state:
     st.session_state.test_answers = {}
 if "shuffled_test_data" not in st.session_state:
     st.session_state.shuffled_test_data = {}
+if "current_subject_results" not in st.session_state:
+    st.session_state.current_subject_results = []
 
 # =========================================================
 # 6. UI СТИЛЬДЕРІ (DESIGN)
@@ -1031,21 +1033,105 @@ def user_page():
                     chosen_idx = q_data["answers"].index(selected_option)
                     st.session_state.test_answers[current_subject][curr_q_idx] = chosen_idx
         else:
-            # Тест аяқталды, нәтижені есептеу және сақтау
+            # Тест аяқталды, нәтижені пәндер бойынша есептеу және сақтау
             st.markdown("### 🏆 Тест аяқталды!")
+
+            # 140 баллдық жүйе:
+            # Негізгі пәндер — 40 сұрақ = 50 балл
+            # Қазақстан тарихы — 20 сұрақ = 20 балл
+            # Оқу сауаттылығы — 10 сұрақ = 10 балл
+            # Математикалық сауаттылық — 10 сұрақ = 10 балл
+            subject_max_points = {
+                "Қазақстан тарихы": 20,
+                "Оқу сауаттылығы": 10,
+                "Математикалық сауаттылық": 10,
+                "Математика": 50,
+                "Физика": 50,
+                "Химия": 50,
+                "Биология": 50,
+                "Информатика": 50,
+                "География": 50,
+                "Дүниежүзі тарихы": 50,
+                "Ағылшын тілі": 50,
+                "Құқық": 50,
+            }
+
+            subject_results = []
             total_score = 0
-            max_possible_score = 0
-            
+            total_max_points = 0
+
             for sub in subj_list:
                 sub_qs = st.session_state.shuffled_test_data.get(sub, [])
-                max_possible_score += len(sub_qs)
                 sub_ans = st.session_state.test_answers.get(sub, {})
-                for idx, q in enumerate(sub_qs):
-                    if sub_ans.get(idx) == q["correct"]:
-                        total_score += 1
-                        
-            st.metric("Сіз жинаған жалпы ұпай:", f"{total_score} / {max_possible_score}")
-            
+                question_count = len(sub_qs)
+                correct_count = sum(
+                    1
+                    for idx, q in enumerate(sub_qs)
+                    if sub_ans.get(idx) == q["correct"]
+                )
+
+                max_points = subject_max_points.get(sub, question_count)
+                expected_questions = subject_limits.get(sub, question_count)
+
+                # Егер пән толық лимитпен берілсе, оның нақты баллын
+                # белгіленген максимал баллға пропорционалды есептейміз.
+                if question_count > 0:
+                    score = round(correct_count * max_points / question_count)
+                else:
+                    score = 0
+
+                total_score += score
+                total_max_points += max_points
+
+                subject_results.append({
+                    "subject": sub,
+                    "correct": correct_count,
+                    "questions": question_count,
+                    "score": score,
+                    "max_score": max_points,
+                    "expected_questions": expected_questions,
+                })
+
+            st.session_state.current_subject_results = subject_results
+
+            # Жалпы нәтиже
+            result_col1, result_col2 = st.columns(2)
+            with result_col1:
+                st.metric("🏆 Жалпы ұпай", f"{total_score} / {total_max_points}")
+            with result_col2:
+                percentage = round((total_score / total_max_points) * 100, 1) if total_max_points else 0
+                st.metric("📊 Нәтиже", f"{percentage}%")
+
+            st.markdown("---")
+            st.markdown("### 📚 Пәндер бойынша нәтиже")
+            st.caption("Әр пәннен қанша сұрақ дұрыс болғанын және қанша балл жиналғанын көре аласыз.")
+
+            # Әр пәнді бөлек көрсету
+            for item in subject_results:
+                subject_name = item["subject"]
+                correct = item["correct"]
+                questions_count = item["questions"]
+                score = item["score"]
+                max_score = item["max_score"]
+
+                st.markdown(
+                    f"**{subject_name}** — {correct} / {questions_count} дұрыс · "
+                    f"🎯 **{score} / {max_score} балл**"
+                )
+                progress_value = score / max_score if max_score else 0
+                st.progress(min(max(progress_value, 0.0), 1.0))
+
+            # Кесте түріндегі қысқа қорытынды
+            st.markdown("#### 📋 Қысқаша кесте")
+            result_table = []
+            for item in subject_results:
+                result_table.append({
+                    "Пән": item["subject"],
+                    "Дұрыс жауап": f'{item["correct"]} / {item["questions"]}',
+                    "Ұпай": f'{item["score"]} / {item["max_score"]}',
+                })
+            st.dataframe(result_table, use_container_width=True, hide_index=True)
+
             if not st.session_state.get("result_saved", False):
                 history = load_results_history()
                 history.append({
@@ -1053,16 +1139,19 @@ def user_page():
                     "name": st.session_state.full_name,
                     "combination": comb_name,
                     "score": total_score,
+                    "max_score": total_max_points,
+                    "subject_results": subject_results,
                     "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                 })
                 save_results_history(history)
                 st.session_state.result_saved = True
-                st.success("✨ Нәтижеңіз жеке кабинетке сақталды!")
-                
+                st.success("✨ Нәтижеңіз жеке кабинетке пәндер бойынша толық сақталды!")
+
             if st.button("🔄 Басты бетке қайту", type="primary", key="return_home_btn"):
                 st.session_state.test_started = False
                 st.session_state.current_subject_index = 0
                 st.session_state.current_question_index = 0
+                st.session_state.current_subject_results = []
                 st.rerun()
 
 
