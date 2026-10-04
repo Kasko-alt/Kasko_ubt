@@ -373,52 +373,25 @@ def login_page():
     c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        tab_login, tab_register = st.tabs(["🔐 Жүйеге кіру", "📝 Тіркелу"])
+        st.markdown("### 🔐 Жүйеге кіру")
 
-        with tab_login:
-            username = st.text_input("Логин", key="login_username")
-            password = st.text_input(
-                "Құпия сөз", type="password", key="login_password"
-            )
+        username = st.text_input("Логин", key="login_username")
+        password = st.text_input(
+            "Құпия сөз", type="password", key="login_password"
+        )
 
-            if st.button("Кіру →", use_container_width=True, type="primary"):
-                user = find_user(username.strip(), password.strip())
-                if user:
-                    st.session_state.logged_in = True
-                    st.session_state.username = user["username"]
-                    st.session_state.full_name = user.get("name", "")
-                    st.session_state.role = user.get("role", "user")
-                    st.rerun()
-                else:
-                    st.error("❌ Логин немесе құпия сөз қате.")
+        if st.button("Кіру →", use_container_width=True, type="primary"):
+            user = find_user(username.strip(), password.strip())
+            if user:
+                st.session_state.logged_in = True
+                st.session_state.username = user["username"]
+                st.session_state.full_name = user.get("name", "")
+                st.session_state.role = user.get("role", "user")
+                st.rerun()
+            else:
+                st.error("❌ Логин немесе құпия сөз қате.")
 
-        with tab_register:
-            reg_name = st.text_input("Толық аты-жөніңіз:")
-            reg_user = st.text_input("Жаңа логин таңдаңыз:")
-            reg_pass = st.text_input(
-                "Құпия сөз ойлап табыңыз:", type="password", key="reg_pass"
-            )
-
-            if st.button(
-                "Тіркелуді аяқтау", use_container_width=True, type="primary"
-            ):
-                if reg_name and reg_user and reg_pass:
-                    if username_exists(reg_user):
-                        st.error("❌ Бұл логин бос емес, басқа логин таңдаңыз.")
-                    else:
-                        new_student = {
-                            "username": reg_user.strip(),
-                            "password": hash_password(reg_pass.strip()),
-                            "name": reg_name.strip(),
-                            "role": "user",
-                            "combination": None,
-                        }
-                        users.append(new_student)
-                        save_users(users)
-                        st.success("✨ Сәтті тіркелдіңіз! Енді кіре аласыз.")
-                else:
-                    st.error("⚠️ Барлық өрістерді толтырыңыз!")
-
+        st.info("🔐 Жаңа аккаунтты тек администратор жасайды.")
         st.markdown("</div>", unsafe_allow_html=True)
 
 
