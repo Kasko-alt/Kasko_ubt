@@ -22,10 +22,14 @@ st.set_page_config(
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
 USERS_FILE = "users.json"
+TEST_PROGRESS_FILE = "test_progress.json"
 
-# Егер users.json әлі жоқ болса, GitHub/Streamlit Secrets
-# арқылы KASYM_ADMIN_PASSWORD орнатуға болады.
-ADMIN_PASSWORD = os.environ.get("KASYM_ADMIN_PASSWORD", "CHANGE_ME")
+# users.json бар болса, оның ішіндегі пароль өзгермейді.
+# Жаңа users.json жасалған кезде ғана осы пароль қолданылады.
+ADMIN_PASSWORD = os.environ.get(
+    "KASYM_ADMIN_PASSWORD",
+    "CHANGE_ME"
+)
 
 
 # =========================================================
@@ -33,7 +37,9 @@ ADMIN_PASSWORD = os.environ.get("KASYM_ADMIN_PASSWORD", "CHANGE_ME")
 # =========================================================
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    return hashlib.sha256(
+        password.encode("utf-8")
+    ).hexdigest()
 
 
 # =========================================================
@@ -55,6 +61,7 @@ all_subjects = [
     "Математикалық сауаттылық",
 ]
 
+
 subject_limits = {
     "Қазақстан тарихы": 20,
     "Оқу сауаттылығы": 10,
@@ -70,7 +77,13 @@ subject_limits = {
     "Құқық": 40,
 }
 
+
+# =========================================================
+# КОМБИНАЦИЯЛАР
+# =========================================================
+
 combinations = {
+
     "Математика - Физика (Инженерлік)": [
         "Математика",
         "Физика",
@@ -126,6 +139,7 @@ combinations = {
 # =========================================================
 
 default_questions = {
+
     "Қазақстан тарихы": [
         {
             "question": "«Ұлы шаньюй» деп аталған тайпа көсемі:",
@@ -228,10 +242,13 @@ default_questions = {
 # =========================================================
 
 def default_users():
+
     return [
         {
             "username": "kas01",
-            "password": hash_password(ADMIN_PASSWORD),
+            "password": hash_password(
+                ADMIN_PASSWORD
+            ),
             "name": "KASYM",
             "role": "admin",
             "combination": None,
@@ -240,77 +257,142 @@ def default_users():
 
 
 def save_users(users_list):
-    with open(USERS_FILE, "w", encoding="utf-8") as file:
-        json.dump(
-            users_list,
-            file,
-            ensure_ascii=False,
-            indent=4
+
+    try:
+
+        with open(
+            USERS_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
+
+            json.dump(
+                users_list,
+                file,
+                ensure_ascii=False,
+                indent=4
+            )
+
+    except Exception as error:
+
+        st.error(
+            f"Қолданушыларды сақтау кезінде қате: {error}"
         )
 
 
 def load_users():
-    users_list = default_users()
+
+    # =====================================================
+    # users.json бар болса —
+    # оның ішіндегі парольдерге тимейміз.
+    # =====================================================
 
     if os.path.exists(USERS_FILE):
+
         try:
-            with open(USERS_FILE, "r", encoding="utf-8") as file:
+
+            with open(
+                USERS_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
                 data = json.load(file)
 
-            if isinstance(data, list) and len(data) > 0:
-                users_list = data
+            if isinstance(data, list) and data:
+
+                admin_found = False
+
+                for user in data:
+
+                    if user.get("username") == "kas01":
+
+                        user["role"] = "admin"
+                        admin_found = True
+
+                # Парольді қайта жазбаймыз!
+                if admin_found:
+
+                    return data
+
+                # kas01 жоқ болса ғана жаңадан қосамыз.
+                data.append({
+                    "username": "kas01",
+                    "password": hash_password(
+                        ADMIN_PASSWORD
+                    ),
+                    "name": "KASYM",
+                    "role": "admin",
+                    "combination": None,
+                })
+
+                save_users(data)
+
+                return data
 
         except Exception:
+
+            # Файл бұзылған болса,
+            # төменде жаңа users.json жасалады.
             pass
 
-    admin_found = False
+    # users.json мүлдем жоқ
+    data = default_users()
 
-    for user in users_list:
-        if user.get("username") == "kas01":
-            user["role"] = "admin"
-            admin_found = True
+    save_users(data)
 
-    if not admin_found:
-        users_list.append({
-            "username": "kas01",
-            "password": hash_password(ADMIN_PASSWORD),
-            "name": "KASYM",
-            "role": "admin",
-            "combination": None,
-        })
-
-    save_users(users_list)
-
-    return users_list
+    return data
 
 
 users = load_users()
 
 
 def find_user(username, password):
+
     username = (username or "").strip()
+
+    # Парольді strip жасамаймыз.
+    # Себебі парольдің ішінде бос орын болуы мүмкін.
+    password = password or ""
 
     if not username or not password:
         return None
 
-    hashed_input = hash_password(password)
+    hashed_input = hash_password(
+        password
+    )
 
     for user in users:
-        stored = user.get("password")
 
-        if (
-            user.get("username") == username
-            and (
-                stored == hashed_input
-                or stored == password
+        if user.get("username") != username:
+            continue
+
+        stored_password = str(
+            user.get(
+                "password",
+                ""
             )
-        ):
+        ).strip()
+
+        # SHA-256 арқылы сақталған пароль
+        if stored_password == hashed_input:
+
+            return user
+
+        # Ескі users.json ішінде
+        # пароль жай мәтін болып қалса,
+        # соны да оқуға мүмкіндік береміз.
+        if stored_password == password:
+
             return user
 
     return None
 
 
 def username_exists(username):
+
+    username = (username or "").strip()
+
     return any(
         user.get("username") == username
         for user in users
@@ -326,6 +408,7 @@ def load_questions():
     if os.path.exists(QUESTIONS_FILE):
 
         try:
+
             with open(
                 QUESTIONS_FILE,
                 "r",
@@ -334,17 +417,25 @@ def load_questions():
 
                 data = json.load(file)
 
+            if not isinstance(data, dict):
+
+                data = {}
+
             for subject in all_subjects:
 
                 if subject not in data:
-                    data[subject] = default_questions.get(
-                        subject,
-                        []
+
+                    data[subject] = (
+                        default_questions.get(
+                            subject,
+                            []
+                        )
                     )
 
             return data
 
         except Exception:
+
             return default_questions.copy()
 
     return default_questions.copy()
@@ -388,9 +479,11 @@ def load_results_history():
                 data = json.load(file)
 
             if isinstance(data, list):
+
                 return data
 
         except Exception:
+
             pass
 
     return []
@@ -413,41 +506,336 @@ def save_results_history(history):
 
 
 # =========================================================
-# 8. SESSION STATE
+# 8. TEST PROGRESS
+# =========================================================
+
+def load_all_test_progress():
+
+    if not os.path.exists(
+        TEST_PROGRESS_FILE
+    ):
+
+        return {}
+
+    try:
+
+        with open(
+            TEST_PROGRESS_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            data = json.load(file)
+
+        if isinstance(data, dict):
+
+            return data
+
+    except Exception:
+
+        pass
+
+    return {}
+
+
+def save_all_test_progress(data):
+
+    try:
+
+        with open(
+            TEST_PROGRESS_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
+
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                indent=4
+            )
+
+    except Exception:
+
+        pass
+
+
+def get_test_progress(username):
+
+    if not username:
+
+        return None
+
+    all_progress = (
+        load_all_test_progress()
+    )
+
+    return all_progress.get(
+        username
+    )
+
+
+def clear_test_progress(username):
+
+    if not username:
+
+        return
+
+    all_progress = (
+        load_all_test_progress()
+    )
+
+    if username in all_progress:
+
+        del all_progress[username]
+
+        save_all_test_progress(
+            all_progress
+        )
+
+
+def normalize_test_answers(raw_answers):
+
+    result = {}
+
+    if not isinstance(
+        raw_answers,
+        dict
+    ):
+
+        return result
+
+    for subject, answers in raw_answers.items():
+
+        if not isinstance(
+            answers,
+            dict
+        ):
+
+            result[subject] = {}
+            continue
+
+        result[subject] = {}
+
+        for q_index, answer_index in answers.items():
+
+            try:
+
+                result[subject][
+                    int(q_index)
+                ] = int(
+                    answer_index
+                )
+
+            except Exception:
+
+                pass
+
+    return result
+
+
+def save_current_test_progress():
+
+    username = st.session_state.get(
+        "username",
+        ""
+    )
+
+    if not username:
+
+        return
+
+    if not st.session_state.get(
+        "test_started",
+        False
+    ):
+
+        return
+
+    progress = {
+        "active_combination": (
+            st.session_state.get(
+                "active_combination"
+            )
+        ),
+
+        "current_subject_index": (
+            st.session_state.get(
+                "current_subject_index",
+                0
+            )
+        ),
+
+        "current_question_index": (
+            st.session_state.get(
+                "current_question_index",
+                0
+            )
+        ),
+
+        "test_answers": (
+            st.session_state.get(
+                "test_answers",
+                {}
+            )
+        ),
+
+        "shuffled_test_data": (
+            st.session_state.get(
+                "shuffled_test_data",
+                {}
+            )
+        ),
+
+        "retry_mode": (
+            st.session_state.get(
+                "retry_mode",
+                False
+            )
+        ),
+
+        "retry_data": (
+            st.session_state.get(
+                "retry_data",
+                {}
+            )
+        ),
+
+        "saved_at": datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+    }
+
+    all_progress = (
+        load_all_test_progress()
+    )
+
+    all_progress[username] = progress
+
+    save_all_test_progress(
+        all_progress
+    )
+
+
+def restore_test_progress(progress):
+
+    if not progress:
+
+        return False
+
+    try:
+
+        st.session_state.active_combination = (
+            progress.get(
+                "active_combination"
+            )
+        )
+
+        st.session_state.current_subject_index = int(
+            progress.get(
+                "current_subject_index",
+                0
+            )
+        )
+
+        st.session_state.current_question_index = int(
+            progress.get(
+                "current_question_index",
+                0
+            )
+        )
+
+        st.session_state.test_answers = (
+            normalize_test_answers(
+                progress.get(
+                    "test_answers",
+                    {}
+                )
+            )
+        )
+
+        st.session_state.shuffled_test_data = (
+            progress.get(
+                "shuffled_test_data",
+                {}
+            )
+        )
+
+        st.session_state.retry_mode = bool(
+            progress.get(
+                "retry_mode",
+                False
+            )
+        )
+
+        st.session_state.retry_data = (
+            progress.get(
+                "retry_data",
+                {}
+            )
+        )
+
+        st.session_state.test_started = True
+        st.session_state.result_saved = False
+
+        return True
+
+    except Exception:
+
+        return False
+
+
+# =========================================================
+# 9. SESSION STATE
 # =========================================================
 
 session_defaults = {
+
     "logged_in": False,
+
     "role": None,
+
     "username": "",
+
     "full_name": "",
+
     "test_started": False,
+
     "active_combination": None,
+
     "current_subject_index": 0,
+
     "current_question_index": 0,
+
     "test_answers": {},
+
     "shuffled_test_data": {},
+
     "current_subject_results": [],
+
     "result_saved": False,
 
-    # Қайта тапсыру режимі
     "retry_mode": False,
+
     "retry_data": {},
+
     "retry_results": {},
 
-    # Сұрақ өшіруді растау
     "pending_delete_question": None,
+
+    "resume_checked": False,
 }
 
 
 for key, value in session_defaults.items():
 
     if key not in st.session_state:
+
         st.session_state[key] = value
 
 
 # =========================================================
-# 9. DESIGN
+# 10. DESIGN
 # =========================================================
 
 st.markdown(
@@ -464,13 +852,16 @@ st.markdown(
         font-size: 42px;
         font-weight: 800;
         text-align: center;
+
         background: linear-gradient(
             135deg,
             #6366F1 0%,
             #A855F7 100%
         );
+
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+
         margin-bottom: 0px;
     }
 
@@ -490,34 +881,49 @@ st.markdown(
         );
 
         padding: 24px;
+
         border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.08);
+
+        border: 1px solid
+        rgba(255,255,255,0.08);
 
         box-shadow:
-            0 10px 25px -5px rgba(0,0,0,0.3);
+            0 10px 25px -5px
+            rgba(0,0,0,0.3);
 
         margin-bottom: 20px;
     }
 
     .stButton > button {
+
         border-radius: 8px;
+
         font-weight: 700;
+
         font-size: 15px !important;
 
-        border: 1px solid rgba(255,255,255,0.15);
+        border: 1px solid
+        rgba(255,255,255,0.15);
 
         background-color: #1E293B;
+
         color: #FFFFFF !important;
 
         transition: all 0.2s ease;
 
         padding: 4px 8px;
+
+        min-height: 42px;
     }
 
     .stButton > button:hover {
+
         border-color: #6366F1;
+
         background-color: #312E81;
+
         color: #FFFFFF !important;
+
         transform: translateY(-1px);
     }
 
@@ -526,6 +932,7 @@ st.markdown(
     .stTextArea > div > div > textarea {
 
         background-color: #1E293B !important;
+
         border-radius: 10px !important;
 
         color: #F3F4F6 !important;
@@ -535,22 +942,158 @@ st.markdown(
     }
 
     .nav-legend {
+
         background: #111827;
+
         padding: 10px 14px;
+
         border-radius: 10px;
+
         margin-bottom: 12px;
+
         text-align: center;
+
         font-size: 14px;
     }
 
     .analytics-good {
+
         color: #22C55E;
+
         font-weight: 700;
     }
 
     .analytics-bad {
+
         color: #EF4444;
+
         font-weight: 700;
+    }
+
+    .resume-box {
+
+        background: linear-gradient(
+            145deg,
+            #172554,
+            #1E1B4B
+        );
+
+        border: 1px solid
+        rgba(99,102,241,0.35);
+
+        border-radius: 16px;
+
+        padding: 20px;
+
+        margin-bottom: 20px;
+    }
+
+    .score-big {
+
+        font-size: 48px;
+
+        font-weight: 800;
+
+        text-align: center;
+
+        margin: 5px 0;
+    }
+
+    .score-label {
+
+        text-align: center;
+
+        color: #9CA3AF;
+
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+
+        .kasym-title {
+
+            font-size: 30px !important;
+
+        }
+
+        .kasym-subtitle {
+
+            font-size: 13px !important;
+
+            margin-bottom: 18px !important;
+
+        }
+
+        .card {
+
+            padding: 14px !important;
+
+            border-radius: 12px !important;
+
+        }
+
+        .stButton > button {
+
+            min-height: 46px !important;
+
+            font-size: 13px !important;
+
+        }
+
+        .stRadio label {
+
+            font-size: 15px !important;
+
+        }
+
+        .nav-legend {
+
+            font-size: 11px !important;
+
+            padding: 9px 5px !important;
+
+        }
+
+        .score-big {
+
+            font-size: 36px !important;
+
+        }
+
+        [data-testid="stHorizontalBlock"] {
+
+            gap: 0.35rem !important;
+
+        }
+
+    }
+
+    @media (max-width: 480px) {
+
+        .kasym-title {
+
+            font-size: 27px !important;
+
+        }
+
+        .kasym-subtitle {
+
+            font-size: 12px !important;
+
+        }
+
+        .stMarkdown {
+
+            font-size: 14px;
+
+        }
+
+        .stRadio label {
+
+            font-size: 14px !important;
+
+        }
+
     }
 
     </style>
@@ -560,10 +1103,19 @@ st.markdown(
 
 
 # =========================================================
-# 10. LOGOUT
+# 11. LOGOUT
 # =========================================================
 
 def logout():
+
+    # Егер тест аяқталмаған болса,
+    # автоматты түрде сақтаймыз.
+    if st.session_state.get(
+        "test_started",
+        False
+    ):
+
+        save_current_test_progress()
 
     for key, value in session_defaults.items():
 
@@ -573,7 +1125,7 @@ def logout():
 
 
 # =========================================================
-# 11. LOGIN
+# 12. LOGIN
 # =========================================================
 
 def login_page():
@@ -590,7 +1142,9 @@ def login_page():
         unsafe_allow_html=True
     )
 
-    c1, c2, c3 = st.columns([1, 1.2, 1])
+    c1, c2, c3 = st.columns(
+        [1, 1.2, 1]
+    )
 
     with c2:
 
@@ -599,7 +1153,9 @@ def login_page():
             unsafe_allow_html=True
         )
 
-        st.markdown("### 🔐 Жүйеге кіру")
+        st.markdown(
+            "### 🔐 Жүйеге кіру"
+        )
 
         username = st.text_input(
             "Логин",
@@ -618,27 +1174,38 @@ def login_page():
             type="primary"
         ):
 
+            # Парольді strip жасамай береміз.
             user = find_user(
-                username.strip(),
-                password.strip()
+                username,
+                password
             )
 
             if user:
 
                 st.session_state.logged_in = True
-                st.session_state.username = user["username"]
-                st.session_state.full_name = user.get(
-                    "name",
-                    ""
+
+                st.session_state.username = (
+                    user["username"]
                 )
-                st.session_state.role = user.get(
-                    "role",
-                    "user"
+
+                st.session_state.full_name = (
+                    user.get(
+                        "name",
+                        ""
+                    )
+                )
+
+                st.session_state.role = (
+                    user.get(
+                        "role",
+                        "user"
+                    )
                 )
 
                 st.rerun()
 
             else:
+
                 st.error(
                     "❌ Логин немесе құпия сөз қате."
                 )
@@ -654,7 +1221,7 @@ def login_page():
 
 
 # =========================================================
-# 12. СТАТИСТИКА
+# 13. СТАТИСТИКА
 # =========================================================
 
 def render_statistics_tab():
@@ -677,12 +1244,20 @@ def render_statistics_tab():
 
     normal_tests = [
         h for h in history
-        if h.get("test_type", "normal") == "normal"
+        if h.get(
+            "test_type",
+            "normal"
+        ) == "normal"
     ]
 
     avg_score = (
         sum(
-            int(h.get("score", 0) or 0)
+            int(
+                h.get(
+                    "score",
+                    0
+                ) or 0
+            )
             for h in normal_tests
         )
         / len(normal_tests)
@@ -725,7 +1300,9 @@ def render_statistics_tab():
 
         comb_filter = st.selectbox(
             "🎯 Комбинация бойынша сүзу:",
-            ["Барлығы"] + list(combinations.keys()),
+            ["Барлығы"] + list(
+                combinations.keys()
+            ),
             key="stat_comb_filter"
         )
 
@@ -777,7 +1354,9 @@ def render_statistics_tab():
                 "Ұпай": score,
                 "Түрі": (
                     "Қайта тапсыру"
-                    if h.get("test_type") == "retry"
+                    if h.get(
+                        "test_type"
+                    ) == "retry"
                     else "Негізгі тест"
                 ),
                 "Күні": date,
@@ -804,7 +1383,7 @@ def render_statistics_tab():
 
 
 # =========================================================
-# 13. TOPIC ANALYTICS
+# 14. ANALYTICS
 # =========================================================
 
 def render_analytics(username=None):
@@ -815,15 +1394,22 @@ def render_analytics(username=None):
 
         history = [
             h for h in history
-            if h.get("username") == username
+            if h.get(
+                "username"
+            ) == username
         ]
 
     history = [
         h for h in history
-        if h.get("test_type", "normal") == "normal"
+        if h.get(
+            "test_type",
+            "normal"
+        ) == "normal"
     ]
 
-    st.markdown("### 📊 Пәндер бойынша аналитика")
+    st.markdown(
+        "### 📊 Пәндер бойынша аналитика"
+    )
 
     if not history:
 
@@ -848,11 +1434,17 @@ def render_analytics(username=None):
             )
 
             correct = int(
-                item.get("correct", 0)
+                item.get(
+                    "correct",
+                    0
+                )
             )
 
             total = int(
-                item.get("questions", 0)
+                item.get(
+                    "questions",
+                    0
+                )
             )
 
             if subject not in subject_stats:
@@ -863,16 +1455,26 @@ def render_analytics(username=None):
                     "attempts": 0
                 }
 
-            subject_stats[subject]["correct"] += correct
-            subject_stats[subject]["total"] += total
-            subject_stats[subject]["attempts"] += 1
+            subject_stats[subject][
+                "correct"
+            ] += correct
+
+            subject_stats[subject][
+                "total"
+            ] += total
+
+            subject_stats[subject][
+                "attempts"
+            ] += 1
 
     analytics_data = []
 
     for subject, data in subject_stats.items():
 
         percentage = (
-            data["correct"] / data["total"] * 100
+            data["correct"]
+            / data["total"]
+            * 100
             if data["total"]
             else 0
         )
@@ -881,7 +1483,10 @@ def render_analytics(username=None):
             "Пән": subject,
             "Дұрыс": data["correct"],
             "Барлық сұрақ": data["total"],
-            "Дәлдік": round(percentage, 1),
+            "Дәлдік": round(
+                percentage,
+                1
+            ),
             "Тест саны": data["attempts"]
         })
 
@@ -916,7 +1521,9 @@ def render_analytics(username=None):
 
         chart_data = pd.DataFrame(
             analytics_data
-        ).set_index("Пән")
+        ).set_index(
+            "Пән"
+        )
 
         st.bar_chart(
             chart_data["Дәлдік"]
@@ -930,7 +1537,7 @@ def render_analytics(username=None):
 
 
 # =========================================================
-# 14. BULK PARSER
+# 15. BULK PARSER
 # =========================================================
 
 def parse_bulk_questions(raw_text):
@@ -959,7 +1566,9 @@ def parse_bulk_questions(raw_text):
         if not q_match:
             continue
 
-        q_text = q_match.group(1).strip()
+        q_text = q_match.group(
+            1
+        ).strip()
 
         options = re.findall(
             r"([A-DА-Гa-dа-г])[\.\)]\s*"
@@ -987,8 +1596,9 @@ def parse_bulk_questions(raw_text):
         if ans_match:
 
             corr_letter = (
-                ans_match.group(1)
-                .upper()
+                ans_match.group(
+                    1
+                ).upper()
             )
 
             letter_map = {
@@ -1014,7 +1624,9 @@ def parse_bulk_questions(raw_text):
         )
 
         topic = (
-            topic_match.group(1).strip()
+            topic_match.group(
+                1
+            ).strip()
             if topic_match
             else "Жалпы"
         )
@@ -1032,7 +1644,7 @@ def parse_bulk_questions(raw_text):
 
 
 # =========================================================
-# 15. EXCEL IMPORT
+# 16. EXCEL
 # =========================================================
 
 def normalize_column_name(name):
@@ -1047,7 +1659,10 @@ def normalize_column_name(name):
     )
 
 
-def find_excel_column(columns, possible_names):
+def find_excel_column(
+    columns,
+    possible_names
+):
 
     normalized = {
         normalize_column_name(c): c
@@ -1056,20 +1671,29 @@ def find_excel_column(columns, possible_names):
 
     for name in possible_names:
 
-        key = normalize_column_name(name)
+        key = normalize_column_name(
+            name
+        )
 
         if key in normalized:
+
             return normalized[key]
 
     return None
 
 
-def parse_correct_answer(value, answers):
+def parse_correct_answer(
+    value,
+    answers
+):
 
     if pd.isna(value):
+
         return None
 
-    text = str(value).strip()
+    text = str(
+        value
+    ).strip()
 
     letter_map = {
         "A": 0,
@@ -1085,15 +1709,28 @@ def parse_correct_answer(value, answers):
     upper = text.upper()
 
     if upper in letter_map:
-        return letter_map[upper]
 
-    if text in ["1", "2", "3", "4"]:
+        return letter_map[
+            upper
+        ]
+
+    if text in [
+        "1",
+        "2",
+        "3",
+        "4"
+    ]:
 
         return int(text) - 1
 
-    for index, answer in enumerate(answers):
+    for index, answer in enumerate(
+        answers
+    ):
 
-        if text == str(answer).strip():
+        if text == str(
+            answer
+        ).strip():
+
             return index
 
     return None
@@ -1113,22 +1750,42 @@ def import_excel_questions(df):
 
     a_col = find_excel_column(
         df.columns,
-        ["А", "A", "A нұсқасы", "answerA"]
+        [
+            "А",
+            "A",
+            "A нұсқасы",
+            "answerA"
+        ]
     )
 
     b_col = find_excel_column(
         df.columns,
-        ["Б", "B", "Б нұсқасы", "answerB"]
+        [
+            "Б",
+            "B",
+            "Б нұсқасы",
+            "answerB"
+        ]
     )
 
     c_col = find_excel_column(
         df.columns,
-        ["В", "C", "В нұсқасы", "answerC"]
+        [
+            "В",
+            "C",
+            "В нұсқасы",
+            "answerC"
+        ]
     )
 
     d_col = find_excel_column(
         df.columns,
-        ["Г", "D", "Г нұсқасы", "answerD"]
+        [
+            "Г",
+            "D",
+            "Г нұсқасы",
+            "answerD"
+        ]
     )
 
     correct_col = find_excel_column(
@@ -1160,7 +1817,10 @@ def import_excel_questions(df):
         correct_col
     ]
 
-    if any(col is None for col in required):
+    if any(
+        col is None
+        for col in required
+    ):
 
         return [], (
             "Excel бағандары дұрыс емес. "
@@ -1178,10 +1838,21 @@ def import_excel_questions(df):
         ).strip()
 
         answers = [
-            str(row[a_col]).strip(),
-            str(row[b_col]).strip(),
-            str(row[c_col]).strip(),
-            str(row[d_col]).strip(),
+            str(
+                row[a_col]
+            ).strip(),
+
+            str(
+                row[b_col]
+            ).strip(),
+
+            str(
+                row[c_col]
+            ).strip(),
+
+            str(
+                row[d_col]
+            ).strip(),
         ]
 
         if (
@@ -1194,7 +1865,8 @@ def import_excel_questions(df):
         ):
 
             errors.append(
-                f"{index + 2}-жол: сұрақ немесе жауап бос."
+                f"{index + 2}-жол: "
+                "сұрақ немесе жауап бос."
             )
 
             continue
@@ -1207,7 +1879,8 @@ def import_excel_questions(df):
         if correct is None:
 
             errors.append(
-                f"{index + 2}-жол: дұрыс жауап анықталмады."
+                f"{index + 2}-жол: "
+                "дұрыс жауап анықталмады."
             )
 
             continue
@@ -1216,9 +1889,13 @@ def import_excel_questions(df):
 
         if topic_col:
 
-            raw_topic = row[topic_col]
+            raw_topic = row[
+                topic_col
+            ]
 
-            if not pd.isna(raw_topic):
+            if not pd.isna(
+                raw_topic
+            ):
 
                 topic = str(
                     raw_topic
@@ -1235,15 +1912,21 @@ def import_excel_questions(df):
 
 
 # =========================================================
-# 16. MODERATOR PAGE
+# 17. MODERATOR
 # =========================================================
 
 def moderator_page():
 
     if (
-        not st.session_state.get("logged_in")
-        or st.session_state.get("role")
-        not in ("moderator", "admin")
+        not st.session_state.get(
+            "logged_in"
+        )
+        or st.session_state.get(
+            "role"
+        ) not in (
+            "moderator",
+            "admin"
+        )
     ):
 
         st.error(
@@ -1252,7 +1935,9 @@ def moderator_page():
 
         st.stop()
 
-    col1, col2 = st.columns([6, 1])
+    col1, col2 = st.columns(
+        [6, 1]
+    )
 
     with col1:
 
@@ -1290,7 +1975,7 @@ def moderator_page():
 
 
     # =====================================================
-    # TAB 1 — МАССАЛЫҚ
+    # TAB 1
     # =====================================================
 
     with tab1:
@@ -1330,16 +2015,22 @@ def moderator_page():
                 if parsed:
 
                     if sel_sub_bulk not in questions:
-                        questions[sel_sub_bulk] = []
 
-                    questions[sel_sub_bulk].extend(
+                        questions[
+                            sel_sub_bulk
+                        ] = []
+
+                    questions[
+                        sel_sub_bulk
+                    ].extend(
                         parsed
                     )
 
                     save_questions()
 
                     st.success(
-                        f"✨ {len(parsed)} сұрақ қосылды."
+                        f"✨ {len(parsed)} "
+                        "сұрақ қосылды."
                     )
 
                 else:
@@ -1361,7 +2052,7 @@ def moderator_page():
 
 
     # =====================================================
-    # TAB 2 — EXCEL
+    # TAB 2
     # =====================================================
 
     with tab2:
@@ -1401,7 +2092,9 @@ def moderator_page():
                     uploaded_file
                 )
 
-                st.markdown("#### 👀 Алдын ала көру")
+                st.markdown(
+                    "#### 👀 Алдын ала көру"
+                )
 
                 st.dataframe(
                     df.head(10),
@@ -1447,9 +2140,14 @@ def moderator_page():
                     if imported_questions:
 
                         if excel_subject not in questions:
-                            questions[excel_subject] = []
 
-                        questions[excel_subject].extend(
+                            questions[
+                                excel_subject
+                            ] = []
+
+                        questions[
+                            excel_subject
+                        ].extend(
                             imported_questions
                         )
 
@@ -1458,7 +2156,7 @@ def moderator_page():
                         st.success(
                             f"✨ "
                             f"{len(imported_questions)} "
-                            f"сұрақ сәтті қосылды!"
+                            "сұрақ сәтті қосылды!"
                         )
 
                         st.rerun()
@@ -1486,7 +2184,7 @@ def moderator_page():
 
 
     # =====================================================
-    # TAB 3 — ЖЕКЕ СҰРАҚ
+    # TAB 3
     # =====================================================
 
     with tab3:
@@ -1548,28 +2246,48 @@ def moderator_page():
             "Б нұсқасы",
             "В нұсқасы",
             "Г нұсқасы"
-        ].index(corr)
+        ].index(
+            corr
+        )
 
         if st.button(
             "💾 Сақтау",
             type="primary"
         ):
 
-            if q_text and a1 and a2 and a3 and a4:
+            if (
+                q_text
+                and a1
+                and a2
+                and a3
+                and a4
+            ):
 
                 if sel_sub_single not in questions:
-                    questions[sel_sub_single] = []
 
-                questions[sel_sub_single].append({
+                    questions[
+                        sel_sub_single
+                    ] = []
+
+                questions[
+                    sel_sub_single
+                ].append({
+
                     "question": q_text,
+
                     "answers": [
                         a1,
                         a2,
                         a3,
                         a4
                     ],
+
                     "correct": corr_idx,
-                    "topic": topic.strip() or "Жалпы",
+
+                    "topic": (
+                        topic.strip()
+                        or "Жалпы"
+                    ),
                 })
 
                 save_questions()
@@ -1593,10 +2311,10 @@ def moderator_page():
 
 
     # =====================================================
-    # TAB 4 — DELETE + CONFIRMATION
+    # TAB 4
     # =====================================================
 
-    with tab3 if False else tab4:
+    with tab4:
 
         st.markdown(
             '<div class="card">',
@@ -1624,27 +2342,39 @@ def moderator_page():
 
             q_map = {
                 f"{i+1}. {q.get('question', '')[:60]}...": i
-                for i, q in enumerate(sub_list)
+                for i, q in enumerate(
+                    sub_list
+                )
             }
 
             chosen_q = st.selectbox(
                 "Жою үшін сұрақты таңдаңыз:",
-                list(q_map.keys()),
+                list(
+                    q_map.keys()
+                ),
                 key="delete_question_select"
             )
 
-            chosen_index = q_map[chosen_q]
+            chosen_index = q_map[
+                chosen_q
+            ]
 
             st.markdown("---")
 
-            pending = st.session_state.get(
-                "pending_delete_question"
+            pending = (
+                st.session_state.get(
+                    "pending_delete_question"
+                )
             )
 
             if (
                 pending
-                and pending.get("subject") == del_sub
-                and pending.get("index") == chosen_index
+                and pending.get(
+                    "subject"
+                ) == del_sub
+                and pending.get(
+                    "index"
+                ) == chosen_index
             ):
 
                 st.warning(
@@ -1666,7 +2396,9 @@ def moderator_page():
                             chosen_index
                         )
 
-                        questions[del_sub] = sub_list
+                        questions[
+                            del_sub
+                        ] = sub_list
 
                         save_questions()
 
@@ -1699,7 +2431,9 @@ def moderator_page():
                 ):
 
                     st.session_state.pending_delete_question = {
+
                         "subject": del_sub,
+
                         "index": chosen_index
                     }
 
@@ -1712,7 +2446,7 @@ def moderator_page():
 
 
     # =====================================================
-    # TAB 5 — STATISTICS
+    # TAB 5
     # =====================================================
 
     with tab5:
@@ -1735,14 +2469,18 @@ def moderator_page():
 
 
 # =========================================================
-# 17. ADMIN
+# 18. ADMIN
 # =========================================================
 
 def admin_page():
 
     if (
-        not st.session_state.get("logged_in")
-        or st.session_state.get("role") != "admin"
+        not st.session_state.get(
+            "logged_in"
+        )
+        or st.session_state.get(
+            "role"
+        ) != "admin"
     ):
 
         st.error(
@@ -1753,7 +2491,9 @@ def admin_page():
 
     global users
 
-    col1, col2 = st.columns([6, 1])
+    col1, col2 = st.columns(
+        [6, 1]
+    )
 
     with col1:
 
@@ -1869,17 +2609,23 @@ def admin_page():
                         for item in users:
 
                             if (
-                                item.get("username")
+                                item.get(
+                                    "username"
+                                )
                                 == u_username
                             ):
 
-                                item["combination"] = (
+                                item[
+                                    "combination"
+                                ] = (
                                     selected_combination
                                 )
 
                                 break
 
-                        save_users(users)
+                        save_users(
+                            users
+                        )
 
                         st.success(
                             "Комбинация сақталды!"
@@ -1899,11 +2645,14 @@ def admin_page():
 
                         users = [
                             x for x in users
-                            if x.get("username")
-                            != u_username
+                            if x.get(
+                                "username"
+                            ) != u_username
                         ]
 
-                        save_users(users)
+                        save_users(
+                            users
+                        )
 
                         st.rerun()
 
@@ -1943,11 +2692,14 @@ def admin_page():
 
                         users = [
                             x for x in users
-                            if x.get("username")
-                            != u_username
+                            if x.get(
+                                "username"
+                            ) != u_username
                         ]
 
-                        save_users(users)
+                        save_users(
+                            users
+                        )
 
                         st.rerun()
 
@@ -2007,7 +2759,9 @@ def admin_page():
 
             new_combination = st.selectbox(
                 "🎯 Оқушының комбинациясы:",
-                list(combinations.keys()),
+                list(
+                    combinations.keys()
+                ),
                 key="new_user_combination"
             )
 
@@ -2018,7 +2772,9 @@ def admin_page():
 
             if new_u and new_p:
 
-                if username_exists(new_u):
+                if username_exists(
+                    new_u
+                ):
 
                     st.error(
                         "❌ Бұл логин жүйеде бар!"
@@ -2027,16 +2783,31 @@ def admin_page():
                 else:
 
                     users.append({
-                        "username": new_u.strip(),
-                        "password": hash_password(
-                            new_p.strip()
+
+                        "username": (
+                            new_u.strip()
                         ),
-                        "name": new_n.strip(),
+
+                        "password": (
+                            hash_password(
+                                new_p
+                            )
+                        ),
+
+                        "name": (
+                            new_n.strip()
+                        ),
+
                         "role": new_r,
-                        "combination": new_combination,
+
+                        "combination": (
+                            new_combination
+                        ),
                     })
 
-                    save_users(users)
+                    save_users(
+                        users
+                    )
 
                     st.success(
                         "✨ Қолданушы сәтті тіркелді!"
@@ -2057,7 +2828,7 @@ def admin_page():
 
 
     # =====================================================
-    # ADMIN STATISTICS
+    # STATISTICS
     # =====================================================
 
     with admin_tabs[2]:
@@ -2080,10 +2851,13 @@ def admin_page():
 
 
 # =========================================================
-# 18. TEST PREPARATION
+# 19. TEST PREPARATION
 # =========================================================
 
-def prepare_test_data(subjects, source_data=None):
+def prepare_test_data(
+    subjects,
+    source_data=None
+):
 
     shuffled_data = {}
 
@@ -2109,14 +2883,18 @@ def prepare_test_data(subjects, source_data=None):
                 )
             ]
 
-            random.shuffle(sub_qs)
+            random.shuffle(
+                sub_qs
+            )
 
             limit = subject_limits.get(
                 subject,
                 40
             )
 
-            sub_qs = sub_qs[:limit]
+            sub_qs = sub_qs[
+                :limit
+            ]
 
         processed_qs = []
 
@@ -2130,6 +2908,7 @@ def prepare_test_data(subjects, source_data=None):
             )
 
             if len(answers) < 4:
+
                 continue
 
             correct_index = q.get(
@@ -2141,38 +2920,47 @@ def prepare_test_data(subjects, source_data=None):
                 0 <= correct_index
                 < len(answers)
             ):
+
                 continue
 
             correct_text = answers[
                 correct_index
             ]
 
-            random.shuffle(answers)
+            random.shuffle(
+                answers
+            )
 
             new_correct_idx = answers.index(
                 correct_text
             )
 
             processed_qs.append({
+
                 "question": q.get(
                     "question",
                     ""
                 ),
+
                 "answers": answers,
+
                 "correct": new_correct_idx,
+
                 "topic": q.get(
                     "topic",
                     "Жалпы"
                 ),
             })
 
-        shuffled_data[subject] = processed_qs
+        shuffled_data[
+            subject
+        ] = processed_qs
 
     return shuffled_data
 
 
 # =========================================================
-# 19. RETRY WRONG / UNANSWERED
+# 20. RETRY TEST
 # =========================================================
 
 def create_retry_test():
@@ -2183,9 +2971,11 @@ def create_retry_test():
         st.session_state.shuffled_test_data.items()
     ):
 
-        answers = st.session_state.test_answers.get(
-            subject,
-            {}
+        answers = (
+            st.session_state.test_answers.get(
+                subject,
+                {}
+            )
         )
 
         wrong_questions = []
@@ -2200,26 +2990,33 @@ def create_retry_test():
 
             is_wrong = (
                 selected is None
-                or selected != q.get("correct")
+                or selected
+                != q.get(
+                    "correct"
+                )
             )
 
             if is_wrong:
 
                 wrong_questions.append({
+
                     "question": q.get(
                         "question",
                         ""
                     ),
+
                     "answers": list(
                         q.get(
                             "answers",
                             []
                         )
                     ),
+
                     "correct": q.get(
                         "correct",
                         0
                     ),
+
                     "topic": q.get(
                         "topic",
                         "Жалпы"
@@ -2228,7 +3025,9 @@ def create_retry_test():
 
         if wrong_questions:
 
-            retry_data[subject] = wrong_questions
+            retry_data[
+                subject
+            ] = wrong_questions
 
     if not retry_data:
 
@@ -2243,23 +3042,34 @@ def create_retry_test():
         source_data=retry_data
     )
 
-    st.session_state.retry_data = new_data
-    st.session_state.shuffled_test_data = new_data
-    st.session_state.active_combination = (
-        st.session_state.active_combination
+    st.session_state.retry_data = (
+        new_data
     )
+
+    st.session_state.shuffled_test_data = (
+        new_data
+    )
+
     st.session_state.test_started = True
+
     st.session_state.retry_mode = True
+
     st.session_state.current_subject_index = 0
+
     st.session_state.current_question_index = 0
+
     st.session_state.test_answers = {}
+
     st.session_state.result_saved = False
+
+    # Автоматты сақтау
+    save_current_test_progress()
 
     return True
 
 
 # =========================================================
-# 20. USER PAGE
+# 21. USER PAGE
 # =========================================================
 
 def user_page():
@@ -2294,6 +3104,101 @@ def user_page():
 
 
         # =================================================
+        # RESUME TEST
+        # =================================================
+
+        saved_progress = get_test_progress(
+            st.session_state.username
+        )
+
+        if saved_progress:
+
+            saved_combination = (
+                saved_progress.get(
+                    "active_combination"
+                )
+            )
+
+            saved_time = (
+                saved_progress.get(
+                    "saved_at",
+                    "белгісіз"
+                )
+            )
+
+            st.markdown(
+                '<div class="resume-box">',
+                unsafe_allow_html=True
+            )
+
+            st.markdown(
+                "### 🔄 Аяқталмаған тест бар!"
+            )
+
+            st.write(
+                "Сізде бұрын аяқталмай қалған "
+                "тест сақталған."
+            )
+
+            if saved_combination:
+
+                st.info(
+                    f"🎯 Бағыт: "
+                    f"**{saved_combination}**"
+                )
+
+            st.caption(
+                f"Соңғы сақталған уақыт: {saved_time}"
+            )
+
+            resume_col1, resume_col2 = st.columns(2)
+
+            with resume_col1:
+
+                if st.button(
+                    "🔄 Тестті жалғастыру",
+                    type="primary",
+                    use_container_width=True,
+                    key="resume_saved_test"
+                ):
+
+                    if restore_test_progress(
+                        saved_progress
+                    ):
+
+                        st.rerun()
+
+                    else:
+
+                        st.error(
+                            "Сақталған тестті қалпына келтіру мүмкін болмады."
+                        )
+
+            with resume_col2:
+
+                if st.button(
+                    "🗑️ Аяқталмаған тестті өшіру",
+                    use_container_width=True,
+                    key="delete_saved_test"
+                ):
+
+                    clear_test_progress(
+                        st.session_state.username
+                    )
+
+                    st.success(
+                        "Аяқталмаған тест өшірілді."
+                    )
+
+                    st.rerun()
+
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+
+        # =================================================
         # PERSONAL CABINET
         # =================================================
 
@@ -2310,8 +3215,11 @@ def user_page():
 
         user_history = [
             h for h in history
-            if h.get("username")
+            if h.get(
+                "username"
+            )
             == st.session_state.username
+
             and h.get(
                 "test_type",
                 "normal"
@@ -2366,7 +3274,7 @@ def user_page():
 
                 st.metric(
                     "Ең жоғары ұпай",
-                    best_score
+                    f"{best_score} / 140"
                 )
 
             with col3:
@@ -2405,12 +3313,16 @@ def user_page():
             for h in user_history:
 
                 display_data.append({
+
                     "Комбинация": h.get(
                         "combination"
                     ),
-                    "Ұпай": h.get(
-                        "score"
+
+                    "Ұпай": (
+                        f'{h.get("score", 0)} / '
+                        f'{h.get("max_score", 140)}'
                     ),
+
                     "Күні": h.get(
                         "date"
                     ),
@@ -2450,7 +3362,9 @@ def user_page():
         current_user = next(
             (
                 u for u in users
-                if u.get("username")
+                if u.get(
+                    "username"
+                )
                 == st.session_state.username
             ),
             None
@@ -2494,15 +3408,26 @@ def user_page():
             )
         ):
 
+            # Ескі progress болса,
+            # жаңа тест басталғанда өшіреміз.
+            clear_test_progress(
+                st.session_state.username
+            )
+
             st.session_state.active_combination = (
                 assigned_combination
             )
 
             st.session_state.test_started = True
+
             st.session_state.retry_mode = False
+
             st.session_state.current_subject_index = 0
+
             st.session_state.current_question_index = 0
+
             st.session_state.test_answers = {}
+
             st.session_state.result_saved = False
 
             st.session_state.shuffled_test_data = (
@@ -2512,6 +3437,9 @@ def user_page():
                     ]
                 )
             )
+
+            # Бірден сақтау
+            save_current_test_progress()
 
             st.rerun()
 
@@ -2539,11 +3467,9 @@ def user_page():
 
     else:
 
-        subj_list = (
-            combinations.get(
-                comb_name,
-                []
-            )
+        subj_list = combinations.get(
+            comb_name,
+            []
         )
 
     sub_idx = (
@@ -2586,14 +3512,19 @@ def user_page():
             if sub_idx > 0:
 
                 st.session_state.current_subject_index -= 1
+
                 st.session_state.current_question_index = 0
+
+                save_current_test_progress()
 
                 st.rerun()
 
     with col_top_next:
 
         is_last_subject = (
-            sub_idx >= len(subj_list) - 1
+            sub_idx >= len(
+                subj_list
+            ) - 1
         )
 
         next_subj_label = (
@@ -2612,13 +3543,18 @@ def user_page():
             if not is_last_subject:
 
                 st.session_state.current_subject_index += 1
+
                 st.session_state.current_question_index = 0
+
+                save_current_test_progress()
 
             else:
 
                 st.session_state.current_subject_index = len(
                     subj_list
                 )
+
+                save_current_test_progress()
 
             st.rerun()
 
@@ -2629,6 +3565,7 @@ def user_page():
             use_container_width=True
         ):
 
+            # logout() ішінде save болады.
             logout()
 
     st.markdown("---")
@@ -2638,7 +3575,9 @@ def user_page():
     # QUESTION
     # =====================================================
 
-    if sub_idx < len(subj_list):
+    if sub_idx < len(
+        subj_list
+    ):
 
         current_subject = subj_list[
             sub_idx
@@ -2664,6 +3603,25 @@ def user_page():
             st.session_state.current_question_index
         )
 
+        # Қауіпсіздік
+        if curr_q_idx < 0:
+
+            curr_q_idx = 0
+
+            st.session_state.current_question_index = 0
+
+        if curr_q_idx >= len(
+            sub_questions
+        ):
+
+            curr_q_idx = len(
+                sub_questions
+            ) - 1
+
+            st.session_state.current_question_index = (
+                curr_q_idx
+            )
+
         num_qs = len(
             sub_questions
         )
@@ -2674,7 +3632,7 @@ def user_page():
 
 
         # =================================================
-        # NAVIGATION LEGEND
+        # LEGEND
         # =================================================
 
         st.markdown(
@@ -2691,7 +3649,9 @@ def user_page():
         )
 
 
-        if current_subject not in st.session_state.test_answers:
+        if current_subject not in (
+            st.session_state.test_answers
+        ):
 
             st.session_state.test_answers[
                 current_subject
@@ -2729,7 +3689,9 @@ def user_page():
                 len(chunk)
             )
 
-            for idx, q_i in enumerate(chunk):
+            for idx, q_i in enumerate(
+                chunk
+            ):
 
                 with pal_cols[idx]:
 
@@ -2738,7 +3700,8 @@ def user_page():
                     )
 
                     is_answered = (
-                        q_i in current_answers
+                        q_i
+                        in current_answers
                     )
 
                     if is_current:
@@ -2774,6 +3737,8 @@ def user_page():
 
                         st.session_state.current_question_index = q_i
 
+                        save_current_test_progress()
+
                         st.rerun()
 
         st.markdown("---")
@@ -2796,7 +3761,8 @@ def user_page():
         with col_next_q_btn:
 
             is_last_q_in_sub = (
-                curr_q_idx == num_qs - 1
+                curr_q_idx
+                == num_qs - 1
             )
 
             nxt_label = (
@@ -2819,7 +3785,10 @@ def user_page():
                 else:
 
                     st.session_state.current_subject_index += 1
+
                     st.session_state.current_question_index = 0
+
+                save_current_test_progress()
 
                 st.rerun()
 
@@ -2849,6 +3818,9 @@ def user_page():
             index=(
                 saved_ans_idx
                 if saved_ans_idx is not None
+                and 0 <= saved_ans_idx < len(
+                    q_data["answers"]
+                )
                 else None
             )
         )
@@ -2865,9 +3837,12 @@ def user_page():
                 current_subject
             ][curr_q_idx] = chosen_idx
 
+            # Жауапты бірден файлға сақтаймыз.
+            save_current_test_progress()
+
 
     # =====================================================
-    # TEST RESULT
+    # RESULT
     # =====================================================
 
     else:
@@ -2882,13 +3857,18 @@ def user_page():
 
 
 # =========================================================
-# 21. NORMAL RESULT
+# 22. NORMAL RESULT
 # =========================================================
 
 def render_normal_result():
 
     st.markdown(
-        "### 🏆 Тест аяқталды!"
+        "## 🏆 Тест аяқталды!"
+    )
+
+    st.success(
+        "Тестіңіз сәтті аяқталды. "
+        "Төменнен толық нәтижеңізді көре аласыз."
     )
 
     comb_name = (
@@ -2900,26 +3880,50 @@ def render_normal_result():
         []
     )
 
+
+    # =====================================================
+    # 140 БАЛЛДЫҚ СИСТЕМА
+    # =====================================================
+
     subject_max_points = {
+
         "Қазақстан тарихы": 20,
+
         "Оқу сауаттылығы": 10,
+
         "Математикалық сауаттылық": 10,
 
         "Математика": 50,
+
         "Физика": 50,
+
         "Химия": 50,
+
         "Биология": 50,
+
         "Информатика": 50,
+
         "География": 50,
+
         "Дүниежүзі тарихы": 50,
+
         "Ағылшын тілі": 50,
+
         "Құқық": 50,
     }
 
     subject_results = []
 
     total_score = 0
+
     total_max_points = 0
+
+    total_correct = 0
+
+    total_questions = 0
+
+    total_unanswered = 0
+
 
     for sub in subj_list:
 
@@ -2943,9 +3947,22 @@ def render_normal_result():
 
         correct_count = sum(
             1
-            for idx, q in enumerate(sub_qs)
-            if sub_ans.get(idx)
-            == q["correct"]
+            for idx, q in enumerate(
+                sub_qs
+            )
+            if sub_ans.get(
+                idx
+            ) == q.get(
+                "correct"
+            )
+        )
+
+        unanswered_count = sum(
+            1
+            for idx in range(
+                question_count
+            )
+            if idx not in sub_ans
         )
 
         max_points = subject_max_points.get(
@@ -2973,17 +3990,57 @@ def render_normal_result():
             score = 0
 
         total_score += score
+
         total_max_points += max_points
 
+        total_correct += correct_count
+
+        total_questions += question_count
+
+        total_unanswered += (
+            unanswered_count
+        )
+
         subject_results.append({
+
             "subject": sub,
+
             "correct": correct_count,
+
             "questions": question_count,
+
             "score": score,
+
             "max_score": max_points,
+
             "expected_questions": expected_questions,
         })
 
+
+    # Негізгі тест үшін максимум 140.
+    # Қалыпты комбинацияда:
+    # 50 + 50 + 20 + 10 + 10 = 140
+    if total_max_points != 140:
+
+        total_max_points = 140
+
+
+    total_wrong = (
+        total_questions
+        - total_correct
+        - total_unanswered
+    )
+
+    percentage = (
+        round(
+            total_score
+            / total_max_points
+            * 100,
+            1
+        )
+        if total_max_points
+        else 0
+    )
 
     st.session_state.current_subject_results = (
         subject_results
@@ -2991,36 +4048,125 @@ def render_normal_result():
 
 
     # =====================================================
-    # SCORE
+    # BIG SCORE
     # =====================================================
 
-    result_col1, result_col2 = st.columns(2)
+    st.markdown(
+        '<div class="card">',
+        unsafe_allow_html=True
+    )
 
-    with result_col1:
+    st.markdown(
+        '<div class="score-label">'
+        'Сіздің жалпы нәтижеңіз'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-        st.metric(
-            "🏆 Жалпы ұпай",
-            f"{total_score} / {total_max_points}"
-        )
+    st.markdown(
+        f'<div class="score-big">'
+        f'{total_score} / {total_max_points}'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    with result_col2:
+    st.markdown(
+        f'<div class="score-label">'
+        f'{percentage}%'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-        percentage = (
-            round(
+    st.progress(
+        min(
+            max(
                 total_score
                 / total_max_points
-                * 100,
-                1
-            )
-            if total_max_points
-            else 0
+                if total_max_points
+                else 0,
+                0
+            ),
+            1
         )
+    )
+
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+
+    # =====================================================
+    # SUMMARY
+    # =====================================================
+
+    summary1, summary2, summary3, summary4 = st.columns(4)
+
+    with summary1:
 
         st.metric(
-            "📊 Нәтиже",
+            "✅ Дұрыс",
+            total_correct
+        )
+
+    with summary2:
+
+        st.metric(
+            "❌ Қате",
+            total_wrong
+        )
+
+    with summary3:
+
+        st.metric(
+            "⚪ Жауапсыз",
+            total_unanswered
+        )
+
+    with summary4:
+
+        st.metric(
+            "📊 Пайыз",
             f"{percentage}%"
         )
 
+
+    # =====================================================
+    # MESSAGE
+    # =====================================================
+
+    if percentage >= 90:
+
+        st.success(
+            "🔥 Керемет нәтиже! "
+            "Сіз өте жақсы дайындалып жатырсыз."
+        )
+
+    elif percentage >= 70:
+
+        st.info(
+            "💪 Жақсы нәтиже! "
+            "Әлсіз тақырыптарды тағы қайталап көріңіз."
+        )
+
+    elif percentage >= 50:
+
+        st.warning(
+            "📚 Жаман емес, бірақ нәтижеңізді "
+            "көтеруге мүмкіндік көп."
+        )
+
+    else:
+
+        st.error(
+            "🎯 Негізгі тақырыптарды қайталап, "
+            "тағы бір тест тапсырып көріңіз."
+        )
+
+
+    # =====================================================
+    # SUBJECT RESULTS
+    # =====================================================
 
     st.markdown("---")
 
@@ -3050,10 +4196,22 @@ def render_normal_result():
             "max_score"
         ]
 
+        subject_percent = (
+            round(
+                score
+                / max_score
+                * 100,
+                1
+            )
+            if max_score
+            else 0
+        )
+
         st.markdown(
             f"**{subject_name}** — "
             f"{correct} / {questions_count} дұрыс · "
-            f"🎯 **{score} / {max_score} балл**"
+            f"🎯 **{score} / {max_score} балл** "
+            f"({subject_percent}%)"
         )
 
         progress_value = (
@@ -3086,6 +4244,7 @@ def render_normal_result():
     for item in subject_results:
 
         result_table.append({
+
             "Пән": item[
                 "subject"
             ],
@@ -3153,7 +4312,9 @@ def render_normal_result():
             ):
 
                 selected_idx = (
-                    sub_ans.get(q_idx)
+                    sub_ans.get(
+                        q_idx
+                    )
                 )
 
                 correct_idx = q.get(
@@ -3180,24 +4341,34 @@ def render_normal_result():
                     status = "❌ Қате"
 
                 selected_text = (
-                    answers[selected_idx]
+
+                    answers[
+                        selected_idx
+                    ]
+
                     if (
                         selected_idx
                         is not None
                         and 0 <= selected_idx
                         < len(answers)
                     )
+
                     else "Жауап берілмеді"
                 )
 
                 correct_text = (
-                    answers[correct_idx]
+
+                    answers[
+                        correct_idx
+                    ]
+
                     if (
                         correct_idx
                         is not None
                         and 0 <= correct_idx
                         < len(answers)
                     )
+
                     else "Көрсетілмеген"
                 )
 
@@ -3240,29 +4411,42 @@ def render_normal_result():
                         f"{prefix} {option_text}"
                     )
 
-                st.markdown("---")
+                st.markdown(
+                    "---"
+                )
 
                 subject_review.append({
-                    "question_number": q_idx + 1,
+
+                    "question_number": (
+                        q_idx + 1
+                    ),
+
                     "question": q.get(
                         "question",
                         ""
                     ),
+
                     "answers": answers,
+
                     "selected_answer": selected_text,
+
                     "correct_answer": correct_text,
+
                     "selected_index": selected_idx,
+
                     "correct_index": correct_idx,
+
                     "status": status,
+
                     "topic": q.get(
                         "topic",
                         "Жалпы"
                     ),
                 })
 
-        question_review[sub] = (
-            subject_review
-        )
+        question_review[
+            sub
+        ] = subject_review
 
 
     # =====================================================
@@ -3277,14 +4461,27 @@ def render_normal_result():
         history = load_results_history()
 
         history.append({
-            "username": st.session_state.username,
-            "name": st.session_state.full_name,
+
+            "username": (
+                st.session_state.username
+            ),
+
+            "name": (
+                st.session_state.full_name
+            ),
+
             "combination": comb_name,
+
             "score": total_score,
+
             "max_score": total_max_points,
+
             "subject_results": subject_results,
+
             "question_review": question_review,
+
             "test_type": "normal",
+
             "date": datetime.datetime.now().strftime(
                 "%Y-%m-%d %H:%M"
             ),
@@ -3296,13 +4493,19 @@ def render_normal_result():
 
         st.session_state.result_saved = True
 
+        # Тест аяқталды.
+        # Ескі progress енді қажет емес.
+        clear_test_progress(
+            st.session_state.username
+        )
+
         st.success(
             "✨ Нәтижеңіз жеке кабинетке сақталды!"
         )
 
 
     # =====================================================
-    # RETRY BUTTON
+    # RETRY
     # =====================================================
 
     wrong_count = 0
@@ -3323,8 +4526,12 @@ def render_normal_result():
         ):
 
             if (
-                sub_ans.get(idx)
-                != q.get("correct")
+                sub_ans.get(
+                    idx
+                )
+                != q.get(
+                    "correct"
+                )
             ):
 
                 wrong_count += 1
@@ -3337,7 +4544,7 @@ def render_normal_result():
         st.info(
             f"🔁 Сізде қайта қарауға "
             f"**{wrong_count}** қате немесе "
-            f"жауапсыз сұрақ бар."
+            "жауапсыз сұрақ бар."
         )
 
         if st.button(
@@ -3358,34 +4565,50 @@ def render_normal_result():
         )
 
 
+    # =====================================================
+    # HOME
+    # =====================================================
+
     if st.button(
         "🔄 Басты бетке қайту",
         type="primary",
+        use_container_width=True,
         key="return_home_btn"
     ):
 
+        clear_test_progress(
+            st.session_state.username
+        )
+
         st.session_state.test_started = False
+
         st.session_state.current_subject_index = 0
+
         st.session_state.current_question_index = 0
+
         st.session_state.current_subject_results = []
+
         st.session_state.retry_mode = False
+
         st.session_state.shuffled_test_data = {}
+
         st.session_state.test_answers = {}
 
         st.rerun()
 
 
 # =========================================================
-# 22. RETRY RESULT
+# 23. RETRY RESULT
 # =========================================================
 
 def render_retry_result():
 
     st.markdown(
-        "### 🔁 Қайта тапсыру нәтижесі"
+        "## 🔁 Қайта тапсыру нәтижесі"
     )
 
     total_questions = 0
+
     correct_answers = 0
 
     retry_subject_results = []
@@ -3410,8 +4633,11 @@ def render_retry_result():
             for idx, q in enumerate(
                 sub_qs
             )
-            if answers.get(idx)
-            == q.get("correct")
+            if answers.get(
+                idx
+            ) == q.get(
+                "correct"
+            )
         )
 
         total_questions += (
@@ -3423,20 +4649,26 @@ def render_retry_result():
         )
 
         retry_subject_results.append({
+
             "Пән": subject,
+
             "Дұрыс": subject_correct,
+
             "Барлығы": subject_total,
         })
 
 
     percentage = (
+
         round(
             correct_answers
             / total_questions
             * 100,
             1
         )
+
         if total_questions
+
         else 0
     )
 
@@ -3457,6 +4689,11 @@ def render_retry_result():
             f"{percentage}%"
         )
 
+    st.progress(
+        percentage / 100
+        if percentage
+        else 0
+    )
 
     st.markdown("---")
 
@@ -3469,7 +4706,6 @@ def render_retry_result():
         use_container_width=True,
         hide_index=True
     )
-
 
     if correct_answers == total_questions:
 
@@ -3485,12 +4721,10 @@ def render_retry_result():
             "Негізгі тесттен қайта қарап шығыңыз."
         )
 
-
     st.info(
         "ℹ️ Қайта тапсыру нәтижесі негізгі "
         "140 балдық статистикаға қосылмайды."
     )
-
 
     if st.button(
         "🏠 Басты бетке қайту",
@@ -3499,19 +4733,29 @@ def render_retry_result():
         key="retry_home"
     ):
 
+        clear_test_progress(
+            st.session_state.username
+        )
+
         st.session_state.test_started = False
+
         st.session_state.retry_mode = False
+
         st.session_state.current_subject_index = 0
+
         st.session_state.current_question_index = 0
+
         st.session_state.test_answers = {}
+
         st.session_state.shuffled_test_data = {}
+
         st.session_state.retry_data = {}
 
         st.rerun()
 
 
 # =========================================================
-# 23. MAIN
+# 24. MAIN
 # =========================================================
 
 def main():
@@ -3522,7 +4766,9 @@ def main():
 
     else:
 
-        role = st.session_state.role
+        role = (
+            st.session_state.role
+        )
 
         if role == "admin":
 
@@ -3542,8 +4788,9 @@ def main():
 
 
 # =========================================================
-# 24. START
+# 25. START
 # =========================================================
 
 if __name__ == "__main__":
+
     main()
