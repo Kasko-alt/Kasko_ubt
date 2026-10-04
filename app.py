@@ -10,40 +10,31 @@ import streamlit as st
 
 
 # =========================================================
-# 1. КОНФИГУРАЦИЯ
+# KASYM EDU
 # =========================================================
 
 st.set_page_config(
     page_title="KASYM EDU - Білім беру платформасы",
     page_icon="🎓",
-    layout="wide"
+    layout="wide",
 )
+
+
+# =========================================================
+# FILES
+# =========================================================
 
 QUESTIONS_FILE = "questions.json"
 RESULTS_FILE = "results_history.json"
 USERS_FILE = "users.json"
 TEST_PROGRESS_FILE = "test_progress.json"
 
-# users.json бар болса, оның ішіндегі пароль өзгермейді.
-# Жаңа users.json жасалған кезде ғана осы пароль қолданылады.
-ADMIN_PASSWORD = os.environ.get(
-    "KASYM_ADMIN_PASSWORD",
-    "CHANGE_ME"
-)
+ADMIN_USERNAME = "kas01"
+ADMIN_PASSWORD = os.environ.get("KASYM_ADMIN_PASSWORD", "CHANGE_ME")
 
 
 # =========================================================
-# 2. ҚАУІПСІЗДІК
-# =========================================================
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(
-        password.encode("utf-8")
-    ).hexdigest()
-
-
-# =========================================================
-# 3. ПӘНДЕР
+# SUBJECTS
 # =========================================================
 
 all_subjects = [
@@ -62,193 +53,171 @@ all_subjects = [
 ]
 
 
-subject_limits = {
+# =========================================================
+# QUESTION LIMITS
+# =========================================================
+
+QUESTION_LIMITS = {
     "Қазақстан тарихы": 20,
     "Оқу сауаттылығы": 10,
     "Математикалық сауаттылық": 10,
-    "Математика": 40,
-    "Физика": 40,
-    "Химия": 40,
+
     "Биология": 40,
+    "Химия": 40,
+    "Физика": 40,
+    "Математика": 40,
     "Информатика": 40,
-    "География": 40,
     "Дүниежүзі тарихы": 40,
     "Ағылшын тілі": 40,
+    "География": 40,
     "Құқық": 40,
 }
 
 
 # =========================================================
-# КОМБИНАЦИЯЛАР
+# POINT LIMITS
 # =========================================================
 
-combinations = {
+POINT_LIMITS = {
+    "Қазақстан тарихы": 20,
+    "Оқу сауаттылығы": 10,
+    "Математикалық сауаттылық": 10,
 
-    "Математика - Физика (Инженерлік)": [
-        "Математика",
-        "Физика",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
-
-    "Биология - Химия (Медицина)": [
-        "Биология",
-        "Химия",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
-
-    "География - Математика (Геодезия/Экономика)": [
-        "География",
-        "Математика",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
-
-    "Дүниежүзі тарихы - Ағылшын (Халықаралық)": [
-        "Дүниежүзі тарихы",
-        "Ағылшын тілі",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
-
-    "Математика - Информатика (IT / Бағдарламалау)": [
-        "Математика",
-        "Информатика",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
-
-    "Құқық - Дүниежүзі тарихы (Юриспруденция)": [
-        "Құқық",
-        "Дүниежүзі тарихы",
-        "Қазақстан тарихы",
-        "Оқу сауаттылығы",
-        "Математикалық сауаттылық",
-    ],
+    "Биология": 50,
+    "Химия": 50,
+    "Физика": 50,
+    "Математика": 50,
+    "Информатика": 50,
+    "Дүниежүзі тарихы": 50,
+    "Ағылшын тілі": 50,
+    "География": 50,
+    "Құқық": 50,
 }
 
 
 # =========================================================
-# 4. БАСТАПҚЫ СҰРАҚТАР
+# COMBINATIONS
+# =========================================================
+
+combinations = {
+    "Математика - Физика (Инженерлік)": {
+        "pair": ["Математика", "Физика"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+
+    "Биология - Химия (Медицина)": {
+        "pair": ["Биология", "Химия"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+
+    "География - Математика (Геодезия/Экономика)": {
+        "pair": ["География", "Математика"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+
+    "Дүниежүзі тарихы - Ағылшын (Халықаралық)": {
+        "pair": ["Дүниежүзі тарихы", "Ағылшын тілі"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+
+    "Математика - Информатика (IT / Бағдарламалау)": {
+        "pair": ["Математика", "Информатика"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+
+    "Құқық - Дүниежүзі тарихы (Юриспруденция)": {
+        "pair": ["Құқық", "Дүниежүзі тарихы"],
+        "common": [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ],
+    },
+}
+
+
+# =========================================================
+# DEFAULT QUESTIONS
 # =========================================================
 
 default_questions = {
-
     "Қазақстан тарихы": [
         {
-            "question": "«Ұлы шаньюй» деп аталған тайпа көсемі:",
-            "answers": [
-                "қаңлыларда",
-                "үйсіндерде",
-                "ғұндарда",
-                "сақтарда"
+            "question": "Қазақстан Республикасының тәуелсіздігі қашан жарияланды?",
+            "options": [
+                "1990 жылғы 25 қазан",
+                "1991 жылғы 16 желтоқсан",
+                "1991 жылғы 1 желтоқсан",
+                "1992 жылғы 4 маусым",
             ],
-            "correct": 2,
-            "topic": "Ежелгі Қазақстан",
+            "answer": 1,
         },
         {
-            "question": "Қазақ хандығы қашан құрылды?",
-            "answers": [
-                "1465-1466 жж.",
-                "1729 ж.",
-                "1841 ж.",
-                "1916 ж."
+            "question": "Қазақстан Республикасының мемлекеттік рәміздері қашан бекітілді?",
+            "options": [
+                "1991 жылы",
+                "1992 жылы",
+                "1993 жылы",
+                "1995 жылы",
             ],
-            "correct": 0,
-            "topic": "Қазақ хандығы",
+            "answer": 1,
         },
     ],
 
     "Биология": [
         {
-            "question": "Фотосинтез процесі қай органоидта жүреді?",
-            "answers": [
-                "Митохондрия",
-                "Хлоропласт",
+            "question": "Жасушаның тұқым қуалайтын ақпаратын сақтайтын негізгі құрылым?",
+            "options": [
                 "Рибосома",
-                "Лизосома"
+                "Ядро",
+                "Лизосома",
+                "Митохондрия",
             ],
-            "correct": 1,
-            "topic": "Жасуша",
-        }
-    ],
-
-    "Математика": [
-        {
-            "question": "Егер x + 5 = 12 болса, x неге тең?",
-            "answers": [
-                "5",
-                "7",
-                "12",
-                "17"
-            ],
-            "correct": 1,
-            "topic": "Теңдеулер",
-        }
-    ],
-
-    "Физика": [
-        {
-            "question": "Жылдамдықтың өлшем бірлігі:",
-            "answers": [
-                "м/с",
-                "кг",
-                "Н",
-                "Вт"
-            ],
-            "correct": 0,
-            "topic": "Механика",
-        }
-    ],
-
-    "Оқу сауаттылығы": [
-        {
-            "question": "Мәтіннің негізгі ойын анықтаңыз: «Еңбек — ерлікке жеткізер»",
-            "answers": [
-                "Балмұздақ жеу",
-                "Еңбектің маңызы",
-                "Спортпен шұғылдану",
-                "Саяхат"
-            ],
-            "correct": 1,
-            "topic": "Мәтінді түсіну",
-        }
-    ],
-
-    "Математикалық сауаттылық": [
-        {
-            "question": "20 санының 20%-ын табыңыз:",
-            "answers": [
-                "2",
-                "4",
-                "5",
-                "10"
-            ],
-            "correct": 1,
-            "topic": "Пайыз",
+            "answer": 1,
         }
     ],
 }
 
 
 # =========================================================
-# 5. USERS
+# PASSWORD
+# =========================================================
+
+def hash_password(password):
+    return hashlib.sha256(
+        password.encode("utf-8")
+    ).hexdigest()
+
+
+# =========================================================
+# USERS
 # =========================================================
 
 def default_users():
-
     return [
         {
-            "username": "kas01",
-            "password": hash_password(
-                ADMIN_PASSWORD
-            ),
+            "username": ADMIN_USERNAME,
+            "password": hash_password(ADMIN_PASSWORD),
             "name": "KASYM",
             "role": "admin",
             "combination": None,
@@ -257,88 +226,54 @@ def default_users():
 
 
 def save_users(users_list):
-
     try:
-
-        with open(
-            USERS_FILE,
-            "w",
-            encoding="utf-8"
-        ) as file:
-
+        with open(USERS_FILE, "w", encoding="utf-8") as file:
             json.dump(
                 users_list,
                 file,
                 ensure_ascii=False,
                 indent=4
             )
-
     except Exception as error:
-
         st.error(
             f"Қолданушыларды сақтау кезінде қате: {error}"
         )
 
 
 def load_users():
-
-    # =====================================================
-    # users.json бар болса —
-    # оның ішіндегі парольдерге тимейміз.
-    # =====================================================
-
     if os.path.exists(USERS_FILE):
-
         try:
-
-            with open(
-                USERS_FILE,
-                "r",
-                encoding="utf-8"
-            ) as file:
-
+            with open(USERS_FILE, "r", encoding="utf-8") as file:
                 data = json.load(file)
 
             if isinstance(data, list) and data:
-
                 admin_found = False
 
                 for user in data:
-
-                    if user.get("username") == "kas01":
-
+                    if user.get("username") == ADMIN_USERNAME:
                         user["role"] = "admin"
                         admin_found = True
 
-                # Парольді қайта жазбаймыз!
                 if admin_found:
-
                     return data
 
-                # kas01 жоқ болса ғана жаңадан қосамыз.
-                data.append({
-                    "username": "kas01",
-                    "password": hash_password(
-                        ADMIN_PASSWORD
-                    ),
-                    "name": "KASYM",
-                    "role": "admin",
-                    "combination": None,
-                })
+                data.append(
+                    {
+                        "username": ADMIN_USERNAME,
+                        "password": hash_password(ADMIN_PASSWORD),
+                        "name": "KASYM",
+                        "role": "admin",
+                        "combination": None,
+                    }
+                )
 
                 save_users(data)
-
                 return data
 
         except Exception:
-
-            # Файл бұзылған болса,
-            # төменде жаңа users.json жасалады.
             pass
 
-    # users.json мүлдем жоқ
     data = default_users()
-
     save_users(data)
 
     return data
@@ -348,206 +283,185 @@ users = load_users()
 
 
 def find_user(username, password):
-
     username = (username or "").strip()
-
-    # Парольді strip жасамаймыз.
-    # Себебі парольдің ішінде бос орын болуы мүмкін.
     password = password or ""
 
     if not username or not password:
         return None
 
-    hashed_input = hash_password(
-        password
-    )
+    hashed_input = hash_password(password)
 
     for user in users:
-
         if user.get("username") != username:
             continue
 
         stored_password = str(
-            user.get(
-                "password",
-                ""
-            )
+            user.get("password", "")
         ).strip()
 
-        # SHA-256 арқылы сақталған пароль
         if stored_password == hashed_input:
-
             return user
 
-        # Ескі users.json ішінде
-        # пароль жай мәтін болып қалса,
-        # соны да оқуға мүмкіндік береміз.
+        # Compatibility with old plain-text users
         if stored_password == password:
-
             return user
 
     return None
 
 
-def username_exists(username):
-
-    username = (username or "").strip()
-
-    return any(
-        user.get("username") == username
-        for user in users
-    )
-
-
 # =========================================================
-# 6. QUESTIONS
+# QUESTIONS
 # =========================================================
+
+def save_questions(data):
+    try:
+        with open(
+            QUESTIONS_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                indent=4
+            )
+    except Exception as error:
+        st.error(
+            f"Сұрақтарды сақтау кезінде қате: {error}"
+        )
+
 
 def load_questions():
-
     if os.path.exists(QUESTIONS_FILE):
-
         try:
-
             with open(
                 QUESTIONS_FILE,
                 "r",
                 encoding="utf-8"
             ) as file:
-
                 data = json.load(file)
 
-            if not isinstance(data, dict):
-
-                data = {}
-
-            for subject in all_subjects:
-
-                if subject not in data:
-
-                    data[subject] = (
-                        default_questions.get(
-                            subject,
-                            []
-                        )
-                    )
-
-            return data
+            if isinstance(data, dict):
+                return data
 
         except Exception:
+            pass
 
-            return default_questions.copy()
+    data = default_questions.copy()
+    save_questions(data)
 
-    return default_questions.copy()
-
-
-def save_questions():
-
-    with open(
-        QUESTIONS_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            questions,
-            file,
-            ensure_ascii=False,
-            indent=4
-        )
+    return data
 
 
 questions = load_questions()
 
 
 # =========================================================
-# 7. RESULTS
+# RESULTS
 # =========================================================
 
-def load_results_history():
-
+def load_results():
     if os.path.exists(RESULTS_FILE):
-
         try:
-
             with open(
                 RESULTS_FILE,
                 "r",
                 encoding="utf-8"
             ) as file:
-
                 data = json.load(file)
 
             if isinstance(data, list):
-
                 return data
 
         except Exception:
-
             pass
 
     return []
 
 
-def save_results_history(history):
-
-    with open(
-        RESULTS_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            history,
-            file,
-            ensure_ascii=False,
-            indent=4
+def save_results(data):
+    try:
+        with open(
+            RESULTS_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                indent=4
+            )
+    except Exception as error:
+        st.error(
+            f"Нәтижені сақтау кезінде қате: {error}"
         )
 
 
+results_history = load_results()
+
+
 # =========================================================
-# 8. TEST PROGRESS
+# TEST PROGRESS
 # =========================================================
 
-def load_all_test_progress():
+def load_test_progress():
+    if os.path.exists(TEST_PROGRESS_FILE):
+        try:
+            with open(
+                TEST_PROGRESS_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+                data = json.load(file)
 
-    if not os.path.exists(
-        TEST_PROGRESS_FILE
-    ):
+            if isinstance(data, dict):
+                return data
 
-        return {}
-
-    try:
-
-        with open(
-            TEST_PROGRESS_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
-            data = json.load(file)
-
-        if isinstance(data, dict):
-
-            return data
-
-    except Exception:
-
-        pass
+        except Exception:
+            pass
 
     return {}
 
 
-def save_all_test_progress(data):
-
+def save_test_progress():
     try:
+        if not st.session_state.get("test_started"):
+            return
+
+        data = {
+            "username": st.session_state.get("username"),
+            "full_name": st.session_state.get("full_name"),
+            "active_combination": st.session_state.get(
+                "active_combination"
+            ),
+            "current_subject_idx": st.session_state.get(
+                "current_subject_idx",
+                0
+            ),
+            "current_question_idx": st.session_state.get(
+                "current_question_idx",
+                0
+            ),
+            "test_answers": st.session_state.get(
+                "test_answers",
+                {}
+            ),
+            "test_data": st.session_state.get(
+                "test_data",
+                {}
+            ),
+            "started_at": st.session_state.get(
+                "started_at"
+            ),
+        }
 
         with open(
             TEST_PROGRESS_FILE,
             "w",
             encoding="utf-8"
         ) as file:
-
             json.dump(
                 data,
                 file,
@@ -556,1866 +470,1074 @@ def save_all_test_progress(data):
             )
 
     except Exception:
-
         pass
 
 
-def get_test_progress(username):
-
-    if not username:
-
-        return None
-
-    all_progress = (
-        load_all_test_progress()
-    )
-
-    return all_progress.get(
-        username
-    )
-
-
-def clear_test_progress(username):
-
-    if not username:
-
-        return
-
-    all_progress = (
-        load_all_test_progress()
-    )
-
-    if username in all_progress:
-
-        del all_progress[username]
-
-        save_all_test_progress(
-            all_progress
-        )
-
-
-def normalize_test_answers(raw_answers):
-
-    result = {}
-
-    if not isinstance(
-        raw_answers,
-        dict
-    ):
-
-        return result
-
-    for subject, answers in raw_answers.items():
-
-        if not isinstance(
-            answers,
-            dict
-        ):
-
-            result[subject] = {}
-            continue
-
-        result[subject] = {}
-
-        for q_index, answer_index in answers.items():
-
-            try:
-
-                result[subject][
-                    int(q_index)
-                ] = int(
-                    answer_index
-                )
-
-            except Exception:
-
-                pass
-
-    return result
-
-
-def save_current_test_progress():
-
-    username = st.session_state.get(
-        "username",
-        ""
-    )
-
-    if not username:
-
-        return
-
-    if not st.session_state.get(
-        "test_started",
-        False
-    ):
-
-        return
-
-    progress = {
-        "active_combination": (
-            st.session_state.get(
-                "active_combination"
-            )
-        ),
-
-        "current_subject_index": (
-            st.session_state.get(
-                "current_subject_index",
-                0
-            )
-        ),
-
-        "current_question_index": (
-            st.session_state.get(
-                "current_question_index",
-                0
-            )
-        ),
-
-        "test_answers": (
-            st.session_state.get(
-                "test_answers",
-                {}
-            )
-        ),
-
-        "shuffled_test_data": (
-            st.session_state.get(
-                "shuffled_test_data",
-                {}
-            )
-        ),
-
-        "retry_mode": (
-            st.session_state.get(
-                "retry_mode",
-                False
-            )
-        ),
-
-        "retry_data": (
-            st.session_state.get(
-                "retry_data",
-                {}
-            )
-        ),
-
-        "saved_at": datetime.datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        ),
-    }
-
-    all_progress = (
-        load_all_test_progress()
-    )
-
-    all_progress[username] = progress
-
-    save_all_test_progress(
-        all_progress
-    )
-
-
-def restore_test_progress(progress):
-
-    if not progress:
-
-        return False
-
+def clear_test_progress():
     try:
-
-        st.session_state.active_combination = (
-            progress.get(
-                "active_combination"
-            )
-        )
-
-        st.session_state.current_subject_index = int(
-            progress.get(
-                "current_subject_index",
-                0
-            )
-        )
-
-        st.session_state.current_question_index = int(
-            progress.get(
-                "current_question_index",
-                0
-            )
-        )
-
-        st.session_state.test_answers = (
-            normalize_test_answers(
-                progress.get(
-                    "test_answers",
-                    {}
-                )
-            )
-        )
-
-        st.session_state.shuffled_test_data = (
-            progress.get(
-                "shuffled_test_data",
-                {}
-            )
-        )
-
-        st.session_state.retry_mode = bool(
-            progress.get(
-                "retry_mode",
-                False
-            )
-        )
-
-        st.session_state.retry_data = (
-            progress.get(
-                "retry_data",
-                {}
-            )
-        )
-
-        st.session_state.test_started = True
-        st.session_state.result_saved = False
-
-        return True
-
+        if os.path.exists(TEST_PROGRESS_FILE):
+            os.remove(TEST_PROGRESS_FILE)
     except Exception:
-
-        return False
+        pass
 
 
 # =========================================================
-# 9. SESSION STATE
+# SESSION DEFAULTS
 # =========================================================
 
 session_defaults = {
-
     "logged_in": False,
-
     "role": None,
+    "username": None,
+    "full_name": None,
 
-    "username": "",
-
-    "full_name": "",
+    "page": "home",
 
     "test_started": False,
-
     "active_combination": None,
 
-    "current_subject_index": 0,
-
-    "current_question_index": 0,
+    "current_subject_idx": 0,
+    "current_question_idx": 0,
 
     "test_answers": {},
+    "test_data": {},
 
-    "shuffled_test_data": {},
-
-    "current_subject_results": [],
-
-    "result_saved": False,
-
-    "retry_mode": False,
-
-    "retry_data": {},
-
-    "retry_results": {},
+    "started_at": None,
 
     "pending_delete_question": None,
+    "pending_user_delete": None,
 
-    "resume_checked": False,
+    "retry_mode": False,
+    "retry_questions": {},
+    "retry_answers": {},
 }
 
 
 for key, value in session_defaults.items():
-
     if key not in st.session_state:
-
         st.session_state[key] = value
 
 
 # =========================================================
-# 10. DESIGN
+# CSS
 # =========================================================
 
 st.markdown(
     """
-    <style>
+<style>
 
-    .stApp {
-        background-color: #0B0F19;
-        color: #F3F4F6;
-        font-family: 'Inter', sans-serif;
+.stApp {
+    background:
+        radial-gradient(
+            circle at top left,
+            #172554 0%,
+            #0B0F19 35%,
+            #080B12 100%
+        );
+    color: white;
+}
+
+.block-container {
+    max-width: 1400px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+
+h1, h2, h3 {
+    color: white !important;
+}
+
+.kasym-title {
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.kasym-subtitle {
+    font-size: 18px;
+    color: #9CA3AF;
+    margin-bottom: 25px;
+}
+
+.hero {
+    padding: 35px;
+    border-radius: 24px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(37,99,235,0.22),
+            rgba(15,23,42,0.92)
+        );
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    margin-bottom: 25px;
+}
+
+.card {
+    background: rgba(15,23,42,0.82);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+}
+
+.resume-card {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(16,185,129,0.18),
+            rgba(15,23,42,0.92)
+        );
+    border: 1px solid rgba(16,185,129,0.35);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 22px;
+}
+
+.score-big {
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.metric-box {
+    background: rgba(15,23,42,0.8);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+}
+
+.metric-number {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.metric-label {
+    color: #94A3B8;
+    font-size: 14px;
+}
+
+.question-box {
+    background: rgba(15,23,42,0.9);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.question-text {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.correct-box {
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.4);
+    border-radius: 14px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.wrong-box {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.4);
+    border-radius: 14px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.unanswered-box {
+    background: rgba(148,163,184,0.1);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 14px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.info-box {
+    padding: 18px;
+    border-radius: 16px;
+    background: rgba(37,99,235,0.12);
+    border: 1px solid rgba(37,99,235,0.25);
+    margin-bottom: 15px;
+}
+
+.warning-box {
+    padding: 18px;
+    border-radius: 16px;
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.35);
+    margin-bottom: 15px;
+}
+
+[data-testid="stButton"] button {
+    border-radius: 12px;
+    min-height: 44px;
+    font-weight: 700;
+}
+
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input {
+    border-radius: 12px;
+}
+
+.stRadio label {
+    font-size: 16px !important;
+}
+
+.palette-btn {
+    text-align: center;
+}
+
+.login-container {
+    max-width: 480px;
+    margin: 7vh auto;
+}
+
+.login-card {
+    background: rgba(15,23,42,0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 25px;
+    padding: 35px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.45);
+}
+
+@media (max-width: 768px) {
+
+    .block-container {
+        padding: 1rem;
     }
 
     .kasym-title {
-        font-size: 42px;
-        font-weight: 800;
-        text-align: center;
-
-        background: linear-gradient(
-            135deg,
-            #6366F1 0%,
-            #A855F7 100%
-        );
-
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-
-        margin-bottom: 0px;
+        font-size: 32px;
     }
 
     .kasym-subtitle {
-        font-size: 16px;
-        text-align: center;
-        color: #9CA3AF;
-        margin-bottom: 30px;
-        font-weight: 500;
+        font-size: 15px;
     }
 
-    .card {
-        background: linear-gradient(
-            145deg,
-            #1E293B 0%,
-            #0F172A 100%
-        );
-
-        padding: 24px;
-
+    .hero,
+    .card,
+    .question-box,
+    .login-card {
+        padding: 18px;
         border-radius: 16px;
-
-        border: 1px solid
-        rgba(255,255,255,0.08);
-
-        box-shadow:
-            0 10px 25px -5px
-            rgba(0,0,0,0.3);
-
-        margin-bottom: 20px;
-    }
-
-    .stButton > button {
-
-        border-radius: 8px;
-
-        font-weight: 700;
-
-        font-size: 15px !important;
-
-        border: 1px solid
-        rgba(255,255,255,0.15);
-
-        background-color: #1E293B;
-
-        color: #FFFFFF !important;
-
-        transition: all 0.2s ease;
-
-        padding: 4px 8px;
-
-        min-height: 42px;
-    }
-
-    .stButton > button:hover {
-
-        border-color: #6366F1;
-
-        background-color: #312E81;
-
-        color: #FFFFFF !important;
-
-        transform: translateY(-1px);
-    }
-
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > div,
-    .stTextArea > div > div > textarea {
-
-        background-color: #1E293B !important;
-
-        border-radius: 10px !important;
-
-        color: #F3F4F6 !important;
-
-        border: 1px solid
-        rgba(255,255,255,0.08) !important;
-    }
-
-    .nav-legend {
-
-        background: #111827;
-
-        padding: 10px 14px;
-
-        border-radius: 10px;
-
-        margin-bottom: 12px;
-
-        text-align: center;
-
-        font-size: 14px;
-    }
-
-    .analytics-good {
-
-        color: #22C55E;
-
-        font-weight: 700;
-    }
-
-    .analytics-bad {
-
-        color: #EF4444;
-
-        font-weight: 700;
-    }
-
-    .resume-box {
-
-        background: linear-gradient(
-            145deg,
-            #172554,
-            #1E1B4B
-        );
-
-        border: 1px solid
-        rgba(99,102,241,0.35);
-
-        border-radius: 16px;
-
-        padding: 20px;
-
-        margin-bottom: 20px;
     }
 
     .score-big {
-
         font-size: 48px;
-
-        font-weight: 800;
-
-        text-align: center;
-
-        margin: 5px 0;
     }
 
-    .score-label {
+    .question-text {
+        font-size: 18px;
+    }
+}
 
-        text-align: center;
+@media (max-width: 480px) {
 
-        color: #9CA3AF;
-
-        font-size: 14px;
+    .kasym-title {
+        font-size: 27px;
     }
 
-    @media (max-width: 768px) {
-
-        .kasym-title {
-
-            font-size: 30px !important;
-
-        }
-
-        .kasym-subtitle {
-
-            font-size: 13px !important;
-
-            margin-bottom: 18px !important;
-
-        }
-
-        .card {
-
-            padding: 14px !important;
-
-            border-radius: 12px !important;
-
-        }
-
-        .stButton > button {
-
-            min-height: 46px !important;
-
-            font-size: 13px !important;
-
-        }
-
-        .stRadio label {
-
-            font-size: 15px !important;
-
-        }
-
-        .nav-legend {
-
-            font-size: 11px !important;
-
-            padding: 9px 5px !important;
-
-        }
-
-        .score-big {
-
-            font-size: 36px !important;
-
-        }
-
-        [data-testid="stHorizontalBlock"] {
-
-            gap: 0.35rem !important;
-
-        }
-
+    .metric-number {
+        font-size: 24px;
     }
 
-    @media (max-width: 480px) {
-
-        .kasym-title {
-
-            font-size: 27px !important;
-
-        }
-
-        .kasym-subtitle {
-
-            font-size: 12px !important;
-
-        }
-
-        .stMarkdown {
-
-            font-size: 14px;
-
-        }
-
-        .stRadio label {
-
-            font-size: 14px !important;
-
-        }
-
+    .score-big {
+        font-size: 40px;
     }
+}
 
-    </style>
-    """,
+</style>
+""",
     unsafe_allow_html=True,
 )
 
 
 # =========================================================
-# 11. LOGOUT
+# LOGOUT
 # =========================================================
 
 def logout():
+    if st.session_state.get("test_started"):
+        save_test_progress()
 
-    # Егер тест аяқталмаған болса,
-    # автоматты түрде сақтаймыз.
-    if st.session_state.get(
-        "test_started",
-        False
-    ):
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.username = None
+    st.session_state.full_name = None
+    st.session_state.page = "home"
 
-        save_current_test_progress()
+    st.session_state.test_started = False
+    st.session_state.active_combination = None
+    st.session_state.test_answers = {}
+    st.session_state.test_data = {}
+    st.session_state.current_subject_idx = 0
+    st.session_state.current_question_idx = 0
 
-    for key, value in session_defaults.items():
+    st.session_state.pending_delete_question = None
+    st.session_state.pending_user_delete = None
 
-        st.session_state[key] = value
+    st.session_state.retry_mode = False
+    st.session_state.retry_questions = {}
+    st.session_state.retry_answers = {}
 
     st.rerun()
 
 
 # =========================================================
-# 12. LOGIN
+# LOGIN PAGE
 # =========================================================
 
 def login_page():
 
     st.markdown(
-        '<div class="kasym-title">KASYM EDU</div>',
-        unsafe_allow_html=True
+        """
+        <div class="login-container">
+            <div class="login-card">
+                <div style="text-align:center;">
+                    <div style="font-size:58px;">🎓</div>
+                    <div class="kasym-title">KASYM EDU</div>
+                    <div class="kasym-subtitle">
+                        Бүгінгі дайындық — ертеңгі грант
+                    </div>
+                </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    st.markdown(
-        '<div class="kasym-subtitle">'
-        'Бүгінгі дайындық — ертеңгі грант'
-        '</div>',
-        unsafe_allow_html=True
+    username = st.text_input(
+        "Логин",
+        placeholder="Логиніңізді енгізіңіз",
+        key="login_username",
     )
 
-    c1, c2, c3 = st.columns(
-        [1, 1.2, 1]
+    password = st.text_input(
+        "Құпиясөз",
+        type="password",
+        placeholder="Құпиясөзіңізді енгізіңіз",
+        key="login_password",
     )
 
-    with c2:
+    if st.button(
+        "🚀 Кіру",
+        use_container_width=True,
+        type="primary",
+    ):
 
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
+        user = find_user(
+            username,
+            password,
         )
 
-        st.markdown(
-            "### 🔐 Жүйеге кіру"
-        )
+        if user:
 
-        username = st.text_input(
-            "Логин",
-            key="login_username"
-        )
-
-        password = st.text_input(
-            "Құпия сөз",
-            type="password",
-            key="login_password"
-        )
-
-        if st.button(
-            "Кіру →",
-            use_container_width=True,
-            type="primary"
-        ):
-
-            # Парольді strip жасамай береміз.
-            user = find_user(
-                username,
-                password
-            )
-
-            if user:
-
-                st.session_state.logged_in = True
-
-                st.session_state.username = (
-                    user["username"]
-                )
-
-                st.session_state.full_name = (
-                    user.get(
-                        "name",
-                        ""
-                    )
-                )
-
-                st.session_state.role = (
-                    user.get(
-                        "role",
-                        "user"
-                    )
-                )
-
-                st.rerun()
-
-            else:
-
-                st.error(
-                    "❌ Логин немесе құпия сөз қате."
-                )
-
-        st.info(
-            "🔐 Жаңа аккаунтты тек администратор жасайды."
-        )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-# =========================================================
-# 13. СТАТИСТИКА
-# =========================================================
-
-def render_statistics_tab():
-
-    st.markdown(
-        "### 📊 Оқушылардың тест нәтижелері мен статистикасы"
-    )
-
-    history = load_results_history()
-
-    if not history:
-
-        st.info(
-            "⚠️ Әзірге ешбір оқушы тест тапсырған жоқ."
-        )
-
-        return
-
-    total_tests = len(history)
-
-    normal_tests = [
-        h for h in history
-        if h.get(
-            "test_type",
-            "normal"
-        ) == "normal"
-    ]
-
-    avg_score = (
-        sum(
-            int(
-                h.get(
-                    "score",
-                    0
-                ) or 0
-            )
-            for h in normal_tests
-        )
-        / len(normal_tests)
-        if normal_tests
-        else 0
-    )
-
-    col_m1, col_m2 = st.columns(2)
-
-    with col_m1:
-
-        st.metric(
-            "📈 Барлық тапсырылған тесттер",
-            total_tests
-        )
-
-    with col_m2:
-
-        st.metric(
-            "⭐ Орташа ұпай",
-            f"{avg_score:.1f}"
-        )
-
-    st.markdown("---")
-
-    sc1, sc2 = st.columns(2)
-
-    with sc1:
-
-        search_query = (
-            st.text_input(
-                "🔍 Оқушының аты немесе логині бойынша іздеу:",
-                key="stat_search"
-            )
-            .strip()
-            .lower()
-        )
-
-    with sc2:
-
-        comb_filter = st.selectbox(
-            "🎯 Комбинация бойынша сүзу:",
-            ["Барлығы"] + list(
-                combinations.keys()
-            ),
-            key="stat_comb_filter"
-        )
-
-    filtered_history = []
-
-    for h in history:
-
-        name = h.get(
-            "name",
-            "Аты жоқ"
-        )
-
-        uname = h.get(
-            "username",
-            "белгісіз"
-        )
-
-        comb = h.get(
-            "combination",
-            "Көрсетілмеген"
-        )
-
-        score = h.get(
-            "score",
-            0
-        )
-
-        date = h.get(
-            "date",
-            "Уақыты белгісіз"
-        )
-
-        match_search = (
-            search_query in name.lower()
-            or search_query in uname.lower()
-        )
-
-        match_comb = (
-            comb_filter == "Барлығы"
-            or comb == comb_filter
-        )
-
-        if match_search and match_comb:
-
-            filtered_history.append({
-                "Аты-жөні": name,
-                "Логин": f"@{uname}",
-                "Комбинация": comb,
-                "Ұпай": score,
-                "Түрі": (
-                    "Қайта тапсыру"
-                    if h.get(
-                        "test_type"
-                    ) == "retry"
-                    else "Негізгі тест"
-                ),
-                "Күні": date,
-            })
-
-    st.caption(
-        f"Табылған нәтижелер саны: "
-        f"{len(filtered_history)}"
-    )
-
-    if not filtered_history:
-
-        st.warning(
-            "⚠️ Іздеу шарттарына сәйкес нәтиже табылмады."
-        )
-
-    else:
-
-        st.dataframe(
-            filtered_history,
-            use_container_width=True,
-            hide_index=True
-        )
-
-
-# =========================================================
-# 14. ANALYTICS
-# =========================================================
-
-def render_analytics(username=None):
-
-    history = load_results_history()
-
-    if username:
-
-        history = [
-            h for h in history
-            if h.get(
+            st.session_state.logged_in = True
+            st.session_state.username = user.get(
                 "username"
-            ) == username
-        ]
+            )
+            st.session_state.full_name = user.get(
+                "name",
+                user.get("username")
+            )
+            st.session_state.role = user.get(
+                "role",
+                "user"
+            )
 
-    history = [
-        h for h in history
-        if h.get(
-            "test_type",
-            "normal"
-        ) == "normal"
-    ]
+            st.session_state.page = "home"
+
+            st.session_state.login_username = ""
+            st.session_state.login_password = ""
+
+            st.rerun()
+
+        else:
+            st.error(
+                "❌ Логин немесе құпиясөз дұрыс емес."
+            )
 
     st.markdown(
-        "### 📊 Пәндер бойынша аналитика"
+        """
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# =========================================================
+# STATISTICS HELPERS
+# =========================================================
+
+def user_results(username):
+    return [
+        result
+        for result in results_history
+        if result.get("username") == username
+    ]
+
+
+def calculate_user_statistics(username):
+    history = user_results(username)
+
+    if not history:
+        return {
+            "attempts": 0,
+            "best": 0,
+            "average": 0,
+        }
+
+    scores = [
+        float(result.get("total_score", 0))
+        for result in history
+    ]
+
+    return {
+        "attempts": len(scores),
+        "best": max(scores),
+        "average": round(
+            sum(scores) / len(scores),
+            1
+        ),
+    }
+
+
+# =========================================================
+# ANALYTICS
+# =========================================================
+
+def analytics_page(username):
+
+    history = user_results(username)
+
+    st.markdown(
+        "## 📊 Менің аналитикам"
     )
 
     if not history:
-
         st.info(
-            "Аналитика жасау үшін алдымен тест тапсыру керек."
+            "Әзірге тест нәтижелері жоқ."
         )
-
         return
 
-    subject_stats = {}
+    scores = [
+        float(item.get("total_score", 0))
+        for item in history
+    ]
 
-    for result in history:
-
-        for item in result.get(
-            "subject_results",
-            []
-        ):
-
-            subject = item.get(
-                "subject",
-                "Белгісіз"
-            )
-
-            correct = int(
-                item.get(
-                    "correct",
-                    0
-                )
-            )
-
-            total = int(
-                item.get(
-                    "questions",
-                    0
-                )
-            )
-
-            if subject not in subject_stats:
-
-                subject_stats[subject] = {
-                    "correct": 0,
-                    "total": 0,
-                    "attempts": 0
-                }
-
-            subject_stats[subject][
-                "correct"
-            ] += correct
-
-            subject_stats[subject][
-                "total"
-            ] += total
-
-            subject_stats[subject][
-                "attempts"
-            ] += 1
-
-    analytics_data = []
-
-    for subject, data in subject_stats.items():
-
-        percentage = (
-            data["correct"]
-            / data["total"]
-            * 100
-            if data["total"]
-            else 0
-        )
-
-        analytics_data.append({
-            "Пән": subject,
-            "Дұрыс": data["correct"],
-            "Барлық сұрақ": data["total"],
-            "Дәлдік": round(
-                percentage,
-                1
-            ),
-            "Тест саны": data["attempts"]
-        })
-
-    analytics_data.sort(
-        key=lambda x: x["Дәлдік"]
+    best = max(scores)
+    average = round(
+        sum(scores) / len(scores),
+        1
     )
 
-    if analytics_data:
+    col1, col2, col3 = st.columns(3)
 
-        weakest = analytics_data[0]
-        strongest = analytics_data[-1]
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.error(
-                f"🔴 Әлсіз пән: "
-                f"**{weakest['Пән']}** — "
-                f"{weakest['Дәлдік']}%"
-            )
-
-        with col2:
-
-            st.success(
-                f"🟢 Күшті пән: "
-                f"**{strongest['Пән']}** — "
-                f"{strongest['Дәлдік']}%"
-            )
-
-        st.markdown("---")
-
-        chart_data = pd.DataFrame(
-            analytics_data
-        ).set_index(
-            "Пән"
+    with col1:
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {len(scores)}
+                </div>
+                <div class="metric-label">
+                    Тест саны
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        st.bar_chart(
-            chart_data["Дәлдік"]
+    with col2:
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {best:.0f}
+                </div>
+                <div class="metric-label">
+                    Ең жоғары балл
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
+    with col3:
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {average:.1f}
+                </div>
+                <div class="metric-label">
+                    Орташа балл
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### 📈 Тест тарихы")
+
+    rows = []
+
+    for index, result in enumerate(
+        reversed(history),
+        start=1
+    ):
+        rows.append(
+            {
+                "№": index,
+                "Күні": result.get(
+                    "date",
+                    "-"
+                ),
+                "Бағыт": result.get(
+                    "combination",
+                    "-"
+                ),
+                "Балл": result.get(
+                    "total_score",
+                    0
+                ),
+                "Пайыз": result.get(
+                    "percentage",
+                    0
+                ),
+            }
+        )
+
+    if rows:
         st.dataframe(
-            analytics_data,
+            pd.DataFrame(rows),
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
         )
 
 
 # =========================================================
-# 15. BULK PARSER
+# BULK QUESTION PARSER
 # =========================================================
 
-def parse_bulk_questions(raw_text):
+def parse_bulk_questions(text):
 
-    questions_list = []
+    questions_result = []
+
+    if not text or not text.strip():
+        return questions_result
 
     blocks = re.split(
-        r"(?=\b\d+[\.\)]\s)",
-        raw_text
+        r"\n\s*\n",
+        text.strip()
     )
 
     for block in blocks:
 
-        if not block.strip():
-            continue
-
-        full_text = " ".join(
-            block.strip().split("\n")
-        )
-
-        q_match = re.search(
-            r"^\d+[\.\)]\s*(.*?)(?=[A-DА-Гa-dа-г][\.\)]|\bЖауабы:|$)",
-            full_text
-        )
-
-        if not q_match:
-            continue
-
-        q_text = q_match.group(
-            1
-        ).strip()
-
-        options = re.findall(
-            r"([A-DА-Гa-dа-г])[\.\)]\s*"
-            r"([^A-DА-Гa-dа-г\.\)]+)",
-            full_text
-        )
-
-        answers = []
-
-        if len(options) >= 4:
-
-            answers = [
-                opt[1].strip()
-                for opt in options[:4]
-            ]
-
-        correct_index = 0
-
-        ans_match = re.search(
-            r"Жауабы:\s*([A-DА-Гa-dа-г])",
-            full_text,
-            re.IGNORECASE
-        )
-
-        if ans_match:
-
-            corr_letter = (
-                ans_match.group(
-                    1
-                ).upper()
-            )
-
-            letter_map = {
-                "A": 0,
-                "А": 0,
-                "B": 1,
-                "Б": 1,
-                "C": 2,
-                "В": 2,
-                "D": 3,
-                "Г": 3,
-            }
-
-            correct_index = letter_map.get(
-                corr_letter,
-                0
-            )
-
-        topic_match = re.search(
-            r"Тақырыбы:\s*(.*?)(?=\s+(?:Жауабы:)|$)",
-            full_text,
-            re.IGNORECASE
-        )
-
-        topic = (
-            topic_match.group(
-                1
-            ).strip()
-            if topic_match
-            else "Жалпы"
-        )
-
-        if len(answers) >= 4:
-
-            questions_list.append({
-                "question": q_text,
-                "answers": answers[:4],
-                "correct": correct_index,
-                "topic": topic,
-            })
-
-    return questions_list
-
-
-# =========================================================
-# 16. EXCEL
-# =========================================================
-
-def normalize_column_name(name):
-
-    return (
-        str(name)
-        .strip()
-        .lower()
-        .replace(" ", "")
-        .replace("_", "")
-        .replace("-", "")
-    )
-
-
-def find_excel_column(
-    columns,
-    possible_names
-):
-
-    normalized = {
-        normalize_column_name(c): c
-        for c in columns
-    }
-
-    for name in possible_names:
-
-        key = normalize_column_name(
-            name
-        )
-
-        if key in normalized:
-
-            return normalized[key]
-
-    return None
-
-
-def parse_correct_answer(
-    value,
-    answers
-):
-
-    if pd.isna(value):
-
-        return None
-
-    text = str(
-        value
-    ).strip()
-
-    letter_map = {
-        "A": 0,
-        "А": 0,
-        "B": 1,
-        "Б": 1,
-        "C": 2,
-        "В": 2,
-        "D": 3,
-        "Г": 3,
-    }
-
-    upper = text.upper()
-
-    if upper in letter_map:
-
-        return letter_map[
-            upper
+        lines = [
+            line.strip()
+            for line in block.splitlines()
+            if line.strip()
         ]
 
-    if text in [
-        "1",
-        "2",
-        "3",
-        "4"
-    ]:
+        if len(lines) < 5:
+            continue
 
-        return int(text) - 1
+        question_text = lines[0]
 
-    for index, answer in enumerate(
-        answers
-    ):
+        options = []
+        correct_index = None
 
-        if text == str(
-            answer
-        ).strip():
+        for line in lines[1:]:
 
-            return index
+            match = re.match(
+                r"^[A-DА-Г]\s*[\.\)\:\-]?\s*(.*)$",
+                line,
+                re.IGNORECASE,
+            )
 
-    return None
+            if not match:
+                continue
+
+            option_text = match.group(1).strip()
+
+            is_correct = False
+
+            if option_text.startswith("*"):
+                is_correct = True
+                option_text = option_text[1:].strip()
+
+            if option_text.startswith("(+)"):
+                is_correct = True
+                option_text = option_text[3:].strip()
+
+            if "Дұрыс" in option_text:
+                is_correct = True
+                option_text = option_text.replace(
+                    "Дұрыс",
+                    ""
+                ).strip()
+
+            options.append(option_text)
+
+            if is_correct:
+                correct_index = len(options) - 1
+
+        if len(options) == 4:
+
+            if correct_index is None:
+                correct_index = 0
+
+            questions_result.append(
+                {
+                    "question": question_text,
+                    "options": options,
+                    "answer": correct_index,
+                }
+            )
+
+    return questions_result
 
 
-def import_excel_questions(df):
+# =========================================================
+# EXCEL QUESTION PARSER
+# =========================================================
 
-    question_col = find_excel_column(
-        df.columns,
-        [
-            "Сұрақ",
-            "Сұрақ мәтіні",
+def parse_excel_questions(uploaded_file):
+
+    try:
+
+        df = pd.read_excel(uploaded_file)
+
+        df.columns = [
+            str(column).strip()
+            for column in df.columns
+        ]
+
+        possible_question_columns = [
             "question",
-            "questiontext"
+            "Question",
+            "Сұрақ",
+            "сұрақ",
+            "Вопрос",
+            "вопрос",
         ]
-    )
 
-    a_col = find_excel_column(
-        df.columns,
-        [
-            "А",
+        question_column = None
+
+        for column in possible_question_columns:
+            if column in df.columns:
+                question_column = column
+                break
+
+        if question_column is None:
+            question_column = df.columns[0]
+
+        option_columns = []
+
+        for name in [
             "A",
-            "A нұсқасы",
-            "answerA"
-        ]
-    )
-
-    b_col = find_excel_column(
-        df.columns,
-        [
-            "Б",
             "B",
-            "Б нұсқасы",
-            "answerB"
-        ]
-    )
-
-    c_col = find_excel_column(
-        df.columns,
-        [
-            "В",
             "C",
-            "В нұсқасы",
-            "answerC"
-        ]
-    )
-
-    d_col = find_excel_column(
-        df.columns,
-        [
-            "Г",
             "D",
-            "Г нұсқасы",
-            "answerD"
-        ]
-    )
+            "А",
+            "Б",
+            "В",
+            "Г",
+        ]:
+            if name in df.columns:
+                option_columns.append(name)
 
-    correct_col = find_excel_column(
-        df.columns,
-        [
-            "Дұрыс жауап",
-            "Дұрыс",
-            "Жауап",
-            "Correct",
-            "CorrectAnswer"
-        ]
-    )
+        if len(option_columns) < 4:
 
-    topic_col = find_excel_column(
-        df.columns,
-        [
-            "Тақырып",
-            "Тақырыбы",
-            "Topic"
-        ]
-    )
+            if len(df.columns) >= 5:
+                option_columns = list(
+                    df.columns[1:5]
+                )
 
-    required = [
-        question_col,
-        a_col,
-        b_col,
-        c_col,
-        d_col,
-        correct_col
-    ]
+        if len(option_columns) < 4:
+            return []
 
-    if any(
-        col is None
-        for col in required
-    ):
+        result = []
 
-        return [], (
-            "Excel бағандары дұрыс емес. "
-            "Керек бағандар: "
-            "Сұрақ, А, Б, В, Г, Дұрыс жауап."
-        )
+        for _, row in df.iterrows():
 
-    result = []
-    errors = []
+            question_text = str(
+                row[question_column]
+            ).strip()
 
-    for index, row in df.iterrows():
-
-        question_text = str(
-            row[question_col]
-        ).strip()
-
-        answers = [
-            str(
-                row[a_col]
-            ).strip(),
-
-            str(
-                row[b_col]
-            ).strip(),
-
-            str(
-                row[c_col]
-            ).strip(),
-
-            str(
-                row[d_col]
-            ).strip(),
-        ]
-
-        if (
-            not question_text
-            or any(
-                x == ""
-                or x.lower() == "nan"
-                for x in answers
-            )
-        ):
-
-            errors.append(
-                f"{index + 2}-жол: "
-                "сұрақ немесе жауап бос."
-            )
-
-            continue
-
-        correct = parse_correct_answer(
-            row[correct_col],
-            answers
-        )
-
-        if correct is None:
-
-            errors.append(
-                f"{index + 2}-жол: "
-                "дұрыс жауап анықталмады."
-            )
-
-            continue
-
-        topic = "Жалпы"
-
-        if topic_col:
-
-            raw_topic = row[
-                topic_col
-            ]
-
-            if not pd.isna(
-                raw_topic
+            if (
+                not question_text
+                or question_text == "nan"
             ):
+                continue
 
-                topic = str(
-                    raw_topic
-                ).strip() or "Жалпы"
+            options = []
 
-        result.append({
-            "question": question_text,
-            "answers": answers,
-            "correct": correct,
-            "topic": topic,
-        })
+            for column in option_columns[:4]:
 
-    return result, errors
+                value = row[column]
+
+                if pd.isna(value):
+                    value = ""
+
+                options.append(
+                    str(value).strip()
+                )
+
+            correct_index = 0
+
+            if "Дұрыс жауап" in df.columns:
+
+                correct = str(
+                    row["Дұрыс жауап"]
+                ).strip()
+
+                if correct.upper() in [
+                    "A",
+                    "А",
+                ]:
+                    correct_index = 0
+
+                elif correct.upper() in [
+                    "B",
+                    "Б",
+                ]:
+                    correct_index = 1
+
+                elif correct.upper() in [
+                    "C",
+                    "В",
+                ]:
+                    correct_index = 2
+
+                elif correct.upper() in [
+                    "D",
+                    "Г",
+                ]:
+                    correct_index = 3
+
+                elif correct.isdigit():
+
+                    number = int(correct)
+
+                    if 1 <= number <= 4:
+                        correct_index = number - 1
+
+            result.append(
+                {
+                    "question": question_text,
+                    "options": options,
+                    "answer": correct_index,
+                }
+            )
+
+        return result
+
+    except Exception as error:
+
+        st.error(
+            f"Excel оқу кезінде қате: {error}"
+        )
+
+        return []
 
 
 # =========================================================
-# 17. MODERATOR
+# MODERATOR PAGE
 # =========================================================
 
 def moderator_page():
 
     if (
-        not st.session_state.get(
-            "logged_in"
-        )
-        or st.session_state.get(
-            "role"
-        ) not in (
-            "moderator",
-            "admin"
-        )
+        not st.session_state.logged_in
+        or st.session_state.role != "moderator"
     ):
-
         st.error(
-            "⛔ Бұл бөлімге кіруге рұқсатыңыз жоқ."
+            "Бұл бөлімге кіруге рұқсат жоқ."
         )
-
-        st.stop()
+        return
 
     col1, col2 = st.columns(
-        [6, 1]
+        [7, 1]
     )
 
     with col1:
-
         st.markdown(
-            '<div class="kasym-title" '
-            'style="font-size:32px;">'
-            '🛠️ Модератор панелі'
-            '</div>',
-            unsafe_allow_html=True
+            "## 🧑‍💼 Модератор панелі"
         )
 
     with col2:
-
         if st.button(
-            "🚪 Шығу",
-            use_container_width=True
+            "Шығу",
+            use_container_width=True,
         ):
-
             logout()
 
-    st.markdown(
-        '<div class="kasym-subtitle">'
-        'Сұрақтар базасы және оқушылар статистикасы'
-        '</div>',
-        unsafe_allow_html=True
+    tabs = st.tabs(
+        [
+            "➕ Сұрақ қосу",
+            "📥 Excel",
+            "🗑️ Сұрақтарды басқару",
+        ]
     )
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "⚡ Массалық жүктеу",
-        "📥 Excel импорт",
-        "✍️ Жеке сұрақ қосу",
-        "🗑️ Сұрақтарды жою",
-        "📊 Статистика",
-    ])
+    # -----------------------------------------------------
+    # ADD QUESTIONS
+    # -----------------------------------------------------
 
+    with tabs[0]:
 
-    # =====================================================
-    # TAB 1
-    # =====================================================
-
-    with tab1:
+        subject = st.selectbox(
+            "Пән",
+            all_subjects,
+            key="moderator_subject_add",
+        )
 
         st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
+            """
+            ### 📝 Бірден көп сұрақ енгізу
+
+            Формат:
+
+            1. Сұрақ мәтіні  
+            A. Жауап  
+            B. Жауап  
+            C. *Дұрыс жауап  
+            D. Жауап  
+
+            Әр сұрақтың арасында бос жол болсын.
+            """
         )
 
-        sel_sub_bulk = st.selectbox(
-            "📚 Пәнді таңдаңыз:",
-            all_subjects,
-            key="mod_bulk_sub"
-        )
-
-        raw_text = st.text_area(
-            "Сұрақтарды осында көшіріп қойыңыз:",
-            height=250
-        )
-
-        st.caption(
-            "Мысал: 1. Сұрақ? А) ... Б) ... "
-            "В) ... Г) ... Жауабы: А"
+        bulk_text = st.text_area(
+            "Сұрақтарды енгізіңіз",
+            height=350,
+            key="bulk_questions",
         )
 
         if st.button(
-            "🚀 Жүктеу",
-            type="primary"
+            "➕ Сұрақтарды қосу",
+            type="primary",
         ):
 
-            if raw_text.strip():
+            parsed = parse_bulk_questions(
+                bulk_text
+            )
 
-                parsed = parse_bulk_questions(
-                    raw_text
+            if not parsed:
+                st.warning(
+                    "Сұрақтар табылмады. Форматты тексеріңіз."
                 )
-
-                if parsed:
-
-                    if sel_sub_bulk not in questions:
-
-                        questions[
-                            sel_sub_bulk
-                        ] = []
-
-                    questions[
-                        sel_sub_bulk
-                    ].extend(
-                        parsed
-                    )
-
-                    save_questions()
-
-                    st.success(
-                        f"✨ {len(parsed)} "
-                        "сұрақ қосылды."
-                    )
-
-                else:
-
-                    st.error(
-                        "⚠️ Формат қате."
-                    )
 
             else:
 
-                st.warning(
-                    "Өріс бос."
-                )
+                if subject not in questions:
+                    questions[subject] = []
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+                questions[subject].extend(parsed)
 
-
-    # =====================================================
-    # TAB 2
-    # =====================================================
-
-    with tab2:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### 📥 Excel арқылы сұрақтарды жүктеу"
-        )
-
-        st.info(
-            "Excel файлында мына бағандар болуы керек: "
-            "**Сұрақ | А | Б | В | Г | Дұрыс жауап**. "
-            "Қосымша **Тақырып** бағанын қосуға болады."
-        )
-
-        excel_subject = st.selectbox(
-            "📚 Қай пәнге импорттаймыз?",
-            all_subjects,
-            key="excel_subject"
-        )
-
-        uploaded_file = st.file_uploader(
-            "Excel файлын таңдаңыз (.xlsx)",
-            type=["xlsx"],
-            key="excel_uploader"
-        )
-
-        if uploaded_file:
-
-            try:
-
-                df = pd.read_excel(
-                    uploaded_file
-                )
-
-                st.markdown(
-                    "#### 👀 Алдын ала көру"
-                )
-
-                st.dataframe(
-                    df.head(10),
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                imported_questions, import_errors = (
-                    import_excel_questions(df)
-                )
-
-                if imported_questions:
-
-                    st.success(
-                        f"Дайын сұрақтар: "
-                        f"{len(imported_questions)}"
-                    )
-
-                if import_errors:
-
-                    st.warning(
-                        f"Қате жолдар: "
-                        f"{len(import_errors)}"
-                    )
-
-                    with st.expander(
-                        "Қате жолдарды көру"
-                    ):
-
-                        for error in import_errors:
-
-                            st.write(
-                                "⚠️",
-                                error
-                            )
-
-                if st.button(
-                    "📥 Excel сұрақтарын сақтау",
-                    type="primary",
-                    key="save_excel_questions"
-                ):
-
-                    if imported_questions:
-
-                        if excel_subject not in questions:
-
-                            questions[
-                                excel_subject
-                            ] = []
-
-                        questions[
-                            excel_subject
-                        ].extend(
-                            imported_questions
-                        )
-
-                        save_questions()
-
-                        st.success(
-                            f"✨ "
-                            f"{len(imported_questions)} "
-                            "сұрақ сәтті қосылды!"
-                        )
-
-                        st.rerun()
-
-                    else:
-
-                        st.error(
-                            "Сақтайтын сұрақ табылмады."
-                        )
-
-            except Exception as error:
-
-                st.error(
-                    "Excel файлын оқу кезінде қате шықты."
-                )
-
-                st.code(
-                    str(error)
-                )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # =====================================================
-    # TAB 3
-    # =====================================================
-
-    with tab3:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        sel_sub_single = st.selectbox(
-            "📚 Пәнді таңдаңыз:",
-            all_subjects,
-            key="mod_single_sub"
-        )
-
-        q_text = st.text_area(
-            "Сұрақ мәтіні:"
-        )
-
-        topic = st.text_input(
-            "📚 Тақырып:",
-            placeholder="Мысалы: Теңдеулер"
-        )
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-
-            a1 = st.text_input(
-                "А нұсқасы:"
-            )
-
-            a3 = st.text_input(
-                "В нұсқасы:"
-            )
-
-        with c2:
-
-            a2 = st.text_input(
-                "Б нұсқасы:"
-            )
-
-            a4 = st.text_input(
-                "Г нұсқасы:"
-            )
-
-        corr = st.selectbox(
-            "Дұрыс жауап:",
-            [
-                "А нұсқасы",
-                "Б нұсқасы",
-                "В нұсқасы",
-                "Г нұсқасы"
-            ]
-        )
-
-        corr_idx = [
-            "А нұсқасы",
-            "Б нұсқасы",
-            "В нұсқасы",
-            "Г нұсқасы"
-        ].index(
-            corr
-        )
-
-        if st.button(
-            "💾 Сақтау",
-            type="primary"
-        ):
-
-            if (
-                q_text
-                and a1
-                and a2
-                and a3
-                and a4
-            ):
-
-                if sel_sub_single not in questions:
-
-                    questions[
-                        sel_sub_single
-                    ] = []
-
-                questions[
-                    sel_sub_single
-                ].append({
-
-                    "question": q_text,
-
-                    "answers": [
-                        a1,
-                        a2,
-                        a3,
-                        a4
-                    ],
-
-                    "correct": corr_idx,
-
-                    "topic": (
-                        topic.strip()
-                        or "Жалпы"
-                    ),
-                })
-
-                save_questions()
+                save_questions(questions)
 
                 st.success(
-                    "✨ Сұрақ сақталды!"
+                    f"✅ {len(parsed)} сұрақ қосылды!"
                 )
 
                 st.rerun()
 
-            else:
+    # -----------------------------------------------------
+    # EXCEL
+    # -----------------------------------------------------
 
-                st.error(
-                    "Барлық өрістерді толтырыңыз!"
+    with tabs[1]:
+
+        st.markdown(
+            "### 📥 Excel арқылы сұрақ импорттау"
+        )
+
+        subject = st.selectbox(
+            "Пән",
+            all_subjects,
+            key="excel_subject",
+        )
+
+        uploaded_file = st.file_uploader(
+            "Excel файлды таңдаңыз",
+            type=[
+                "xlsx",
+                "xls",
+            ],
+        )
+
+        if uploaded_file:
+
+            parsed = parse_excel_questions(
+                uploaded_file
+            )
+
+            st.info(
+                f"Табылған сұрақ саны: {len(parsed)}"
+            )
+
+            if parsed:
+
+                preview_rows = []
+
+                for index, item in enumerate(
+                    parsed[:10],
+                    start=1
+                ):
+                    preview_rows.append(
+                        {
+                            "№": index,
+                            "Сұрақ": item[
+                                "question"
+                            ],
+                            "Дұрыс жауап": (
+                                item["answer"] + 1
+                            ),
+                        }
+                    )
+
+                st.dataframe(
+                    pd.DataFrame(preview_rows),
+                    use_container_width=True,
+                    hide_index=True,
                 )
 
+                if st.button(
+                    "📥 Excel сұрақтарын сақтау",
+                    type="primary",
+                ):
+
+                    if subject not in questions:
+                        questions[subject] = []
+
+                    questions[subject].extend(
+                        parsed
+                    )
+
+                    save_questions(
+                        questions
+                    )
+
+                    st.success(
+                        f"✅ {len(parsed)} сұрақ сақталды!"
+                    )
+
+                    st.rerun()
+
+    # -----------------------------------------------------
+    # DELETE QUESTIONS
+    # -----------------------------------------------------
+
+    with tabs[2]:
+
         st.markdown(
-            "</div>",
-            unsafe_allow_html=True
+            "### 🗑️ Сұрақтарды басқару"
         )
 
-
-    # =====================================================
-    # TAB 4
-    # =====================================================
-
-    with tab4:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        del_sub = st.selectbox(
-            "📚 Пәнді таңдаңыз:",
+        subject = st.selectbox(
+            "Пәнді таңдаңыз",
             all_subjects,
-            key="mod_del_sub"
+            key="delete_subject",
         )
 
-        sub_list = questions.get(
-            del_sub,
+        subject_questions = questions.get(
+            subject,
             []
         )
 
-        if not sub_list:
+        if not subject_questions:
 
             st.info(
-                "Бұл пәнде сұрақтар жоқ."
+                "Бұл пәнде сұрақ жоқ."
             )
 
         else:
 
-            q_map = {
-                f"{i+1}. {q.get('question', '')[:60]}...": i
-                for i, q in enumerate(
-                    sub_list
+            question_options = [
+                f"{index + 1}. {item.get('question', '')[:100]}"
+                for index, item in enumerate(
+                    subject_questions
                 )
-            }
-
-            chosen_q = st.selectbox(
-                "Жою үшін сұрақты таңдаңыз:",
-                list(
-                    q_map.keys()
-                ),
-                key="delete_question_select"
-            )
-
-            chosen_index = q_map[
-                chosen_q
             ]
 
-            st.markdown("---")
-
-            pending = (
-                st.session_state.get(
-                    "pending_delete_question"
-                )
+            selected_question = st.selectbox(
+                "Сұрақ",
+                question_options,
+                key="question_to_delete",
             )
 
-            if (
-                pending
-                and pending.get(
-                    "subject"
-                ) == del_sub
-                and pending.get(
-                    "index"
-                ) == chosen_index
-            ):
+            selected_index = question_options.index(
+                selected_question
+            )
+
+            question = subject_questions[
+                selected_index
+            ]
+
+            st.markdown(
+                f"""
+                <div class="question-box">
+                    <b>{question.get('question', '')}</b>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            pending = st.session_state.get(
+                "pending_delete_question"
+            )
+
+            pending_key = (
+                f"{subject}:{selected_index}"
+            )
+
+            if pending == pending_key:
 
                 st.warning(
                     "⚠️ Бұл сұрақты шынымен өшіргіңіз келе ме?"
                 )
 
-                confirm_col1, confirm_col2 = st.columns(2)
+                c1, c2 = st.columns(2)
 
-                with confirm_col1:
+                with c1:
 
                     if st.button(
                         "✅ Иә, өшіру",
-                        type="primary",
+                        key="confirm_question_delete",
                         use_container_width=True,
-                        key="confirm_delete"
+                        type="primary",
                     ):
 
-                        sub_list.pop(
-                            chosen_index
+                        del questions[
+                            subject
+                        ][selected_index]
+
+                        save_questions(
+                            questions
                         )
-
-                        questions[
-                            del_sub
-                        ] = sub_list
-
-                        save_questions()
 
                         st.session_state.pending_delete_question = None
 
                         st.success(
-                            "🗑️ Сұрақ өшірілді."
+                            "Сұрақ өшірілді."
                         )
 
                         st.rerun()
 
-                with confirm_col2:
+                with c2:
 
                     if st.button(
                         "❌ Болдырмау",
+                        key="cancel_question_delete",
                         use_container_width=True,
-                        key="cancel_delete"
                     ):
 
                         st.session_state.pending_delete_question = None
@@ -2426,70 +1548,1078 @@ def moderator_page():
 
                 if st.button(
                     "🗑️ Жою",
-                    type="primary",
-                    key="delete_question_start"
+                    key="delete_question_button",
+                    type="secondary",
                 ):
 
-                    st.session_state.pending_delete_question = {
-
-                        "subject": del_sub,
-
-                        "index": chosen_index
-                    }
+                    st.session_state.pending_delete_question = pending_key
 
                     st.rerun()
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # =====================================================
-    # TAB 5
-    # =====================================================
-
-    with tab5:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        render_statistics_tab()
-
-        st.markdown("---")
-
-        render_analytics()
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
 
 # =========================================================
-# 18. ADMIN
+# ADMIN PAGE
 # =========================================================
 
 def admin_page():
 
     if (
-        not st.session_state.get(
-            "logged_in"
+        not st.session_state.logged_in
+        or st.session_state.role != "admin"
+    ):
+        st.error(
+            "Бұл бөлімге кіруге рұқсат жоқ."
         )
-        or st.session_state.get(
-            "role"
-        ) != "admin"
+        return
+
+    col1, col2 = st.columns(
+        [7, 1]
+    )
+
+    with col1:
+        st.markdown(
+            "## 👑 Админ панелі"
+        )
+
+    with col2:
+
+        if st.button(
+            "Шығу",
+            use_container_width=True,
+        ):
+            logout()
+
+    tabs = st.tabs(
+        [
+            "👥 Қолданушылар",
+            "➕ Жаңа қолданушы",
+            "📊 Статистика",
+        ]
+    )
+
+    # =====================================================
+    # USERS
+    # =====================================================
+
+    with tabs[0]:
+
+        st.markdown(
+            "### 👥 Қолданушылар"
+        )
+
+        current_users = users
+
+        if not current_users:
+
+            st.info(
+                "Қолданушылар жоқ."
+            )
+
+        else:
+
+            pending_user_delete = st.session_state.get(
+                "pending_user_delete"
+            )
+
+            for index, user in enumerate(
+                current_users
+            ):
+
+                u_username = user.get(
+                    "username",
+                    ""
+                )
+
+                u_name = user.get(
+                    "name",
+                    ""
+                )
+
+                u_role = user.get(
+                    "role",
+                    "user"
+                )
+
+                u_combination = user.get(
+                    "combination"
+                )
+
+                role_label = {
+                    "admin": "👑 Админ",
+                    "moderator": "🧑‍💼 Модератор",
+                    "user": "👨‍🎓 Оқушы",
+                }.get(
+                    u_role,
+                    u_role
+                )
+
+                st.markdown(
+                    '<div class="card">',
+                    unsafe_allow_html=True,
+                )
+
+                col1, col2, col3, col4 = st.columns(
+                    [2, 2, 2, 1]
+                )
+
+                with col1:
+
+                    st.markdown(
+                        f"**{u_name}**"
+                    )
+
+                    st.caption(
+                        f"Логин: `{u_username}`"
+                    )
+
+                with col2:
+
+                    st.markdown(
+                        f"**Рөл:** {role_label}"
+                    )
+
+                with col3:
+
+                    if u_combination:
+
+                        st.markdown(
+                            f"**Бағыт:** {u_combination}"
+                        )
+
+                    else:
+
+                        st.markdown(
+                            "**Бағыт:** —"
+                        )
+
+                with col4:
+
+                    if u_username == ADMIN_USERNAME:
+
+                        st.caption(
+                            "🔒 Негізгі админ"
+                        )
+
+                    else:
+
+                        delete_key = (
+                            f"delete_user_{u_username}"
+                        )
+
+                        if pending_user_delete == u_username:
+
+                            st.warning(
+                                "Өшіру?"
+                            )
+
+                            c1, c2 = st.columns(2)
+
+                            with c1:
+
+                                if st.button(
+                                    "✅ Иә",
+                                    key=f"confirm_{u_username}",
+                                    use_container_width=True,
+                                    type="primary",
+                                ):
+
+                                    users[:] = [
+                                        x
+                                        for x in users
+                                        if x.get(
+                                            "username"
+                                        ) != u_username
+                                    ]
+
+                                    save_users(
+                                        users
+                                    )
+
+                                    st.session_state.pending_user_delete = None
+
+                                    st.success(
+                                        "Қолданушы өшірілді."
+                                    )
+
+                                    st.rerun()
+
+                            with c2:
+
+                                if st.button(
+                                    "❌ Жоқ",
+                                    key=f"cancel_{u_username}",
+                                    use_container_width=True,
+                                ):
+
+                                    st.session_state.pending_user_delete = None
+
+                                    st.rerun()
+
+                        else:
+
+                            if st.button(
+                                "🗑️ Жою",
+                                key=delete_key,
+                                use_container_width=True,
+                            ):
+
+                                st.session_state.pending_user_delete = u_username
+
+                                st.rerun()
+
+                st.markdown(
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+    # =====================================================
+    # NEW USER
+    # =====================================================
+
+    with tabs[1]:
+
+        st.markdown(
+            "### ➕ Жаңа қолданушы"
+        )
+
+        new_name = st.text_input(
+            "Аты-жөні",
+            placeholder="Мысалы: Алишер",
+        )
+
+        new_username = st.text_input(
+            "Логин",
+            placeholder="Мысалы: alisher01",
+        )
+
+        new_password = st.text_input(
+            "Құпиясөз",
+            type="password",
+        )
+
+        new_role = st.selectbox(
+            "Рөл",
+            [
+                "user",
+                "moderator",
+            ],
+            format_func=lambda x: {
+                "user": "👨‍🎓 Оқушы",
+                "moderator": "🧑‍💼 Модератор",
+            }.get(
+                x,
+                x
+            ),
+        )
+
+        if new_role == "user":
+
+            new_combination = st.selectbox(
+                "ҰБТ бағыты",
+                list(combinations.keys()),
+            )
+
+        else:
+
+            new_combination = None
+
+        if st.button(
+            "➕ Қолданушыны жасау",
+            type="primary",
+        ):
+
+            username_clean = new_username.strip()
+
+            if not new_name.strip():
+                st.warning(
+                    "Аты-жөнін енгізіңіз."
+                )
+
+            elif not username_clean:
+                st.warning(
+                    "Логин енгізіңіз."
+                )
+
+            elif not new_password:
+                st.warning(
+                    "Құпиясөз енгізіңіз."
+                )
+
+            elif any(
+                user.get("username")
+                == username_clean
+                for user in users
+            ):
+                st.error(
+                    "Бұл логин бұрыннан бар."
+                )
+
+            else:
+
+                users.append(
+                    {
+                        "username": username_clean,
+                        "password": hash_password(
+                            new_password
+                        ),
+                        "name": new_name.strip(),
+                        "role": new_role,
+                        "combination": new_combination,
+                    }
+                )
+
+                save_users(
+                    users
+                )
+
+                st.success(
+                    f"✅ {username_clean} қолданушысы жасалды."
+                )
+
+                st.rerun()
+
+    # =====================================================
+    # STATISTICS
+    # =====================================================
+
+    with tabs[2]:
+
+        st.markdown(
+            "### 📊 Жалпы статистика"
+        )
+
+        total_users = len(users)
+
+        total_students = len(
+            [
+                user
+                for user in users
+                if user.get("role") == "user"
+            ]
+        )
+
+        total_moderators = len(
+            [
+                user
+                for user in users
+                if user.get("role") == "moderator"
+            ]
+        )
+
+        total_tests = len(
+            results_history
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+
+            st.markdown(
+                f"""
+                <div class="metric-box">
+                    <div class="metric-number">
+                        {total_users}
+                    </div>
+                    <div class="metric-label">
+                        Қолданушы
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col2:
+
+            st.markdown(
+                f"""
+                <div class="metric-box">
+                    <div class="metric-number">
+                        {total_students}
+                    </div>
+                    <div class="metric-label">
+                        Оқушы
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col3:
+
+            st.markdown(
+                f"""
+                <div class="metric-box">
+                    <div class="metric-number">
+                        {total_moderators}
+                    </div>
+                    <div class="metric-label">
+                        Модератор
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col4:
+
+            st.markdown(
+                f"""
+                <div class="metric-box">
+                    <div class="metric-number">
+                        {total_tests}
+                    </div>
+                    <div class="metric-label">
+                        Тест саны
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown(
+            "### 👥 Қолданушылар"
+        )
+
+        user_rows = []
+
+        for user in users:
+
+            user_stats = calculate_user_statistics(
+                user.get("username")
+            )
+
+            user_rows.append(
+                {
+                    "Аты": user.get(
+                        "name",
+                        "-"
+                    ),
+                    "Логин": user.get(
+                        "username",
+                        "-"
+                    ),
+                    "Рөл": user.get(
+                        "role",
+                        "-"
+                    ),
+                    "Тест саны": user_stats[
+                        "attempts"
+                    ],
+                    "Үздік балл": user_stats[
+                        "best"
+                    ],
+                    "Орташа": user_stats[
+                        "average"
+                    ],
+                }
+            )
+
+        if user_rows:
+
+            st.dataframe(
+                pd.DataFrame(user_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+
+# =========================================================
+# PREPARE TEST
+# =========================================================
+
+def prepare_test_data(combination_name):
+
+    combination = combinations.get(
+        combination_name
+    )
+
+    if not combination:
+        return {}
+
+    subjects = (
+        combination["common"]
+        + combination["pair"]
+    )
+
+    test_data = {}
+
+    for subject in subjects:
+
+        source_questions = questions.get(
+            subject,
+            []
+        )
+
+        if not source_questions:
+            test_data[subject] = []
+            continue
+
+        limit = QUESTION_LIMITS.get(
+            subject,
+            40
+        )
+
+        selected = source_questions.copy()
+
+        random.shuffle(selected)
+
+        selected = selected[:limit]
+
+        prepared = []
+
+        for item in selected:
+
+            options = item.get(
+                "options",
+                []
+            )
+
+            correct = item.get(
+                "answer",
+                0
+            )
+
+            option_pairs = list(
+                enumerate(options)
+            )
+
+            random.shuffle(option_pairs)
+
+            new_options = [
+                pair[1]
+                for pair in option_pairs
+            ]
+
+            new_correct = 0
+
+            for new_index, pair in enumerate(
+                option_pairs
+            ):
+
+                old_index = pair[0]
+
+                if old_index == correct:
+                    new_correct = new_index
+                    break
+
+            prepared.append(
+                {
+                    "question": item.get(
+                        "question",
+                        ""
+                    ),
+                    "options": new_options,
+                    "answer": new_correct,
+                }
+            )
+
+        test_data[subject] = prepared
+
+    return test_data
+
+
+# =========================================================
+# START TEST
+# =========================================================
+
+def start_test(combination_name):
+
+    st.session_state.test_started = True
+
+    st.session_state.active_combination = (
+        combination_name
+    )
+
+    st.session_state.current_subject_idx = 0
+    st.session_state.current_question_idx = 0
+
+    st.session_state.test_answers = {}
+
+    st.session_state.test_data = (
+        prepare_test_data(
+            combination_name
+        )
+    )
+
+    st.session_state.started_at = (
+        datetime.datetime.now().isoformat()
+    )
+
+    st.session_state.retry_mode = False
+
+    save_test_progress()
+
+
+# =========================================================
+# GET TEST SUBJECTS
+# =========================================================
+
+def get_test_subjects():
+
+    combination_name = (
+        st.session_state.active_combination
+    )
+
+    if not combination_name:
+        return []
+
+    combination = combinations.get(
+        combination_name
+    )
+
+    if not combination:
+        return []
+
+    return (
+        combination["common"]
+        + combination["pair"]
+    )
+
+
+# =========================================================
+# USER PAGE
+# =========================================================
+
+def user_page():
+
+    username = st.session_state.username
+
+    # =====================================================
+    # TEST SCREEN
+    # =====================================================
+
+    if st.session_state.test_started:
+
+        render_test()
+
+        return
+
+    # =====================================================
+    # RESULT
+    # =====================================================
+
+    if st.session_state.page == "result":
+
+        render_result()
+
+        return
+
+    # =====================================================
+    # RETRY RESULT
+    # =====================================================
+
+    if st.session_state.page == "retry_result":
+
+        render_retry_result()
+
+        return
+
+    # =====================================================
+    # ANALYTICS
+    # =====================================================
+
+    if st.session_state.page == "analytics":
+
+        analytics_page(username)
+
+        if st.button(
+            "⬅️ Басты бетке",
+        ):
+            st.session_state.page = "home"
+            st.rerun()
+
+        return
+
+    # =====================================================
+    # HOME
+    # =====================================================
+
+    col1, col2 = st.columns(
+        [7, 1]
+    )
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div class="kasym-title">
+                KASYM EDU 🎓
+            </div>
+            <div class="kasym-subtitle">
+                Бүгінгі дайындық — ертеңгі грант
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            f"### Сәлем, {st.session_state.full_name}! 👋"
+        )
+
+    with col2:
+
+        if st.button(
+            "Шығу",
+            use_container_width=True,
+        ):
+            logout()
+
+    # =====================================================
+    # RESUME
+    # =====================================================
+
+    progress = load_test_progress()
+
+    if (
+        progress
+        and progress.get("username")
+        == username
+        and progress.get("active_combination")
     ):
 
-        st.error(
-            "⛔ Администратор бөліміне кіруге рұқсатыңыз жоқ."
+        st.markdown(
+            """
+            <div class="resume-card">
+                <h3>🔄 Аяқталмаған тест бар</h3>
+                <p>
+                    Алдыңғы тестіңіз автоматты түрде сақталған.
+                    Жалғастыра аласыз.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        st.stop()
+        c1, c2 = st.columns(2)
 
-    global users
+        with c1:
+
+            if st.button(
+                "▶️ Тестті жалғастыру",
+                use_container_width=True,
+                type="primary",
+            ):
+
+                st.session_state.test_started = True
+
+                st.session_state.active_combination = (
+                    progress.get(
+                        "active_combination"
+                    )
+                )
+
+                st.session_state.current_subject_idx = (
+                    progress.get(
+                        "current_subject_idx",
+                        0
+                    )
+                )
+
+                st.session_state.current_question_idx = (
+                    progress.get(
+                        "current_question_idx",
+                        0
+                    )
+                )
+
+                st.session_state.test_answers = (
+                    progress.get(
+                        "test_answers",
+                        {}
+                    )
+                )
+
+                st.session_state.test_data = (
+                    progress.get(
+                        "test_data",
+                        {}
+                    )
+                )
+
+                st.session_state.started_at = (
+                    progress.get(
+                        "started_at"
+                    )
+                )
+
+                st.rerun()
+
+        with c2:
+
+            if st.button(
+                "🗑️ Аяқталмаған тестті өшіру",
+                use_container_width=True,
+            ):
+
+                clear_test_progress()
+
+                st.success(
+                    "Сақталған тест өшірілді."
+                )
+
+                st.rerun()
+
+    # =====================================================
+    # CABINET
+    # =====================================================
+
+    stats = calculate_user_statistics(
+        username
+    )
+
+    st.markdown(
+        "## 👤 Жеке кабинет"
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {stats["attempts"]}
+                </div>
+                <div class="metric-label">
+                    Тест саны
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col2:
+
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {stats["best"]:.0f}
+                </div>
+                <div class="metric-label">
+                    Үздік нәтиже / 140
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col3:
+
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {stats["average"]:.1f}
+                </div>
+                <div class="metric-label">
+                    Орташа балл
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if st.button(
+        "📊 Менің аналитикам",
+        use_container_width=True,
+    ):
+
+        st.session_state.page = "analytics"
+        st.rerun()
+
+    # =====================================================
+    # NEW TEST
+    # =====================================================
+
+    current_user = None
+
+    for user in users:
+
+        if user.get("username") == username:
+            current_user = user
+            break
+
+    if not current_user:
+        st.error(
+            "Қолданушы табылмады."
+        )
+        return
+
+    assigned_combination = current_user.get(
+        "combination"
+    )
+
+    st.markdown(
+        "## 📝 Жаңа тест"
+    )
+
+    if not assigned_combination:
+
+        st.warning(
+            "Сізге ҰБТ бағыты әлі тағайындалмаған."
+        )
+
+        return
+
+    st.markdown(
+        f"""
+        <div class="hero">
+            <h2>🎯 {assigned_combination}</h2>
+            <p>
+                Бұл бағытта Қазақстан тарихы,
+                Оқу сауаттылығы,
+                Математикалық сауаттылық және
+                екі бейіндік пән бар.
+            </p>
+            <p>
+                <b>Жалпы максимум: 140 балл</b>
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    combination_info = combinations.get(
+        assigned_combination
+    )
+
+    if combination_info:
+
+        st.markdown(
+            "### 📚 Пәндер"
+        )
+
+        subjects = (
+            combination_info["common"]
+            + combination_info["pair"]
+        )
+
+        cols = st.columns(
+            len(subjects)
+        )
+
+        for index, subject in enumerate(
+            subjects
+        ):
+
+            with cols[index]:
+
+                st.markdown(
+                    f"""
+                    <div class="card">
+                        <h4>{subject}</h4>
+                        <p>
+                            {QUESTION_LIMITS.get(subject, 40)}
+                            сұрақ
+                        </p>
+                        <p>
+                            Макс:
+                            {POINT_LIMITS.get(subject, 50)}
+                            балл
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    if st.button(
+        "🚀 Тестті бастау",
+        type="primary",
+        use_container_width=True,
+    ):
+
+        clear_test_progress()
+
+        start_test(
+            assigned_combination
+        )
+
+        st.rerun()
+
+
+# =========================================================
+# TEST RENDER
+# =========================================================
+
+def render_test():
+
+    subjects = get_test_subjects()
+
+    if not subjects:
+
+        st.error(
+            "Тест пәндері табылмады."
+        )
+
+        return
+
+    subject_index = (
+        st.session_state.current_subject_idx
+    )
+
+    question_index = (
+        st.session_state.current_question_idx
+    )
+
+    if subject_index >= len(subjects):
+
+        finish_test()
+
+        return
+
+    subject = subjects[
+        subject_index
+    ]
+
+    subject_questions = (
+        st.session_state.test_data.get(
+            subject,
+            []
+        )
+    )
+
+    if not subject_questions:
+
+        st.warning(
+            f"{subject} пәнінде жеткілікті сұрақ жоқ."
+        )
+
+        if st.button(
+            "⬅️ Басты бетке"
+        ):
+
+            st.session_state.test_started = False
+            clear_test_progress()
+            st.rerun()
+
+        return
+
+    if question_index >= len(subject_questions):
+
+        question_index = 0
+        st.session_state.current_question_idx = 0
+
+    question = subject_questions[
+        question_index
+    ]
+
+    total_questions = len(
+        subject_questions
+    )
+
+    answer_key = (
+        f"{subject}_{question_index}"
+    )
+
+    current_answer = st.session_state.test_answers.get(
+        answer_key
+    )
+
+    # =====================================================
+    # TOP
+    # =====================================================
 
     col1, col2 = st.columns(
         [6, 1]
@@ -2498,2299 +2628,1218 @@ def admin_page():
     with col1:
 
         st.markdown(
-            '<div class="kasym-title" '
-            'style="font-size:32px;">'
-            '👑 Администратор панелі'
-            '</div>',
-            unsafe_allow_html=True
+            f"## 📚 {subject}"
+        )
+
+        st.caption(
+            f"Сұрақ {question_index + 1} / {total_questions}"
         )
 
     with col2:
 
         if st.button(
-            "🚪 Шығу",
-            use_container_width=True
-        ):
-
-            logout()
-
-    st.markdown(
-        '<div class="kasym-subtitle">'
-        'Қолданушыларды басқару және статистика'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    admin_tabs = st.tabs([
-        "👥 Қолданушылар",
-        "➕ Жаңа қолданушы",
-        "📊 Статистика",
-    ])
-
-
-    # =====================================================
-    # USERS
-    # =====================================================
-
-    with admin_tabs[0]:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### 📋 Тіркелген қолданушылар"
-        )
-
-        for u in list(users):
-
-            u_name = u.get(
-                "name",
-                "Аты жоқ"
-            )
-
-            u_username = u.get(
-                "username"
-            )
-
-            u_role = u.get(
-                "role"
-            )
-
-            current_combination = u.get(
-                "combination"
-            )
-
-            st.markdown(
-                f"**{u_name}** · "
-                f"`@{u_username}` · "
-                f"Рөлі: `{u_role}`"
-            )
-
-            if u_role == "user":
-
-                comb_options = list(
-                    combinations.keys()
-                )
-
-                current_index = (
-                    comb_options.index(
-                        current_combination
-                    )
-                    if current_combination
-                    in comb_options
-                    else 0
-                )
-
-                col_comb, col_save, col_del = st.columns(
-                    [4, 1.2, 1.2]
-                )
-
-                with col_comb:
-
-                    selected_combination = st.selectbox(
-                        "🎯 Бекітілген комбинация",
-                        comb_options,
-                        index=current_index,
-                        key=f"user_comb_{u_username}"
-                    )
-
-                with col_save:
-
-                    st.write("")
-                    st.write("")
-
-                    if st.button(
-                        "💾 Сақтау",
-                        key=f"save_comb_{u_username}"
-                    ):
-
-                        for item in users:
-
-                            if (
-                                item.get(
-                                    "username"
-                                )
-                                == u_username
-                            ):
-
-                                item[
-                                    "combination"
-                                ] = (
-                                    selected_combination
-                                )
-
-                                break
-
-                        save_users(
-                            users
-                        )
-
-                        st.success(
-                            "Комбинация сақталды!"
-                        )
-
-                        st.rerun()
-
-                with col_del:
-
-                    st.write("")
-                    st.write("")
-
-                    if st.button(
-                        "🗑️ Жою",
-                        key=f"del_user_{u_username}"
-                    ):
-
-                        users = [
-                            x for x in users
-                            if x.get(
-                                "username"
-                            ) != u_username
-                        ]
-
-                        save_users(
-                            users
-                        )
-
-                        st.rerun()
-
-                if current_combination:
-
-                    st.caption(
-                        f"Қазір бекітілгені: "
-                        f"{current_combination}"
-                    )
-
-                else:
-
-                    st.warning(
-                        "⚠️ Комбинация бекітілмеген."
-                    )
-
-            else:
-
-                if u_role == "admin":
-
-                    st.caption(
-                        "👑 Администратор"
-                    )
-
-                elif u_role == "moderator":
-
-                    st.caption(
-                        "📝 Модератор / Премьер министр"
-                    )
-
-                if u_username != "kas01":
-
-                    if st.button(
-                        "🗑️ Жою",
-                        key=f"del_user_{u_username}"
-                    ):
-
-                        users = [
-                            x for x in users
-                            if x.get(
-                                "username"
-                            ) != u_username
-                        ]
-
-                        save_users(
-                            users
-                        )
-
-                        st.rerun()
-
-                else:
-
-                    st.caption(
-                        "🔒 Басты админ — жоюға болмайды."
-                    )
-
-            st.markdown("---")
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # =====================================================
-    # ADD USER
-    # =====================================================
-
-    with admin_tabs[1]:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### ➕ Жаңа қолданушы қосу"
-        )
-
-        new_u = st.text_input(
-            "Логин:"
-        )
-
-        new_p = st.text_input(
-            "Құпия сөз:",
-            type="password"
-        )
-
-        new_n = st.text_input(
-            "Толық аты-жөні:"
-        )
-
-        new_r = st.selectbox(
-            "Рөлі:",
-            [
-                "user",
-                "moderator"
-            ]
-        )
-
-        new_combination = None
-
-        if new_r == "user":
-
-            new_combination = st.selectbox(
-                "🎯 Оқушының комбинациясы:",
-                list(
-                    combinations.keys()
-                ),
-                key="new_user_combination"
-            )
-
-        if st.button(
-            "Қолданушыны сақтау",
-            type="primary"
-        ):
-
-            if new_u and new_p:
-
-                if username_exists(
-                    new_u
-                ):
-
-                    st.error(
-                        "❌ Бұл логин жүйеде бар!"
-                    )
-
-                else:
-
-                    users.append({
-
-                        "username": (
-                            new_u.strip()
-                        ),
-
-                        "password": (
-                            hash_password(
-                                new_p
-                            )
-                        ),
-
-                        "name": (
-                            new_n.strip()
-                        ),
-
-                        "role": new_r,
-
-                        "combination": (
-                            new_combination
-                        ),
-                    })
-
-                    save_users(
-                        users
-                    )
-
-                    st.success(
-                        "✨ Қолданушы сәтті тіркелді!"
-                    )
-
-                    st.rerun()
-
-            else:
-
-                st.error(
-                    "⚠️ Логин мен құпия сөзді толтырыңыз!"
-                )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # =====================================================
-    # STATISTICS
-    # =====================================================
-
-    with admin_tabs[2]:
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        render_statistics_tab()
-
-        st.markdown("---")
-
-        render_analytics()
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-# =========================================================
-# 19. TEST PREPARATION
-# =========================================================
-
-def prepare_test_data(
-    subjects,
-    source_data=None
-):
-
-    shuffled_data = {}
-
-    for subject in subjects:
-
-        if source_data is not None:
-
-            sub_qs = [
-                dict(q)
-                for q in source_data.get(
-                    subject,
-                    []
-                )
-            ]
-
-        else:
-
-            sub_qs = [
-                dict(q)
-                for q in questions.get(
-                    subject,
-                    []
-                )
-            ]
-
-            random.shuffle(
-                sub_qs
-            )
-
-            limit = subject_limits.get(
-                subject,
-                40
-            )
-
-            sub_qs = sub_qs[
-                :limit
-            ]
-
-        processed_qs = []
-
-        for q in sub_qs:
-
-            answers = list(
-                q.get(
-                    "answers",
-                    []
-                )
-            )
-
-            if len(answers) < 4:
-
-                continue
-
-            correct_index = q.get(
-                "correct",
-                0
-            )
-
-            if not (
-                0 <= correct_index
-                < len(answers)
-            ):
-
-                continue
-
-            correct_text = answers[
-                correct_index
-            ]
-
-            random.shuffle(
-                answers
-            )
-
-            new_correct_idx = answers.index(
-                correct_text
-            )
-
-            processed_qs.append({
-
-                "question": q.get(
-                    "question",
-                    ""
-                ),
-
-                "answers": answers,
-
-                "correct": new_correct_idx,
-
-                "topic": q.get(
-                    "topic",
-                    "Жалпы"
-                ),
-            })
-
-        shuffled_data[
-            subject
-        ] = processed_qs
-
-    return shuffled_data
-
-
-# =========================================================
-# 20. RETRY TEST
-# =========================================================
-
-def create_retry_test():
-
-    retry_data = {}
-
-    for subject, sub_questions in (
-        st.session_state.shuffled_test_data.items()
-    ):
-
-        answers = (
-            st.session_state.test_answers.get(
-                subject,
-                {}
-            )
-        )
-
-        wrong_questions = []
-
-        for index, q in enumerate(
-            sub_questions
-        ):
-
-            selected = answers.get(
-                index
-            )
-
-            is_wrong = (
-                selected is None
-                or selected
-                != q.get(
-                    "correct"
-                )
-            )
-
-            if is_wrong:
-
-                wrong_questions.append({
-
-                    "question": q.get(
-                        "question",
-                        ""
-                    ),
-
-                    "answers": list(
-                        q.get(
-                            "answers",
-                            []
-                        )
-                    ),
-
-                    "correct": q.get(
-                        "correct",
-                        0
-                    ),
-
-                    "topic": q.get(
-                        "topic",
-                        "Жалпы"
-                    ),
-                })
-
-        if wrong_questions:
-
-            retry_data[
-                subject
-            ] = wrong_questions
-
-    if not retry_data:
-
-        return False
-
-    subjects = list(
-        retry_data.keys()
-    )
-
-    new_data = prepare_test_data(
-        subjects,
-        source_data=retry_data
-    )
-
-    st.session_state.retry_data = (
-        new_data
-    )
-
-    st.session_state.shuffled_test_data = (
-        new_data
-    )
-
-    st.session_state.test_started = True
-
-    st.session_state.retry_mode = True
-
-    st.session_state.current_subject_index = 0
-
-    st.session_state.current_question_index = 0
-
-    st.session_state.test_answers = {}
-
-    st.session_state.result_saved = False
-
-    # Автоматты сақтау
-    save_current_test_progress()
-
-    return True
-
-
-# =========================================================
-# 21. USER PAGE
-# =========================================================
-
-def user_page():
-
-    # =====================================================
-    # HOME
-    # =====================================================
-
-    if not st.session_state.test_started:
-
-        col_top1, col_top_out = st.columns(
-            [6, 1]
-        )
-
-        with col_top1:
-
-            st.markdown(
-                f"### 👤 Қош келдіңіз, "
-                f"{st.session_state.full_name}!"
-            )
-
-        with col_top_out:
-
-            if st.button(
-                "🚪 Шығу",
-                use_container_width=True
-            ):
-
-                logout()
-
-        st.markdown("---")
-
-
-        # =================================================
-        # RESUME TEST
-        # =================================================
-
-        saved_progress = get_test_progress(
-            st.session_state.username
-        )
-
-        if saved_progress:
-
-            saved_combination = (
-                saved_progress.get(
-                    "active_combination"
-                )
-            )
-
-            saved_time = (
-                saved_progress.get(
-                    "saved_at",
-                    "белгісіз"
-                )
-            )
-
-            st.markdown(
-                '<div class="resume-box">',
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                "### 🔄 Аяқталмаған тест бар!"
-            )
-
-            st.write(
-                "Сізде бұрын аяқталмай қалған "
-                "тест сақталған."
-            )
-
-            if saved_combination:
-
-                st.info(
-                    f"🎯 Бағыт: "
-                    f"**{saved_combination}**"
-                )
-
-            st.caption(
-                f"Соңғы сақталған уақыт: {saved_time}"
-            )
-
-            resume_col1, resume_col2 = st.columns(2)
-
-            with resume_col1:
-
-                if st.button(
-                    "🔄 Тестті жалғастыру",
-                    type="primary",
-                    use_container_width=True,
-                    key="resume_saved_test"
-                ):
-
-                    if restore_test_progress(
-                        saved_progress
-                    ):
-
-                        st.rerun()
-
-                    else:
-
-                        st.error(
-                            "Сақталған тестті қалпына келтіру мүмкін болмады."
-                        )
-
-            with resume_col2:
-
-                if st.button(
-                    "🗑️ Аяқталмаған тестті өшіру",
-                    use_container_width=True,
-                    key="delete_saved_test"
-                ):
-
-                    clear_test_progress(
-                        st.session_state.username
-                    )
-
-                    st.success(
-                        "Аяқталмаған тест өшірілді."
-                    )
-
-                    st.rerun()
-
-            st.markdown(
-                "</div>",
-                unsafe_allow_html=True
-            )
-
-
-        # =================================================
-        # PERSONAL CABINET
-        # =================================================
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### 🗂️ Менің жеке кабинетім"
-        )
-
-        history = load_results_history()
-
-        user_history = [
-            h for h in history
-            if h.get(
-                "username"
-            )
-            == st.session_state.username
-
-            and h.get(
-                "test_type",
-                "normal"
-            ) == "normal"
-        ]
-
-        if not user_history:
-
-            st.info(
-                "ℹ️ Сіз әлі тест тапсырған жоқсыз."
-            )
-
-        else:
-
-            total_tests = len(
-                user_history
-            )
-
-            best_score = max(
-                int(
-                    h.get(
-                        "score",
-                        0
-                    )
-                )
-                for h in user_history
-            )
-
-            avg_score = (
-                sum(
-                    int(
-                        h.get(
-                            "score",
-                            0
-                        )
-                    )
-                    for h in user_history
-                )
-                / total_tests
-            )
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-
-                st.metric(
-                    "Жалпы тесттер саны",
-                    total_tests
-                )
-
-            with col2:
-
-                st.metric(
-                    "Ең жоғары ұпай",
-                    f"{best_score} / 140"
-                )
-
-            with col3:
-
-                st.metric(
-                    "Орташа ұпай",
-                    f"{avg_score:.1f}"
-                )
-
-            st.markdown("---")
-
-            st.markdown(
-                "#### 📈 Ұпайлардың өсу динамикасы"
-            )
-
-            scores_list = [
-                int(
-                    h.get(
-                        "score",
-                        0
-                    )
-                )
-                for h in user_history
-            ]
-
-            st.line_chart(
-                scores_list
-            )
-
-            st.markdown(
-                "#### 📋 Тест тарихы"
-            )
-
-            display_data = []
-
-            for h in user_history:
-
-                display_data.append({
-
-                    "Комбинация": h.get(
-                        "combination"
-                    ),
-
-                    "Ұпай": (
-                        f'{h.get("score", 0)} / '
-                        f'{h.get("max_score", 140)}'
-                    ),
-
-                    "Күні": h.get(
-                        "date"
-                    ),
-                })
-
-            st.dataframe(
-                display_data,
-                use_container_width=True,
-                hide_index=True
-            )
-
-            st.markdown("---")
-
-            render_analytics(
-                st.session_state.username
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-        # =================================================
-        # START TEST
-        # =================================================
-
-        st.markdown(
-            '<div class="card">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            "### 🎯 Жаңа тест тапсыру"
-        )
-
-        current_user = next(
-            (
-                u for u in users
-                if u.get(
-                    "username"
-                )
-                == st.session_state.username
-            ),
-            None
-        )
-
-        assigned_combination = (
-            current_user or {}
-        ).get(
-            "combination"
-        )
-
-        if (
-            assigned_combination
-            and assigned_combination
-            in combinations
-        ):
-
-            st.success(
-                f"🎯 Сізге бекітілген бағыт: "
-                f"**{assigned_combination}**"
-            )
-
-            st.caption(
-                "Бұл бағытты оқушы өзі өзгерте алмайды."
-            )
-
-        else:
-
-            st.warning(
-                "⚠️ Сізге әлі тест бағыты бекітілмеген."
-            )
-
-        if st.button(
-            "🚀 Тестті бастау",
-            type="primary",
+            "Шығу",
             use_container_width=True,
-            disabled=not (
-                assigned_combination
-                and assigned_combination
-                in combinations
-            )
         ):
 
-            # Ескі progress болса,
-            # жаңа тест басталғанда өшіреміз.
-            clear_test_progress(
-                st.session_state.username
-            )
+            save_test_progress()
 
-            st.session_state.active_combination = (
-                assigned_combination
-            )
-
-            st.session_state.test_started = True
-
-            st.session_state.retry_mode = False
-
-            st.session_state.current_subject_index = 0
-
-            st.session_state.current_question_index = 0
-
-            st.session_state.test_answers = {}
-
-            st.session_state.result_saved = False
-
-            st.session_state.shuffled_test_data = (
-                prepare_test_data(
-                    combinations[
-                        assigned_combination
-                    ]
-                )
-            )
-
-            # Бірден сақтау
-            save_current_test_progress()
+            st.session_state.test_started = False
 
             st.rerun()
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-        return
-
-
     # =====================================================
-    # TEST
+    # SUBJECT NAVIGATION
     # =====================================================
 
-    comb_name = (
-        st.session_state.active_combination
+    st.markdown(
+        "### Пәндер"
     )
 
-    if st.session_state.retry_mode:
-
-        subj_list = list(
-            st.session_state.shuffled_test_data.keys()
-        )
-
-    else:
-
-        subj_list = combinations.get(
-            comb_name,
-            []
-        )
-
-    sub_idx = (
-        st.session_state.current_subject_index
+    subject_cols = st.columns(
+        len(subjects)
     )
 
+    for index, sub in enumerate(subjects):
 
-    # =====================================================
-    # TOP NAVIGATION
-    # =====================================================
+        with subject_cols[index]:
 
-    col_top1, col_top_prev, col_top_next, col_top_out = st.columns(
-        [3, 1.2, 1.2, 0.8]
-    )
+            if st.button(
+                sub,
+                key=f"subject_nav_{index}",
+                use_container_width=True,
+            ):
 
-    with col_top1:
+                st.session_state.current_subject_idx = index
+                st.session_state.current_question_idx = 0
 
-        if st.session_state.retry_mode:
-
-            st.markdown(
-                "**🔁 Қате сұрақтарды қайта тапсыру**"
-            )
-
-        else:
-
-            st.markdown(
-                f"**👤 {st.session_state.full_name}**"
-            )
-
-    with col_top_prev:
-
-        if st.button(
-            "< Алдыңғы пән",
-            use_container_width=True,
-            disabled=(
-                sub_idx == 0
-            )
-        ):
-
-            if sub_idx > 0:
-
-                st.session_state.current_subject_index -= 1
-
-                st.session_state.current_question_index = 0
-
-                save_current_test_progress()
+                save_test_progress()
 
                 st.rerun()
 
-    with col_top_next:
+    # =====================================================
+    # QUESTION PALETTE
+    # =====================================================
 
-        is_last_subject = (
-            sub_idx >= len(
-                subj_list
-            ) - 1
+    st.markdown(
+        "### 🧭 Сұрақтар"
+    )
+
+    palette = []
+
+    for i in range(
+        total_questions
+    ):
+
+        key = f"{subject}_{i}"
+
+        if i == question_index:
+
+            state = "🔵"
+
+        elif key in st.session_state.test_answers:
+
+            state = "🟢"
+
+        else:
+
+            state = "⚪"
+
+        palette.append(
+            (
+                i,
+                state
+            )
         )
 
-        next_subj_label = (
-            "Нәтижеге 🏁"
-            if is_last_subject
-            else "Келесі пән >"
+    for start in range(
+        0,
+        len(palette),
+        20
+    ):
+
+        row = palette[
+            start:start + 20
+        ]
+
+        cols = st.columns(
+            len(row)
         )
 
-        if st.button(
-            next_subj_label,
-            use_container_width=True,
-            type="primary",
-            key=f"top_next_subj_{sub_idx}"
+        for col, (number, state) in zip(
+            cols,
+            row
         ):
 
-            if not is_last_subject:
+            with col:
 
-                st.session_state.current_subject_index += 1
+                if st.button(
+                    f"{state} {number + 1}",
+                    key=f"palette_{subject}_{number}",
+                    use_container_width=True,
+                ):
 
-                st.session_state.current_question_index = 0
+                    st.session_state.current_question_idx = number
 
-                save_current_test_progress()
+                    save_test_progress()
 
-            else:
-
-                st.session_state.current_subject_index = len(
-                    subj_list
-                )
-
-                save_current_test_progress()
-
-            st.rerun()
-
-    with col_top_out:
-
-        if st.button(
-            "🚪 Шығу",
-            use_container_width=True
-        ):
-
-            # logout() ішінде save болады.
-            logout()
-
-    st.markdown("---")
-
+                    st.rerun()
 
     # =====================================================
     # QUESTION
     # =====================================================
 
-    if sub_idx < len(
-        subj_list
+    st.markdown(
+        f"""
+        <div class="question-box">
+            <div class="question-text">
+                {question.get("question", "")}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    options = question.get(
+        "options",
+        []
+    )
+
+    option_labels = [
+        "A",
+        "B",
+        "C",
+        "D",
+    ]
+
+    radio_options = []
+
+    for index, option in enumerate(
+        options
     ):
 
-        current_subject = subj_list[
-            sub_idx
-        ]
-
-        sub_questions = (
-            st.session_state.shuffled_test_data.get(
-                current_subject,
-                []
-            )
+        label = (
+            f"{option_labels[index]}. {option}"
         )
 
-        if not sub_questions:
-
-            st.warning(
-                f"{current_subject} пәнінде "
-                "әзірге сұрақ жоқ."
-            )
-
-            return
-
-        curr_q_idx = (
-            st.session_state.current_question_index
+        radio_options.append(
+            label
         )
 
-        # Қауіпсіздік
-        if curr_q_idx < 0:
+    selected_index = None
 
-            curr_q_idx = 0
+    if current_answer is not None:
 
-            st.session_state.current_question_index = 0
+        if (
+            0 <= current_answer
+            < len(radio_options)
+        ):
+            selected_index = current_answer
 
-        if curr_q_idx >= len(
-            sub_questions
+    radio_value = 0
+
+    if selected_index is not None:
+        radio_value = selected_index
+
+    selected_label = st.radio(
+        "Жауапты таңдаңыз:",
+        radio_options,
+        index=radio_value if current_answer is not None else None,
+        key=f"answer_radio_{subject}_{question_index}",
+    )
+
+    if selected_label:
+
+        try:
+
+            selected_index = radio_options.index(
+                selected_label
+            )
+
+            st.session_state.test_answers[
+                answer_key
+            ] = selected_index
+
+            save_test_progress()
+
+        except ValueError:
+            pass
+
+    # =====================================================
+    # NAVIGATION
+    # =====================================================
+
+    st.markdown("---")
+
+    nav1, nav2, nav3 = st.columns(
+        [1, 1, 1]
+    )
+
+    with nav1:
+
+        if st.button(
+            "⬅️ Алдыңғы",
+            use_container_width=True,
+            disabled=(
+                subject_index == 0
+                and question_index == 0
+            ),
         ):
 
-            curr_q_idx = len(
-                sub_questions
-            ) - 1
+            if question_index > 0:
 
-            st.session_state.current_question_index = (
-                curr_q_idx
-            )
+                st.session_state.current_question_idx -= 1
 
-        num_qs = len(
-            sub_questions
-        )
+            elif subject_index > 0:
 
-        st.markdown(
-            f"**Бөлім: {current_subject}**"
-        )
+                st.session_state.current_subject_idx -= 1
 
+                previous_subject = subjects[
+                    subject_index - 1
+                ]
 
-        # =================================================
-        # LEGEND
-        # =================================================
+                previous_questions = (
+                    st.session_state.test_data.get(
+                        previous_subject,
+                        []
+                    )
+                )
 
-        st.markdown(
-            """
-            <div class="nav-legend">
-                🔵 Қазіргі сұрақ
-                &nbsp;&nbsp;&nbsp;
-                🟢 Жауап берілген
-                &nbsp;&nbsp;&nbsp;
-                ⚪ Жауап берілмеген
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+                st.session_state.current_question_idx = max(
+                    len(previous_questions) - 1,
+                    0
+                )
 
+            save_test_progress()
 
-        if current_subject not in (
+            st.rerun()
+
+    with nav2:
+
+        answered = len(
             st.session_state.test_answers
-        ):
-
-            st.session_state.test_answers[
-                current_subject
-            ] = {}
-
-
-        current_answers = (
-            st.session_state.test_answers[
-                current_subject
-            ]
         )
 
-
-        # =================================================
-        # QUESTION PALETTE
-        # =================================================
-
-        cols_per_row = 20
-
-        for i in range(
-            0,
-            num_qs,
-            cols_per_row
-        ):
-
-            chunk = range(
-                i,
-                min(
-                    i + cols_per_row,
-                    num_qs
+        total_all = sum(
+            len(
+                st.session_state.test_data.get(
+                    sub,
+                    []
                 )
             )
-
-            pal_cols = st.columns(
-                len(chunk)
-            )
-
-            for idx, q_i in enumerate(
-                chunk
-            ):
-
-                with pal_cols[idx]:
-
-                    is_current = (
-                        q_i == curr_q_idx
-                    )
-
-                    is_answered = (
-                        q_i
-                        in current_answers
-                    )
-
-                    if is_current:
-
-                        label = (
-                            f"🔵 {q_i + 1}"
-                        )
-
-                    elif is_answered:
-
-                        label = (
-                            f"🟢 {q_i + 1}"
-                        )
-
-                    else:
-
-                        label = (
-                            f"⚪ {q_i + 1}"
-                        )
-
-                    btn_type = (
-                        "primary"
-                        if is_current
-                        else "secondary"
-                    )
-
-                    if st.button(
-                        label,
-                        key=f"pal_{sub_idx}_{q_i}",
-                        use_container_width=True,
-                        type=btn_type
-                    ):
-
-                        st.session_state.current_question_index = q_i
-
-                        save_current_test_progress()
-
-                        st.rerun()
-
-        st.markdown("---")
-
-
-        # =================================================
-        # QUESTION TITLE
-        # =================================================
-
-        col_q_title, col_next_q_btn = st.columns(
-            [6, 1.5]
+            for sub in subjects
         )
 
-        with col_q_title:
+        st.markdown(
+            f"""
+            <div style="
+                text-align:center;
+                padding:10px;
+                font-weight:700;
+            ">
+                {answered} / {total_all} жауап
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-            st.markdown(
-                f"#### Сұрақ №{curr_q_idx + 1}"
-            )
+    with nav3:
 
-        with col_next_q_btn:
+        is_last_question = (
+            question_index
+            == total_questions - 1
+            and subject_index
+            == len(subjects) - 1
+        )
 
-            is_last_q_in_sub = (
-                curr_q_idx
-                == num_qs - 1
-            )
-
-            nxt_label = (
-                "Келесі пән >"
-                if is_last_q_in_sub
-                else "Келесі сұрақ >"
-            )
+        if is_last_question:
 
             if st.button(
-                nxt_label,
-                type="primary",
+                "🏁 Аяқтау",
                 use_container_width=True,
-                key=f"next_btn_{sub_idx}_{curr_q_idx}"
+                type="primary",
             ):
 
-                if not is_last_q_in_sub:
+                finish_test()
 
-                    st.session_state.current_question_index += 1
+        else:
+
+            if st.button(
+                "Келесі ➡️",
+                use_container_width=True,
+                type="primary",
+            ):
+
+                if question_index < total_questions - 1:
+
+                    st.session_state.current_question_idx += 1
 
                 else:
 
-                    st.session_state.current_subject_index += 1
+                    st.session_state.current_subject_idx += 1
+                    st.session_state.current_question_idx = 0
 
-                    st.session_state.current_question_index = 0
-
-                save_current_test_progress()
+                save_test_progress()
 
                 st.rerun()
 
 
-        # =================================================
-        # CURRENT QUESTION
-        # =================================================
+# =========================================================
+# FINISH TEST
+# =========================================================
 
-        q_data = sub_questions[
-            curr_q_idx
-        ]
+def finish_test():
 
-        st.markdown(
-            f"**{q_data['question']}**"
-        )
+    st.session_state.test_started = False
 
-        saved_ans_idx = (
-            current_answers.get(
-                curr_q_idx
-            )
-        )
+    clear_test_progress()
 
-        selected_option = st.radio(
-            "Жауапты таңдаңыз:",
-            q_data["answers"],
-            key=f"radio_{sub_idx}_{curr_q_idx}",
-            index=(
-                saved_ans_idx
-                if saved_ans_idx is not None
-                and 0 <= saved_ans_idx < len(
-                    q_data["answers"]
-                )
-                else None
-            )
-        )
+    st.session_state.page = "result"
 
-        if selected_option is not None:
-
-            chosen_idx = (
-                q_data["answers"].index(
-                    selected_option
-                )
-            )
-
-            st.session_state.test_answers[
-                current_subject
-            ][curr_q_idx] = chosen_idx
-
-            # Жауапты бірден файлға сақтаймыз.
-            save_current_test_progress()
-
-
-    # =====================================================
-    # RESULT
-    # =====================================================
-
-    else:
-
-        if st.session_state.retry_mode:
-
-            render_retry_result()
-
-        else:
-
-            render_normal_result()
+    st.rerun()
 
 
 # =========================================================
-# 22. NORMAL RESULT
+# RESULT
 # =========================================================
 
-def render_normal_result():
+def calculate_results():
 
-    st.markdown(
-        "## 🏆 Тест аяқталды!"
-    )
+    subjects = get_test_subjects()
 
-    st.success(
-        "Тестіңіз сәтті аяқталды. "
-        "Төменнен толық нәтижеңізді көре аласыз."
-    )
-
-    comb_name = (
-        st.session_state.active_combination
-    )
-
-    subj_list = combinations.get(
-        comb_name,
-        []
-    )
-
-
-    # =====================================================
-    # 140 БАЛЛДЫҚ СИСТЕМА
-    # =====================================================
-
-    subject_max_points = {
-
-        "Қазақстан тарихы": 20,
-
-        "Оқу сауаттылығы": 10,
-
-        "Математикалық сауаттылық": 10,
-
-        "Математика": 50,
-
-        "Физика": 50,
-
-        "Химия": 50,
-
-        "Биология": 50,
-
-        "Информатика": 50,
-
-        "География": 50,
-
-        "Дүниежүзі тарихы": 50,
-
-        "Ағылшын тілі": 50,
-
-        "Құқық": 50,
-    }
-
-    subject_results = []
+    subject_results = {}
 
     total_score = 0
-
-    total_max_points = 0
+    total_possible = 0
 
     total_correct = 0
-
-    total_questions = 0
-
+    total_wrong = 0
     total_unanswered = 0
 
+    for subject in subjects:
 
-    for sub in subj_list:
-
-        sub_qs = (
-            st.session_state.shuffled_test_data.get(
-                sub,
+        subject_questions = (
+            st.session_state.test_data.get(
+                subject,
                 []
             )
         )
 
-        sub_ans = (
-            st.session_state.test_answers.get(
-                sub,
-                {}
+        correct = 0
+        wrong = 0
+        unanswered = 0
+
+        answers = st.session_state.test_answers
+
+        for index, question in enumerate(
+            subject_questions
+        ):
+
+            key = f"{subject}_{index}"
+
+            if key not in answers:
+
+                unanswered += 1
+
+                continue
+
+            selected = answers[key]
+
+            correct_answer = question.get(
+                "answer",
+                0
             )
+
+            if selected == correct_answer:
+
+                correct += 1
+
+            else:
+
+                wrong += 1
+
+        total_questions = len(
+            subject_questions
         )
 
-        question_count = len(
-            sub_qs
+        max_points = POINT_LIMITS.get(
+            subject,
+            0
         )
 
-        correct_count = sum(
-            1
-            for idx, q in enumerate(
-                sub_qs
-            )
-            if sub_ans.get(
-                idx
-            ) == q.get(
-                "correct"
-            )
-        )
+        if subject in [
+            "Қазақстан тарихы",
+            "Оқу сауаттылығы",
+            "Математикалық сауаттылық",
+        ]:
 
-        unanswered_count = sum(
-            1
-            for idx in range(
-                question_count
-            )
-            if idx not in sub_ans
-        )
-
-        max_points = subject_max_points.get(
-            sub,
-            question_count
-        )
-
-        expected_questions = (
-            subject_limits.get(
-                sub,
-                question_count
-            )
-        )
-
-        if question_count > 0:
-
-            score = round(
-                correct_count
-                * max_points
-                / question_count
-            )
+            score = correct
 
         else:
 
-            score = 0
+            if total_questions > 0:
+
+                score = round(
+                    correct
+                    / total_questions
+                    * max_points,
+                    2
+                )
+
+            else:
+
+                score = 0
+
+        subject_results[subject] = {
+            "correct": correct,
+            "wrong": wrong,
+            "unanswered": unanswered,
+            "total": total_questions,
+            "score": score,
+            "max_score": max_points,
+        }
 
         total_score += score
+        total_possible += max_points
 
-        total_max_points += max_points
+        total_correct += correct
+        total_wrong += wrong
+        total_unanswered += unanswered
 
-        total_correct += correct_count
+    percentage = 0
 
-        total_questions += question_count
+    if total_possible > 0:
 
-        total_unanswered += (
-            unanswered_count
-        )
-
-        subject_results.append({
-
-            "subject": sub,
-
-            "correct": correct_count,
-
-            "questions": question_count,
-
-            "score": score,
-
-            "max_score": max_points,
-
-            "expected_questions": expected_questions,
-        })
-
-
-    # Негізгі тест үшін максимум 140.
-    # Қалыпты комбинацияда:
-    # 50 + 50 + 20 + 10 + 10 = 140
-    if total_max_points != 140:
-
-        total_max_points = 140
-
-
-    total_wrong = (
-        total_questions
-        - total_correct
-        - total_unanswered
-    )
-
-    percentage = (
-        round(
+        percentage = round(
             total_score
-            / total_max_points
+            / total_possible
             * 100,
             1
         )
-        if total_max_points
-        else 0
+
+    return {
+        "subject_results": subject_results,
+        "total_score": round(
+            total_score,
+            2
+        ),
+        "total_possible": total_possible,
+        "percentage": percentage,
+        "total_correct": total_correct,
+        "total_wrong": total_wrong,
+        "total_unanswered": total_unanswered,
+    }
+
+
+# =========================================================
+# SAVE NORMAL RESULT
+# =========================================================
+
+def save_normal_result(result_data):
+
+    username = st.session_state.username
+
+    existing_result_id = st.session_state.get(
+        "saved_result_id"
     )
 
-    st.session_state.current_subject_results = (
-        subject_results
+    if existing_result_id:
+        return
+
+    now = datetime.datetime.now()
+
+    result_id = (
+        f"{username}_"
+        f"{now.strftime('%Y%m%d%H%M%S')}"
     )
 
+    result_record = {
+        "id": result_id,
+        "username": username,
+        "name": st.session_state.full_name,
+        "combination": st.session_state.active_combination,
+        "date": now.strftime(
+            "%Y-%m-%d %H:%M"
+        ),
+        "total_score": result_data[
+            "total_score"
+        ],
+        "percentage": result_data[
+            "percentage"
+        ],
+        "subject_results": result_data[
+            "subject_results"
+        ],
+    }
 
-    # =====================================================
-    # BIG SCORE
-    # =====================================================
+    results_history.append(
+        result_record
+    )
+
+    save_results(
+        results_history
+    )
+
+    st.session_state.saved_result_id = result_id
+
+
+# =========================================================
+# RESULT PAGE
+# =========================================================
+
+def render_result():
+
+    result_data = calculate_results()
+
+    save_normal_result(
+        result_data
+    )
+
+    clear_test_progress()
 
     st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
+        "## 🏆 Тест нәтижесі"
     )
 
     st.markdown(
-        '<div class="score-label">'
-        'Сіздің жалпы нәтижеңіз'
-        '</div>',
-        unsafe_allow_html=True
+        f"""
+        <div class="hero" style="text-align:center;">
+            <div style="color:#94A3B8;">
+                Жалпы нәтиже
+            </div>
+
+            <div class="score-big">
+                {result_data["total_score"]:.0f}
+                /
+                {result_data["total_possible"]}
+            </div>
+
+            <div style="font-size:20px;margin-top:10px;">
+                {result_data["percentage"]}%
+            </div>
+
+            <div style="margin-top:15px;color:#CBD5E1;">
+                {st.session_state.active_combination}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    st.markdown(
-        f'<div class="score-big">'
-        f'{total_score} / {total_max_points}'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    col1, col2, col3 = st.columns(3)
 
-    st.markdown(
-        f'<div class="score-label">'
-        f'{percentage}%'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    with col1:
 
-    st.progress(
-        min(
-            max(
-                total_score
-                / total_max_points
-                if total_max_points
-                else 0,
-                0
-            ),
-            1
-        )
-    )
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-
-    # =====================================================
-    # SUMMARY
-    # =====================================================
-
-    summary1, summary2, summary3, summary4 = st.columns(4)
-
-    with summary1:
-
-        st.metric(
-            "✅ Дұрыс",
-            total_correct
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    🟢 {result_data["total_correct"]}
+                </div>
+                <div class="metric-label">
+                    Дұрыс
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with summary2:
+    with col2:
 
-        st.metric(
-            "❌ Қате",
-            total_wrong
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    🔴 {result_data["total_wrong"]}
+                </div>
+                <div class="metric-label">
+                    Қате
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with summary3:
+    with col3:
 
-        st.metric(
-            "⚪ Жауапсыз",
-            total_unanswered
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    ⚪ {result_data["total_unanswered"]}
+                </div>
+                <div class="metric-label">
+                    Жауапсыз
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with summary4:
-
-        st.metric(
-            "📊 Пайыз",
-            f"{percentage}%"
-        )
-
-
-    # =====================================================
-    # MESSAGE
-    # =====================================================
-
-    if percentage >= 90:
+    if result_data["percentage"] >= 80:
 
         st.success(
-            "🔥 Керемет нәтиже! "
-            "Сіз өте жақсы дайындалып жатырсыз."
+            "🔥 Өте жақсы нәтиже! Осы қарқынмен жалғастыр!"
         )
 
-    elif percentage >= 70:
+    elif result_data["percentage"] >= 60:
 
         st.info(
-            "💪 Жақсы нәтиже! "
-            "Әлсіз тақырыптарды тағы қайталап көріңіз."
-        )
-
-    elif percentage >= 50:
-
-        st.warning(
-            "📚 Жаман емес, бірақ нәтижеңізді "
-            "көтеруге мүмкіндік көп."
+            "👍 Жақсы нәтиже! Әлсіз тақырыптарды тағы қайтала."
         )
 
     else:
 
-        st.error(
-            "🎯 Негізгі тақырыптарды қайталап, "
-            "тағы бір тест тапсырып көріңіз."
+        st.warning(
+            "📚 Нәтижеңді көтеруге мүмкіндік көп. Қате сұрақтарды қайталап шық."
         )
-
 
     # =====================================================
     # SUBJECT RESULTS
     # =====================================================
 
-    st.markdown("---")
-
     st.markdown(
         "### 📚 Пәндер бойынша нәтиже"
     )
 
-    for item in subject_results:
+    for subject, data in result_data[
+        "subject_results"
+    ].items():
 
-        subject_name = item[
-            "subject"
-        ]
+        percentage = 0
 
-        correct = item[
-            "correct"
-        ]
+        if data["total"] > 0:
 
-        questions_count = item[
-            "questions"
-        ]
-
-        score = item[
-            "score"
-        ]
-
-        max_score = item[
-            "max_score"
-        ]
-
-        subject_percent = (
-            round(
-                score
-                / max_score
+            percentage = round(
+                data["correct"]
+                / data["total"]
                 * 100,
                 1
             )
-            if max_score
-            else 0
-        )
 
         st.markdown(
-            f"**{subject_name}** — "
-            f"{correct} / {questions_count} дұрыс · "
-            f"🎯 **{score} / {max_score} балл** "
-            f"({subject_percent}%)"
+            f"""
+            <div class="card">
+                <h3>{subject}</h3>
+                <p>
+                    🟢 Дұрыс: {data["correct"]}
+                    &nbsp;&nbsp;
+                    🔴 Қате: {data["wrong"]}
+                    &nbsp;&nbsp;
+                    ⚪ Жауапсыз: {data["unanswered"]}
+                </p>
+                <p>
+                    <b>
+                        Балл: {data["score"]:.0f}
+                        / {data["max_score"]}
+                    </b>
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-
-        progress_value = (
-            score / max_score
-            if max_score
-            else 0
-        )
-
-        st.progress(
-            min(
-                max(
-                    progress_value,
-                    0.0
-                ),
-                1.0
-            )
-        )
-
-
-    # =====================================================
-    # TABLE
-    # =====================================================
-
-    st.markdown(
-        "#### 📋 Қысқаша кесте"
-    )
-
-    result_table = []
-
-    for item in subject_results:
-
-        result_table.append({
-
-            "Пән": item[
-                "subject"
-            ],
-
-            "Дұрыс жауап": (
-                f'{item["correct"]} / '
-                f'{item["questions"]}'
-            ),
-
-            "Ұпай": (
-                f'{item["score"]} / '
-                f'{item["max_score"]}'
-            ),
-        })
-
-    st.dataframe(
-        result_table,
-        use_container_width=True,
-        hide_index=True
-    )
-
 
     # =====================================================
     # REVIEW
     # =====================================================
 
-    question_review = {}
-
-    st.markdown("---")
-
     st.markdown(
-        "### 🔎 Сұрақтарды толық талдау"
+        "### 🔍 Сұрақтарды талдау"
     )
 
-    st.caption(
-        "Қай сұраққа қате немесе жауапсыз кеткеніңізді "
-        "толық көре аласыз."
-    )
+    for subject in get_test_subjects():
 
-    for sub in subj_list:
-
-        sub_qs = (
-            st.session_state.shuffled_test_data.get(
-                sub,
+        subject_questions = (
+            st.session_state.test_data.get(
+                subject,
                 []
             )
         )
 
-        sub_ans = (
-            st.session_state.test_answers.get(
-                sub,
-                {}
-            )
-        )
-
-        subject_review = []
+        if not subject_questions:
+            continue
 
         with st.expander(
-            f"📚 {sub} — "
-            f"{len(sub_qs)} сұрақ"
+            f"📖 {subject}"
         ):
 
-            for q_idx, q in enumerate(
-                sub_qs
+            for index, question in enumerate(
+                subject_questions
             ):
 
-                selected_idx = (
-                    sub_ans.get(
-                        q_idx
+                key = f"{subject}_{index}"
+
+                selected = (
+                    st.session_state.test_answers.get(
+                        key
                     )
                 )
 
-                correct_idx = q.get(
-                    "correct"
+                correct = question.get(
+                    "answer",
+                    0
                 )
 
-                answers = q.get(
-                    "answers",
+                options = question.get(
+                    "options",
                     []
                 )
 
-                if selected_idx is None:
+                st.markdown(
+                    f"**{index + 1}. {question.get('question', '')}**"
+                )
 
-                    status = (
-                        "⚪ Жауап берілмеді"
+                if selected is None:
+
+                    st.markdown(
+                        """
+                        <div class="unanswered-box">
+                            ⚪ Жауап берілмеді
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
 
-                elif selected_idx == correct_idx:
+                elif selected == correct:
 
-                    status = "✅ Дұрыс"
+                    st.markdown(
+                        f"""
+                        <div class="correct-box">
+                            🟢 Дұрыс жауап:<br>
+                            {options[correct]}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
                 else:
 
-                    status = "❌ Қате"
-
-                selected_text = (
-
-                    answers[
-                        selected_idx
-                    ]
-
-                    if (
-                        selected_idx
-                        is not None
-                        and 0 <= selected_idx
-                        < len(answers)
+                    st.markdown(
+                        f"""
+                        <div class="wrong-box">
+                            🔴 Сенің жауабың:
+                            {options[selected]}
+                            <br><br>
+                            🟢 Дұрыс жауап:
+                            {options[correct]}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
 
-                    else "Жауап берілмеді"
-                )
-
-                correct_text = (
-
-                    answers[
-                        correct_idx
-                    ]
-
-                    if (
-                        correct_idx
-                        is not None
-                        and 0 <= correct_idx
-                        < len(answers)
-                    )
-
-                    else "Көрсетілмеген"
-                )
-
-                st.markdown(
-                    f"#### {q_idx + 1}. "
-                    f"{status}"
-                )
-
-                st.markdown(
-                    f"**{q.get('question', '')}**"
-                )
-
-                st.markdown(
-                    f"📝 **Сіздің жауабыңыз:** "
-                    f"{selected_text}"
-                )
-
-                st.markdown(
-                    f"🎯 **Дұрыс жауап:** "
-                    f"{correct_text}"
-                )
-
-                for option_idx, option_text in enumerate(
-                    answers
-                ):
-
-                    if option_idx == correct_idx:
-
-                        prefix = "🟢"
-
-                    elif option_idx == selected_idx:
-
-                        prefix = "🔴"
-
-                    else:
-
-                        prefix = "⚪"
-
-                    st.write(
-                        f"{prefix} {option_text}"
-                    )
-
-                st.markdown(
-                    "---"
-                )
-
-                subject_review.append({
-
-                    "question_number": (
-                        q_idx + 1
-                    ),
-
-                    "question": q.get(
-                        "question",
-                        ""
-                    ),
-
-                    "answers": answers,
-
-                    "selected_answer": selected_text,
-
-                    "correct_answer": correct_text,
-
-                    "selected_index": selected_idx,
-
-                    "correct_index": correct_idx,
-
-                    "status": status,
-
-                    "topic": q.get(
-                        "topic",
-                        "Жалпы"
-                    ),
-                })
-
-        question_review[
-            sub
-        ] = subject_review
-
-
-    # =====================================================
-    # SAVE RESULT
-    # =====================================================
-
-    if not st.session_state.get(
-        "result_saved",
-        False
-    ):
-
-        history = load_results_history()
-
-        history.append({
-
-            "username": (
-                st.session_state.username
-            ),
-
-            "name": (
-                st.session_state.full_name
-            ),
-
-            "combination": comb_name,
-
-            "score": total_score,
-
-            "max_score": total_max_points,
-
-            "subject_results": subject_results,
-
-            "question_review": question_review,
-
-            "test_type": "normal",
-
-            "date": datetime.datetime.now().strftime(
-                "%Y-%m-%d %H:%M"
-            ),
-        })
-
-        save_results_history(
-            history
-        )
-
-        st.session_state.result_saved = True
-
-        # Тест аяқталды.
-        # Ескі progress енді қажет емес.
-        clear_test_progress(
-            st.session_state.username
-        )
-
-        st.success(
-            "✨ Нәтижеңіз жеке кабинетке сақталды!"
-        )
-
+                st.markdown("---")
 
     # =====================================================
     # RETRY
     # =====================================================
 
-    wrong_count = 0
-
-    for sub, sub_qs in (
-        st.session_state.shuffled_test_data.items()
+    if st.button(
+        "🔄 Қате және жауапсыз сұрақтарды қайта тапсыру",
+        use_container_width=True,
     ):
 
-        sub_ans = (
-            st.session_state.test_answers.get(
-                sub,
-                {}
+        retry_questions = {}
+
+        for subject in get_test_subjects():
+
+            subject_questions = (
+                st.session_state.test_data.get(
+                    subject,
+                    []
+                )
             )
-        )
 
-        for idx, q in enumerate(
-            sub_qs
-        ):
-
-            if (
-                sub_ans.get(
-                    idx
-                )
-                != q.get(
-                    "correct"
-                )
+            for index, question in enumerate(
+                subject_questions
             ):
 
-                wrong_count += 1
+                key = f"{subject}_{index}"
 
+                selected = (
+                    st.session_state.test_answers.get(
+                        key
+                    )
+                )
 
-    st.markdown("---")
+                correct = question.get(
+                    "answer",
+                    0
+                )
 
-    if wrong_count > 0:
+                if (
+                    selected is None
+                    or selected != correct
+                ):
 
-        st.info(
-            f"🔁 Сізде қайта қарауға "
-            f"**{wrong_count}** қате немесе "
-            "жауапсыз сұрақ бар."
-        )
+                    if subject not in retry_questions:
+                        retry_questions[subject] = []
 
-        if st.button(
-            "🔁 Қате және жауапсыз сұрақтарды қайта тапсыру",
-            type="primary",
-            use_container_width=True,
-            key="retry_wrong_questions"
-        ):
+                    retry_questions[subject].append(
+                        question
+                    )
 
-            if create_retry_test():
+        if retry_questions:
 
-                st.rerun()
+            st.session_state.retry_mode = True
 
-    else:
+            st.session_state.retry_questions = (
+                retry_questions
+            )
 
-        st.success(
-            "🎉 Барлық сұраққа дұрыс жауап бердіңіз!"
-        )
+            st.session_state.retry_answers = {}
 
+            st.session_state.retry_subject_idx = 0
+            st.session_state.retry_question_idx = 0
 
-    # =====================================================
-    # HOME
-    # =====================================================
+            st.session_state.page = "retry_test"
+
+            st.rerun()
+
+        else:
+
+            st.success(
+                "🎉 Барлық сұраққа дұрыс жауап бердің!"
+            )
 
     if st.button(
-        "🔄 Басты бетке қайту",
-        type="primary",
+        "🏠 Басты бетке",
         use_container_width=True,
-        key="return_home_btn"
     ):
 
-        clear_test_progress(
-            st.session_state.username
-        )
+        st.session_state.page = "home"
 
         st.session_state.test_started = False
 
-        st.session_state.current_subject_index = 0
-
-        st.session_state.current_question_index = 0
-
-        st.session_state.current_subject_results = []
-
-        st.session_state.retry_mode = False
-
-        st.session_state.shuffled_test_data = {}
-
+        st.session_state.test_data = {}
         st.session_state.test_answers = {}
+
+        st.session_state.saved_result_id = None
 
         st.rerun()
 
 
 # =========================================================
-# 23. RETRY RESULT
+# RETRY TEST
 # =========================================================
 
-def render_retry_result():
+def render_retry_test():
+
+    retry_questions = (
+        st.session_state.retry_questions
+    )
+
+    subjects = list(
+        retry_questions.keys()
+    )
+
+    if not subjects:
+
+        st.session_state.page = "home"
+        st.rerun()
+
+        return
+
+    subject_index = st.session_state.get(
+        "retry_subject_idx",
+        0
+    )
+
+    question_index = st.session_state.get(
+        "retry_question_idx",
+        0
+    )
+
+    if subject_index >= len(subjects):
+
+        st.session_state.page = "retry_result"
+        st.rerun()
+
+        return
+
+    subject = subjects[
+        subject_index
+    ]
+
+    subject_questions = retry_questions[
+        subject
+    ]
+
+    question = subject_questions[
+        question_index
+    ]
+
+    answer_key = (
+        f"{subject}_{question_index}"
+    )
+
+    current_answer = (
+        st.session_state.retry_answers.get(
+            answer_key
+        )
+    )
 
     st.markdown(
-        "## 🔁 Қайта тапсыру нәтижесі"
+        "## 🔄 Қате сұрақтарды қайталау"
     )
 
-    total_questions = 0
-
-    correct_answers = 0
-
-    retry_subject_results = []
-
-    for subject, sub_qs in (
-        st.session_state.shuffled_test_data.items()
-    ):
-
-        answers = (
-            st.session_state.test_answers.get(
-                subject,
-                {}
-            )
-        )
-
-        subject_total = len(
-            sub_qs
-        )
-
-        subject_correct = sum(
-            1
-            for idx, q in enumerate(
-                sub_qs
-            )
-            if answers.get(
-                idx
-            ) == q.get(
-                "correct"
-            )
-        )
-
-        total_questions += (
-            subject_total
-        )
-
-        correct_answers += (
-            subject_correct
-        )
-
-        retry_subject_results.append({
-
-            "Пән": subject,
-
-            "Дұрыс": subject_correct,
-
-            "Барлығы": subject_total,
-        })
-
-
-    percentage = (
-
-        round(
-            correct_answers
-            / total_questions
-            * 100,
-            1
-        )
-
-        if total_questions
-
-        else 0
+    st.caption(
+        f"{subject} — "
+        f"{question_index + 1} / "
+        f"{len(subject_questions)}"
     )
 
+    st.markdown(
+        f"""
+        <div class="question-box">
+            <div class="question-text">
+                {question.get("question", "")}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    options = question.get(
+        "options",
+        []
+    )
+
+    labels = [
+        "A",
+        "B",
+        "C",
+        "D",
+    ]
+
+    radio_options = [
+        f"{labels[i]}. {option}"
+        for i, option in enumerate(options)
+    ]
+
+    selected = st.radio(
+        "Жауап:",
+        radio_options,
+        index=current_answer
+        if current_answer is not None
+        else None,
+        key=f"retry_radio_{subject}_{question_index}",
+    )
+
+    if selected:
+
+        selected_index = radio_options.index(
+            selected
+        )
+
+        st.session_state.retry_answers[
+            answer_key
+        ] = selected_index
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        st.metric(
-            "🎯 Дұрыс жауап",
-            f"{correct_answers} / {total_questions}"
+        if st.button(
+            "⬅️ Алдыңғы",
+            use_container_width=True,
+            disabled=(
+                subject_index == 0
+                and question_index == 0
+            ),
+        ):
+
+            if question_index > 0:
+
+                st.session_state.retry_question_idx -= 1
+
+            else:
+
+                st.session_state.retry_subject_idx -= 1
+
+                previous_subject = subjects[
+                    subject_index - 1
+                ]
+
+                st.session_state.retry_question_idx = (
+                    len(
+                        retry_questions[
+                            previous_subject
+                        ]
+                    ) - 1
+                )
+
+            st.rerun()
+
+    with col2:
+
+        is_last = (
+            subject_index == len(subjects) - 1
+            and question_index
+            == len(subject_questions) - 1
+        )
+
+        if is_last:
+
+            if st.button(
+                "🏁 Аяқтау",
+                use_container_width=True,
+                type="primary",
+            ):
+
+                st.session_state.page = "retry_result"
+
+                st.rerun()
+
+        else:
+
+            if st.button(
+                "Келесі ➡️",
+                use_container_width=True,
+                type="primary",
+            ):
+
+                if (
+                    question_index
+                    < len(subject_questions) - 1
+                ):
+
+                    st.session_state.retry_question_idx += 1
+
+                else:
+
+                    st.session_state.retry_subject_idx += 1
+                    st.session_state.retry_question_idx = 0
+
+                st.rerun()
+
+
+# =========================================================
+# RETRY RESULT
+# =========================================================
+
+def render_retry_result():
+
+    questions_data = (
+        st.session_state.retry_questions
+    )
+
+    answers = (
+        st.session_state.retry_answers
+    )
+
+    total = 0
+    correct = 0
+
+    for subject, subject_questions in questions_data.items():
+
+        for index, question in enumerate(
+            subject_questions
+        ):
+
+            total += 1
+
+            key = f"{subject}_{index}"
+
+            selected = answers.get(
+                key
+            )
+
+            if selected == question.get(
+                "answer",
+                0
+            ):
+
+                correct += 1
+
+    percentage = 0
+
+    if total > 0:
+
+        percentage = round(
+            correct / total * 100,
+            1
+        )
+
+    st.markdown(
+        "## 🔄 Қайта тапсыру нәтижесі"
+    )
+
+    st.markdown(
+        f"""
+        <div class="hero" style="text-align:center;">
+            <div class="score-big">
+                {correct} / {total}
+            </div>
+
+            <div style="font-size:22px;margin-top:10px;">
+                {percentage}%
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    🟢 {correct}
+                </div>
+                <div class="metric-label">
+                    Дұрыс
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     with col2:
 
-        st.metric(
-            "📊 Нәтиже",
-            f"{percentage}%"
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    🔴 {total - correct}
+                </div>
+                <div class="metric-label">
+                    Қате
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    st.progress(
-        percentage / 100
-        if percentage
-        else 0
-    )
+    with col3:
 
-    st.markdown("---")
-
-    st.markdown(
-        "### 📚 Пән бойынша"
-    )
-
-    st.dataframe(
-        retry_subject_results,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    if correct_answers == total_questions:
-
-        st.success(
-            "🔥 Керемет! Қате сұрақтардың "
-            "барлығын дұрыс орындадыңыз!"
-        )
-
-    else:
-
-        st.warning(
-            "💪 Кейбір сұрақтар әлі де қате. "
-            "Негізгі тесттен қайта қарап шығыңыз."
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-number">
+                    {percentage}%
+                </div>
+                <div class="metric-label">
+                    Нәтиже
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     st.info(
-        "ℹ️ Қайта тапсыру нәтижесі негізгі "
-        "140 балдық статистикаға қосылмайды."
+        "ℹ️ Қайта тапсыру нәтижесі негізгі 140 балдық статистикаға қосылмайды."
     )
 
     if st.button(
-        "🏠 Басты бетке қайту",
-        type="primary",
+        "🏠 Басты бетке",
         use_container_width=True,
-        key="retry_home"
     ):
 
-        clear_test_progress(
-            st.session_state.username
-        )
-
-        st.session_state.test_started = False
+        st.session_state.page = "home"
 
         st.session_state.retry_mode = False
-
-        st.session_state.current_subject_index = 0
-
-        st.session_state.current_question_index = 0
-
-        st.session_state.test_answers = {}
-
-        st.session_state.shuffled_test_data = {}
-
-        st.session_state.retry_data = {}
+        st.session_state.retry_questions = {}
+        st.session_state.retry_answers = {}
 
         st.rerun()
 
 
 # =========================================================
-# 24. MAIN
+# MAIN
 # =========================================================
 
-def main():
+if not st.session_state.logged_in:
 
-    if not st.session_state.logged_in:
+    login_page()
 
-        login_page()
+else:
 
-    else:
+    if st.session_state.role == "admin":
 
-        role = (
-            st.session_state.role
-        )
+        admin_page()
 
-        if role == "admin":
+    elif st.session_state.role == "moderator":
 
-            admin_page()
-
-        elif role == "moderator":
-
+        if st.session_state.page == "home":
+            moderator_page()
+        else:
             moderator_page()
 
-        elif role == "user":
+    elif st.session_state.role == "user":
 
-            user_page()
+        if st.session_state.page == "retry_test":
+
+            render_retry_test()
 
         else:
 
-            logout()
+            user_page()
 
+    else:
 
-# =========================================================
-# 25. START
-# =========================================================
-
-if __name__ == "__main__":
-
-    main()
+        st.error(
+            "Белгісіз қолданушы рөлі."
+        )
