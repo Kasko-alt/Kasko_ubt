@@ -202,6 +202,10 @@ users = load_users()
 
 
 def find_user(username, password):
+    username = (username or "").strip()
+    if not username or not password:
+        return None
+
     hashed_input = hash_password(password)
     for user in users:
         stored = user.get("password")
@@ -355,6 +359,8 @@ def logout():
     st.session_state.current_question_index = 0
     st.session_state.test_answers = {}
     st.session_state.shuffled_test_data = {}
+    st.session_state.current_subject_results = []
+    st.session_state.result_saved = False
     st.rerun()
 
 
@@ -507,6 +513,11 @@ def parse_bulk_questions(raw_text):
 
 
 def moderator_page():
+    # Қауіпсіздік: модератор панеліне тек moderator/admin кіре алады.
+    if not st.session_state.get("logged_in") or st.session_state.get("role") not in ("moderator", "admin"):
+        st.error("⛔ Бұл бөлімге кіруге рұқсатыңыз жоқ.")
+        st.stop()
+
     col1, col2 = st.columns([6, 1])
     with col1:
         st.markdown(
@@ -614,6 +625,11 @@ def moderator_page():
 # 9. ӘКІМШІ (ADMIN) ПАНЕЛІ
 # =========================================================
 def admin_page():
+    # Қауіпсіздік: админ панеліне тек admin рөлі кіре алады.
+    if not st.session_state.get("logged_in") or st.session_state.get("role") != "admin":
+        st.error("⛔ Администратор бөліміне кіруге рұқсатыңыз жоқ.")
+        st.stop()
+
     global users
     col1, col2 = st.columns([6, 1])
     with col1:
@@ -714,7 +730,7 @@ def admin_page():
                                 st.success(f"@{u_username} логині сәтті жойылды!")
                                 st.rerun()
                         else:
-                            st.caption("Басты админ")
+                            st.caption("🔒 Басты админ — жоюға болмайды.")
                 st.markdown("---")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -724,7 +740,9 @@ def admin_page():
         new_u = st.text_input("Логин:")
         new_p = st.text_input("Құпия сөз:", type="password")
         new_n = st.text_input("Толық аты-жөні:")
-        new_r = st.selectbox("Ролі:", ["user", "moderator", "admin"])
+        # Қосымша admin аккаунтын тек кодтағы қорғалған негізгі аккаунт басқарады.
+        # Панельден жаңа admin жасауға әдейі рұқсат берілмейді.
+        new_r = st.selectbox("Рөлі:", ["user", "moderator"])
 
         new_combination = None
         if new_r == "user":
@@ -1212,8 +1230,11 @@ def main():
             admin_page()
         elif role == "moderator":
             moderator_page()
-        else:
+        elif role == "user":
             user_page()
+        else:
+            # Белгісіз/бұзылған рөл болса, жүйеге қайта кіргіземіз.
+            logout()
 
 
 if __name__ == "__main__":
