@@ -30,7 +30,10 @@ USERS_FILE = "users.json"
 TEST_PROGRESS_FILE = "test_progress.json"
 
 ADMIN_USERNAME = "kas01"
-ADMIN_PASSWORD = os.environ.get("KASYM_ADMIN_PASSWORD", "CHANGE_ME")
+ADMIN_PASSWORD = os.environ.get(
+    "KASYM_ADMIN_PASSWORD",
+    "CHANGE_ME"
+)
 
 
 # =========================================================
@@ -81,7 +84,7 @@ QUESTION_LIMITS = {
 POINT_LIMITS = {
     "Қазақстан тарихы": 20,
     "Оқу сауаттылығы": 10,
-    "Математикалық сауаттылық": 10,
+    "Математикалық сауаттылығы": 10,
 
     "Биология": 50,
     "Химия": 50,
@@ -93,6 +96,10 @@ POINT_LIMITS = {
     "География": 50,
     "Құқық": 50,
 }
+
+# Correct key for math literacy
+POINT_LIMITS["Математикалық сауаттылығы"] = 10
+POINT_LIMITS["Математикалық сауаттылық"] = 10
 
 
 # =========================================================
@@ -227,7 +234,11 @@ def default_users():
 
 def save_users(users_list):
     try:
-        with open(USERS_FILE, "w", encoding="utf-8") as file:
+        with open(
+            USERS_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
             json.dump(
                 users_list,
                 file,
@@ -241,17 +252,29 @@ def save_users(users_list):
 
 
 def load_users():
+
     if os.path.exists(USERS_FILE):
+
         try:
-            with open(USERS_FILE, "r", encoding="utf-8") as file:
+
+            with open(
+                USERS_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
                 data = json.load(file)
 
             if isinstance(data, list) and data:
+
                 admin_found = False
 
                 for user in data:
+
                     if user.get("username") == ADMIN_USERNAME:
+
                         user["role"] = "admin"
+
                         admin_found = True
 
                 if admin_found:
@@ -260,7 +283,9 @@ def load_users():
                 data.append(
                     {
                         "username": ADMIN_USERNAME,
-                        "password": hash_password(ADMIN_PASSWORD),
+                        "password": hash_password(
+                            ADMIN_PASSWORD
+                        ),
                         "name": "KASYM",
                         "role": "admin",
                         "combination": None,
@@ -268,12 +293,14 @@ def load_users():
                 )
 
                 save_users(data)
+
                 return data
 
         except Exception:
             pass
 
     data = default_users()
+
     save_users(data)
 
     return data
@@ -283,6 +310,7 @@ users = load_users()
 
 
 def find_user(username, password):
+
     username = (username or "").strip()
     password = password or ""
 
@@ -292,6 +320,7 @@ def find_user(username, password):
     hashed_input = hash_password(password)
 
     for user in users:
+
         if user.get("username") != username:
             continue
 
@@ -314,32 +343,41 @@ def find_user(username, password):
 # =========================================================
 
 def save_questions(data):
+
     try:
+
         with open(
             QUESTIONS_FILE,
             "w",
             encoding="utf-8"
         ) as file:
+
             json.dump(
                 data,
                 file,
                 ensure_ascii=False,
                 indent=4
             )
+
     except Exception as error:
+
         st.error(
             f"Сұрақтарды сақтау кезінде қате: {error}"
         )
 
 
 def load_questions():
+
     if os.path.exists(QUESTIONS_FILE):
+
         try:
+
             with open(
                 QUESTIONS_FILE,
                 "r",
                 encoding="utf-8"
             ) as file:
+
                 data = json.load(file)
 
             if isinstance(data, dict):
@@ -349,6 +387,7 @@ def load_questions():
             pass
 
     data = default_questions.copy()
+
     save_questions(data)
 
     return data
@@ -362,13 +401,17 @@ questions = load_questions()
 # =========================================================
 
 def load_results():
+
     if os.path.exists(RESULTS_FILE):
+
         try:
+
             with open(
                 RESULTS_FILE,
                 "r",
                 encoding="utf-8"
             ) as file:
+
                 data = json.load(file)
 
             if isinstance(data, list):
@@ -381,19 +424,24 @@ def load_results():
 
 
 def save_results(data):
+
     try:
+
         with open(
             RESULTS_FILE,
             "w",
             encoding="utf-8"
         ) as file:
+
             json.dump(
                 data,
                 file,
                 ensure_ascii=False,
                 indent=4
             )
+
     except Exception as error:
+
         st.error(
             f"Нәтижені сақтау кезінде қате: {error}"
         )
@@ -407,13 +455,17 @@ results_history = load_results()
 # =========================================================
 
 def load_test_progress():
+
     if os.path.exists(TEST_PROGRESS_FILE):
+
         try:
+
             with open(
                 TEST_PROGRESS_FILE,
                 "r",
                 encoding="utf-8"
             ) as file:
+
                 data = json.load(file)
 
             if isinstance(data, dict):
@@ -426,32 +478,45 @@ def load_test_progress():
 
 
 def save_test_progress():
+
     try:
+
         if not st.session_state.get("test_started"):
             return
 
         data = {
-            "username": st.session_state.get("username"),
-            "full_name": st.session_state.get("full_name"),
+            "username": st.session_state.get(
+                "username"
+            ),
+
+            "full_name": st.session_state.get(
+                "full_name"
+            ),
+
             "active_combination": st.session_state.get(
                 "active_combination"
             ),
+
             "current_subject_idx": st.session_state.get(
                 "current_subject_idx",
                 0
             ),
+
             "current_question_idx": st.session_state.get(
                 "current_question_idx",
                 0
             ),
+
             "test_answers": st.session_state.get(
                 "test_answers",
                 {}
             ),
+
             "test_data": st.session_state.get(
                 "test_data",
                 {}
             ),
+
             "started_at": st.session_state.get(
                 "started_at"
             ),
@@ -462,6 +527,7 @@ def save_test_progress():
             "w",
             encoding="utf-8"
         ) as file:
+
             json.dump(
                 data,
                 file,
@@ -474,9 +540,12 @@ def save_test_progress():
 
 
 def clear_test_progress():
+
     try:
+
         if os.path.exists(TEST_PROGRESS_FILE):
             os.remove(TEST_PROGRESS_FILE)
+
     except Exception:
         pass
 
@@ -486,225 +555,917 @@ def clear_test_progress():
 # =========================================================
 
 session_defaults = {
+
     "logged_in": False,
+
     "role": None,
+
     "username": None,
+
     "full_name": None,
 
     "page": "home",
 
     "test_started": False,
+
     "active_combination": None,
 
     "current_subject_idx": 0,
+
     "current_question_idx": 0,
 
     "test_answers": {},
+
     "test_data": {},
 
     "started_at": None,
 
+    "saved_result_id": None,
+
     "pending_delete_question": None,
+
     "pending_user_delete": None,
 
     "retry_mode": False,
+
     "retry_questions": {},
+
     "retry_answers": {},
+
+    "retry_subject_idx": 0,
+
+    "retry_question_idx": 0,
 }
 
 
 for key, value in session_defaults.items():
+
     if key not in st.session_state:
+
         st.session_state[key] = value
 
 
 # =========================================================
-# CSS
+# PREMIUM DARK BLUE CSS
 # =========================================================
 
 st.markdown(
     """
 <style>
 
+/* ===================================================== */
+/* GLOBAL */
+/* ===================================================== */
+
 .stApp {
+
     background:
         radial-gradient(
-            circle at top left,
-            #172554 0%,
-            #0B0F19 35%,
-            #080B12 100%
-        );
-    color: white;
+            circle at 10% 0%,
+            rgba(37, 99, 235, 0.16),
+            transparent 28%
+        ),
+
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(124, 58, 237, 0.12),
+            transparent 25%
+        ),
+
+        #070A12;
+
+    color: #F8FAFC;
 }
+
 
 .block-container {
-    max-width: 1400px;
+
+    max-width: 1450px;
+
     padding-top: 2rem;
-    padding-bottom: 3rem;
+
+    padding-bottom: 4rem;
 }
 
-h1, h2, h3 {
-    color: white !important;
+
+/* ===================================================== */
+/* TEXT */
+/* ===================================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+
+    color: #F8FAFC !important;
 }
+
+
+p,
+span,
+label {
+
+    color: #CBD5E1;
+}
+
 
 .kasym-title {
-    font-size: 44px;
+
+    font-size: 46px;
+
     font-weight: 900;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
+
+    letter-spacing: -1.5px;
+
+    color: #F8FAFC;
 }
+
 
 .kasym-subtitle {
-    font-size: 18px;
-    color: #9CA3AF;
-    margin-bottom: 25px;
+
+    font-size: 16px;
+
+    color: #94A3B8;
+
+    margin-top: -5px;
 }
+
+
+/* ===================================================== */
+/* HERO */
+/* ===================================================== */
 
 .hero {
-    padding: 35px;
-    border-radius: 24px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    padding: 34px;
+
+    border-radius: 26px;
+
     background:
+
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(56,189,248,0.18),
+            transparent 28%
+        ),
+
         linear-gradient(
             135deg,
-            rgba(37,99,235,0.22),
-            rgba(15,23,42,0.92)
+            rgba(37,99,235,0.28),
+            rgba(15,23,42,0.94)
         );
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    margin-bottom: 25px;
+
+    border: 1px solid rgba(
+        96,
+        165,
+        250,
+        0.20
+    );
+
+    box-shadow:
+
+        0 25px 80px rgba(0,0,0,0.35),
+
+        inset 0 1px 0 rgba(
+            255,
+            255,
+            255,
+            0.04
+        );
+
+    margin: 20px 0 25px 0;
 }
+
+
+.hero::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 220px;
+
+    height: 220px;
+
+    right: -80px;
+
+    top: -100px;
+
+    background: rgba(
+        37,
+        99,
+        235,
+        0.20
+    );
+
+    filter: blur(60px);
+
+    border-radius: 50%;
+}
+
+
+.hero h2 {
+
+    font-size: 28px;
+
+    font-weight: 850;
+
+    margin-bottom: 10px;
+}
+
+
+.hero p {
+
+    color: #A8B4C7;
+}
+
+
+/* ===================================================== */
+/* CARDS */
+/* ===================================================== */
 
 .card {
-    background: rgba(15,23,42,0.82);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 18px;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.2);
-}
 
-.resume-card {
     background:
+
         linear-gradient(
-            135deg,
-            rgba(16,185,129,0.18),
-            rgba(15,23,42,0.92)
+            145deg,
+            rgba(17,24,39,0.92),
+            rgba(10,15,27,0.92)
         );
-    border: 1px solid rgba(16,185,129,0.35);
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.10
+    );
+
     border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 22px;
+
+    padding: 23px;
+
+    margin-bottom: 18px;
+
+    box-shadow:
+
+        0 12px 40px rgba(
+            0,
+            0,
+            0,
+            0.22
+        ),
+
+        inset 0 1px 0 rgba(
+            255,
+            255,
+            255,
+            0.025
+        );
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.score-big {
-    font-size: 64px;
-    font-weight: 900;
-    line-height: 1;
+
+.card:hover {
+
+    transform: translateY(-3px);
+
+    border-color:
+        rgba(59,130,246,0.30);
+
+    box-shadow:
+
+        0 18px 45px rgba(
+            0,
+            0,
+            0,
+            0.32
+        ),
+
+        0 0 25px rgba(
+            37,
+            99,
+            235,
+            0.07
+        );
 }
+
+
+/* ===================================================== */
+/* METRIC */
+/* ===================================================== */
 
 .metric-box {
-    background: rgba(15,23,42,0.8);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px;
-    padding: 20px;
+
+    position: relative;
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.95),
+            rgba(11,16,28,0.95)
+        );
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.10
+    );
+
+    border-radius: 20px;
+
+    padding: 24px;
+
     text-align: center;
+
+    min-height: 120px;
+
+    box-shadow:
+        0 10px 35px rgba(
+            0,
+            0,
+            0,
+            0.20
+        );
 }
+
 
 .metric-number {
+
     font-size: 32px;
-    font-weight: 800;
+
+    font-weight: 900;
+
+    color: #F8FAFC;
 }
+
 
 .metric-label {
-    color: #94A3B8;
-    font-size: 14px;
+
+    margin-top: 6px;
+
+    color: #64748B;
+
+    font-size: 13px;
+
+    font-weight: 600;
 }
+
+
+/* ===================================================== */
+/* QUESTION */
+/* ===================================================== */
 
 .question-box {
-    background: rgba(15,23,42,0.9);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 20px;
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.97),
+            rgba(9,14,25,0.97)
+        );
+
+    border: 1px solid rgba(
+        96,
+        165,
+        250,
+        0.14
+    );
+
+    border-radius: 24px;
+
+    padding: 30px;
+
+    margin: 20px 0;
+
+    box-shadow:
+        0 20px 60px rgba(
+            0,
+            0,
+            0,
+            0.30
+        );
 }
+
 
 .question-text {
+
     font-size: 21px;
-    font-weight: 700;
-    line-height: 1.5;
+
+    font-weight: 750;
+
+    line-height: 1.6;
+
+    color: #F8FAFC;
 }
+
+
+/* ===================================================== */
+/* ANSWER STATES */
+/* ===================================================== */
 
 .correct-box {
-    background: rgba(16,185,129,0.12);
-    border: 1px solid rgba(16,185,129,0.4);
-    border-radius: 14px;
-    padding: 15px;
-    margin-top: 10px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(34,197,94,0.12),
+            rgba(15,23,42,0.80)
+        );
+
+    border: 1px solid rgba(
+        34,
+        197,
+        94,
+        0.30
+    );
+
+    border-radius: 16px;
+
+    padding: 17px;
+
+    margin-top: 12px;
 }
+
 
 .wrong-box {
-    background: rgba(239,68,68,0.12);
-    border: 1px solid rgba(239,68,68,0.4);
-    border-radius: 14px;
-    padding: 15px;
-    margin-top: 10px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(239,68,68,0.12),
+            rgba(15,23,42,0.80)
+        );
+
+    border: 1px solid rgba(
+        239,
+        68,
+        68,
+        0.30
+    );
+
+    border-radius: 16px;
+
+    padding: 17px;
+
+    margin-top: 12px;
 }
+
 
 .unanswered-box {
-    background: rgba(148,163,184,0.1);
-    border: 1px solid rgba(148,163,184,0.25);
-    border-radius: 14px;
-    padding: 15px;
-    margin-top: 10px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(100,116,139,0.10),
+            rgba(15,23,42,0.80)
+        );
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.18
+    );
+
+    border-radius: 16px;
+
+    padding: 17px;
+
+    margin-top: 12px;
 }
+
+
+/* ===================================================== */
+/* RESUME */
+/* ===================================================== */
+
+.resume-card {
+
+    background:
+
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(34,197,94,0.13),
+            transparent 35%
+        ),
+
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.96),
+            rgba(8,15,25,0.96)
+        );
+
+    border: 1px solid rgba(
+        34,
+        197,
+        94,
+        0.25
+    );
+
+    border-radius: 22px;
+
+    padding: 25px;
+
+    margin: 22px 0;
+}
+
+
+/* ===================================================== */
+/* INFO */
+/* ===================================================== */
 
 .info-box {
+
     padding: 18px;
+
     border-radius: 16px;
-    background: rgba(37,99,235,0.12);
-    border: 1px solid rgba(37,99,235,0.25);
+
+    background:
+        rgba(37,99,235,0.10);
+
+    border: 1px solid rgba(
+        59,
+        130,
+        246,
+        0.22
+    );
+
     margin-bottom: 15px;
 }
+
 
 .warning-box {
+
     padding: 18px;
+
     border-radius: 16px;
-    background: rgba(245,158,11,0.12);
-    border: 1px solid rgba(245,158,11,0.35);
+
+    background:
+        rgba(245,158,11,0.10);
+
+    border: 1px solid rgba(
+        245,
+        158,
+        11,
+        0.25
+    );
+
     margin-bottom: 15px;
 }
 
+
+/* ===================================================== */
+/* BUTTONS */
+/* ===================================================== */
+
 [data-testid="stButton"] button {
-    border-radius: 12px;
-    min-height: 44px;
-    font-weight: 700;
+
+    min-height: 46px;
+
+    border-radius: 13px;
+
+    font-weight: 750;
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.12
+    );
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(30,41,59,0.95),
+            rgba(15,23,42,0.95)
+        );
+
+    color: #E2E8F0;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
 }
+
+
+[data-testid="stButton"] button:hover {
+
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(59,130,246,0.40);
+
+    box-shadow:
+        0 8px 25px rgba(
+            37,
+            99,
+            235,
+            0.15
+        );
+}
+
+
+/* PRIMARY */
+
+[data-testid="stButton"] button[kind="primary"] {
+
+    background:
+
+        linear-gradient(
+            135deg,
+            #2563EB,
+            #1D4ED8
+        );
+
+    color: white;
+
+    border: none;
+
+    box-shadow:
+        0 8px 28px rgba(
+            37,
+            99,
+            235,
+            0.28
+        );
+}
+
+
+[data-testid="stButton"] button[kind="primary"]:hover {
+
+    background:
+
+        linear-gradient(
+            135deg,
+            #3B82F6,
+            #2563EB
+        );
+
+    box-shadow:
+        0 10px 35px rgba(
+            37,
+            99,
+            235,
+            0.40
+        );
+}
+
+
+/* ===================================================== */
+/* INPUTS */
+/* ===================================================== */
 
 [data-testid="stTextInput"] input,
-[data-testid="stNumberInput"] input {
-    border-radius: 12px;
+[data-testid="stNumberInput"] input,
+[data-testid="stTextArea"] textarea {
+
+    background: #0F172A !important;
+
+    border: 1px solid #1E293B !important;
+
+    color: #F8FAFC !important;
+
+    border-radius: 13px !important;
 }
+
+
+[data-testid="stTextInput"] input:focus,
+[data-testid="stNumberInput"] input:focus,
+[data-testid="stTextArea"] textarea:focus {
+
+    border-color: #3B82F6 !important;
+
+    box-shadow:
+        0 0 0 1px #3B82F6,
+        0 0 18px rgba(
+            37,
+            99,
+            235,
+            0.14
+        ) !important;
+}
+
+
+/* ===================================================== */
+/* RADIO */
+/* ===================================================== */
+
+.stRadio > div {
+
+    gap: 10px;
+}
+
 
 .stRadio label {
-    font-size: 16px !important;
+
+    padding: 12px 15px;
+
+    border-radius: 13px;
+
+    background:
+        rgba(15,23,42,0.70);
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.08
+    );
+
+    transition: all 0.18s ease;
 }
 
-.palette-btn {
-    text-align: center;
+
+.stRadio label:hover {
+
+    background:
+        rgba(30,41,59,0.90);
+
+    border-color:
+        rgba(59,130,246,0.30);
 }
+
+
+/* ===================================================== */
+/* TABS */
+/* ===================================================== */
+
+.stTabs [data-baseweb="tab-list"] {
+
+    gap: 8px;
+
+    background: transparent;
+}
+
+
+.stTabs [data-baseweb="tab"] {
+
+    background:
+        rgba(15,23,42,0.70);
+
+    border-radius: 12px;
+
+    padding: 10px 18px;
+
+    color: #94A3B8;
+}
+
+
+.stTabs [aria-selected="true"] {
+
+    background:
+        rgba(37,99,235,0.16);
+
+    color: #60A5FA !important;
+
+    border-bottom:
+        2px solid #3B82F6;
+}
+
+
+/* ===================================================== */
+/* EXPANDER */
+/* ===================================================== */
+
+[data-testid="stExpander"] {
+
+    background:
+        rgba(15,23,42,0.65);
+
+    border: 1px solid rgba(
+        148,
+        163,
+        184,
+        0.10
+    );
+
+    border-radius: 16px;
+}
+
+
+/* ===================================================== */
+/* LOGIN */
+/* ===================================================== */
 
 .login-container {
-    max-width: 480px;
-    margin: 7vh auto;
+
+    max-width: 470px;
+
+    margin: 7vh auto 0 auto;
 }
 
+
 .login-card {
-    background: rgba(15,23,42,0.92);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 25px;
-    padding: 35px;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.45);
+
+    background:
+
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(37,99,235,0.14),
+            transparent 40%
+        ),
+
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.98),
+            rgba(7,11,20,0.98)
+        );
+
+    border: 1px solid rgba(
+        96,
+        165,
+        250,
+        0.16
+    );
+
+    border-radius: 28px;
+
+    padding: 38px;
+
+    box-shadow:
+
+        0 30px 100px rgba(
+            0,
+            0,
+            0,
+            0.55
+        ),
+
+        0 0 50px rgba(
+            37,
+            99,
+            235,
+            0.05
+        );
 }
+
+
+/* ===================================================== */
+/* SCORE */
+/* ===================================================== */
+
+.score-big {
+
+    font-size: 68px;
+
+    font-weight: 950;
+
+    line-height: 1;
+
+    letter-spacing: -3px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            #FFFFFF,
+            #60A5FA
+        );
+
+    -webkit-background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+}
+
+
+/* ===================================================== */
+/* DIVIDER */
+/* ===================================================== */
+
+hr {
+
+    border-color:
+        rgba(
+            148,
+            163,
+            184,
+            0.10
+        ) !important;
+}
+
+
+/* ===================================================== */
+/* MOBILE */
+/* ===================================================== */
 
 @media (max-width: 768px) {
 
@@ -717,25 +1478,51 @@ h1, h2, h3 {
     }
 
     .kasym-subtitle {
-        font-size: 15px;
+        font-size: 14px;
     }
 
-    .hero,
-    .card,
-    .question-box,
-    .login-card {
+    .hero {
+        padding: 22px;
+        border-radius: 20px;
+    }
+
+    .card {
         padding: 18px;
-        border-radius: 16px;
+        border-radius: 17px;
+    }
+
+    .question-box {
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .question-text {
+        font-size: 18px;
+    }
+
+    .metric-box {
+        padding: 17px;
+        min-height: 95px;
+    }
+
+    .metric-number {
+        font-size: 25px;
     }
 
     .score-big {
         font-size: 48px;
     }
 
-    .question-text {
-        font-size: 18px;
+    .login-container {
+        margin-top: 3vh;
+    }
+
+    .login-card {
+        padding: 24px;
+        border-radius: 22px;
     }
 }
+
 
 @media (max-width: 480px) {
 
@@ -744,11 +1531,11 @@ h1, h2, h3 {
     }
 
     .metric-number {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .score-big {
-        font-size: 40px;
+        font-size: 42px;
     }
 }
 
@@ -763,6 +1550,7 @@ h1, h2, h3 {
 # =========================================================
 
 def logout():
+
     if st.session_state.get("test_started"):
         save_test_progress()
 
@@ -786,6 +1574,8 @@ def logout():
     st.session_state.retry_questions = {}
     st.session_state.retry_answers = {}
 
+    st.session_state.saved_result_id = None
+
     st.rerun()
 
 
@@ -798,13 +1588,57 @@ def login_page():
     st.markdown(
         """
         <div class="login-container">
+
             <div class="login-card">
-                <div style="text-align:center;">
-                    <div style="font-size:58px;">🎓</div>
-                    <div class="kasym-title">KASYM EDU</div>
+
+                <div style="
+                    text-align:center;
+                    margin-bottom:25px;
+                ">
+
+                    <div style="
+                        width:80px;
+                        height:80px;
+                        margin:auto;
+                        border-radius:24px;
+
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+
+                        background:
+                            linear-gradient(
+                                135deg,
+                                #2563EB,
+                                #7C3AED
+                            );
+
+                        box-shadow:
+                            0 15px 40px
+                            rgba(
+                                37,
+                                99,
+                                235,
+                                0.30
+                            );
+
+                        font-size:40px;
+                    ">
+                        🎓
+                    </div>
+
+                    <div class="kasym-title"
+                         style="
+                            font-size:38px;
+                            margin-top:18px;
+                         ">
+                        KASYM EDU
+                    </div>
+
                     <div class="kasym-subtitle">
                         Бүгінгі дайындық — ертеңгі грант
                     </div>
+
                 </div>
         """,
         unsafe_allow_html=True,
@@ -837,13 +1671,16 @@ def login_page():
         if user:
 
             st.session_state.logged_in = True
+
             st.session_state.username = user.get(
                 "username"
             )
+
             st.session_state.full_name = user.get(
                 "name",
                 user.get("username")
             )
+
             st.session_state.role = user.get(
                 "role",
                 "user"
@@ -857,6 +1694,7 @@ def login_page():
             st.rerun()
 
         else:
+
             st.error(
                 "❌ Логин немесе құпиясөз дұрыс емес."
             )
@@ -871,10 +1709,11 @@ def login_page():
 
 
 # =========================================================
-# STATISTICS HELPERS
+# STATISTICS
 # =========================================================
 
 def user_results(username):
+
     return [
         result
         for result in results_history
@@ -883,9 +1722,11 @@ def user_results(username):
 
 
 def calculate_user_statistics(username):
+
     history = user_results(username)
 
     if not history:
+
         return {
             "attempts": 0,
             "best": 0,
@@ -893,7 +1734,12 @@ def calculate_user_statistics(username):
         }
 
     scores = [
-        float(result.get("total_score", 0))
+        float(
+            result.get(
+                "total_score",
+                0
+            )
+        )
         for result in history
     ]
 
@@ -920,17 +1766,47 @@ def analytics_page(username):
     )
 
     if not history:
-        st.info(
-            "Әзірге тест нәтижелері жоқ."
+
+        st.markdown(
+            """
+            <div class="card"
+                 style="text-align:center;padding:40px;">
+
+                <div style="
+                    font-size:45px;
+                    margin-bottom:10px;
+                ">
+                    📊
+                </div>
+
+                <h3>
+                    Әзірге нәтиже жоқ
+                </h3>
+
+                <p>
+                    Бірінші тестіңді орындағаннан кейін
+                    аналитика осы жерде пайда болады.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
+
         return
 
     scores = [
-        float(item.get("total_score", 0))
+        float(
+            item.get(
+                "total_score",
+                0
+            )
+        )
         for item in history
     ]
 
     best = max(scores)
+
     average = round(
         sum(scores) / len(scores),
         1
@@ -939,12 +1815,14 @@ def analytics_page(username):
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.markdown(
             f"""
             <div class="metric-box">
                 <div class="metric-number">
                     {len(scores)}
                 </div>
+
                 <div class="metric-label">
                     Тест саны
                 </div>
@@ -954,12 +1832,20 @@ def analytics_page(username):
         )
 
     with col2:
+
         st.markdown(
             f"""
             <div class="metric-box">
                 <div class="metric-number">
                     {best:.0f}
+                    <span style="
+                        font-size:14px;
+                        color:#64748B;
+                    ">
+                        / 140
+                    </span>
                 </div>
+
                 <div class="metric-label">
                     Ең жоғары балл
                 </div>
@@ -969,12 +1855,14 @@ def analytics_page(username):
         )
 
     with col3:
+
         st.markdown(
             f"""
             <div class="metric-box">
                 <div class="metric-number">
                     {average:.1f}
                 </div>
+
                 <div class="metric-label">
                     Орташа балл
                 </div>
@@ -983,7 +1871,9 @@ def analytics_page(username):
             unsafe_allow_html=True,
         )
 
-    st.markdown("### 📈 Тест тарихы")
+    st.markdown(
+        "### 📈 Тест тарихы"
+    )
 
     rows = []
 
@@ -991,6 +1881,7 @@ def analytics_page(username):
         reversed(history),
         start=1
     ):
+
         rows.append(
             {
                 "№": index,
@@ -1014,6 +1905,7 @@ def analytics_page(username):
         )
 
     if rows:
+
         st.dataframe(
             pd.DataFrame(rows),
             use_container_width=True,
@@ -1051,6 +1943,7 @@ def parse_bulk_questions(text):
         question_text = lines[0]
 
         options = []
+
         correct_index = None
 
         for line in lines[1:]:
@@ -1069,24 +1962,43 @@ def parse_bulk_questions(text):
             is_correct = False
 
             if option_text.startswith("*"):
+
                 is_correct = True
-                option_text = option_text[1:].strip()
+
+                option_text = (
+                    option_text[1:].strip()
+                )
 
             if option_text.startswith("(+)"):
+
                 is_correct = True
-                option_text = option_text[3:].strip()
+
+                option_text = (
+                    option_text[3:].strip()
+                )
 
             if "Дұрыс" in option_text:
-                is_correct = True
-                option_text = option_text.replace(
-                    "Дұрыс",
-                    ""
-                ).strip()
 
-            options.append(option_text)
+                is_correct = True
+
+                option_text = (
+                    option_text
+                    .replace(
+                        "Дұрыс",
+                        ""
+                    )
+                    .strip()
+                )
+
+            options.append(
+                option_text
+            )
 
             if is_correct:
-                correct_index = len(options) - 1
+
+                correct_index = (
+                    len(options) - 1
+                )
 
         if len(options) == 4:
 
@@ -1112,7 +2024,9 @@ def parse_excel_questions(uploaded_file):
 
     try:
 
-        df = pd.read_excel(uploaded_file)
+        df = pd.read_excel(
+            uploaded_file
+        )
 
         df.columns = [
             str(column).strip()
@@ -1131,11 +2045,15 @@ def parse_excel_questions(uploaded_file):
         question_column = None
 
         for column in possible_question_columns:
+
             if column in df.columns:
+
                 question_column = column
+
                 break
 
         if question_column is None:
+
             question_column = df.columns[0]
 
         option_columns = []
@@ -1150,17 +2068,21 @@ def parse_excel_questions(uploaded_file):
             "В",
             "Г",
         ]:
+
             if name in df.columns:
+
                 option_columns.append(name)
 
         if len(option_columns) < 4:
 
             if len(df.columns) >= 5:
+
                 option_columns = list(
                     df.columns[1:5]
                 )
 
         if len(option_columns) < 4:
+
             return []
 
         result = []
@@ -1202,24 +2124,28 @@ def parse_excel_questions(uploaded_file):
                     "A",
                     "А",
                 ]:
+
                     correct_index = 0
 
                 elif correct.upper() in [
                     "B",
                     "Б",
                 ]:
+
                     correct_index = 1
 
                 elif correct.upper() in [
                     "C",
                     "В",
                 ]:
+
                     correct_index = 2
 
                 elif correct.upper() in [
                     "D",
                     "Г",
                 ]:
+
                     correct_index = 3
 
                 elif correct.isdigit():
@@ -1227,7 +2153,10 @@ def parse_excel_questions(uploaded_file):
                     number = int(correct)
 
                     if 1 <= number <= 4:
-                        correct_index = number - 1
+
+                        correct_index = (
+                            number - 1
+                        )
 
             result.append(
                 {
@@ -1258,25 +2187,38 @@ def moderator_page():
         not st.session_state.logged_in
         or st.session_state.role != "moderator"
     ):
+
         st.error(
             "Бұл бөлімге кіруге рұқсат жоқ."
         )
+
         return
 
-    col1, col2 = st.columns(
-        [7, 1]
-    )
+    top1, top2 = st.columns([7, 1])
 
-    with col1:
+    with top1:
+
         st.markdown(
-            "## 🧑‍💼 Модератор панелі"
+            """
+            <div class="kasym-title"
+                 style="font-size:36px;">
+                KASYM EDU
+            </div>
+
+            <div class="kasym-subtitle">
+                🧑‍💼 Модератор жұмыс кеңістігі
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with col2:
+    with top2:
+
         if st.button(
-            "Шығу",
+            "↪ Шығу",
             use_container_width=True,
         ):
+
             logout()
 
     tabs = st.tabs(
@@ -1287,11 +2229,15 @@ def moderator_page():
         ]
     )
 
-    # -----------------------------------------------------
-    # ADD QUESTIONS
-    # -----------------------------------------------------
+    # =====================================================
+    # ADD
+    # =====================================================
 
     with tabs[0]:
+
+        st.markdown(
+            "### ➕ Сұрақтар қосу"
+        )
 
         subject = st.selectbox(
             "Пән",
@@ -1301,18 +2247,21 @@ def moderator_page():
 
         st.markdown(
             """
-            ### 📝 Бірден көп сұрақ енгізу
+            <div class="info-box">
 
-            Формат:
+            <b>Формат:</b><br><br>
 
-            1. Сұрақ мәтіні  
-            A. Жауап  
-            B. Жауап  
-            C. *Дұрыс жауап  
-            D. Жауап  
+            1. Сұрақ мәтіні<br>
+            A. Жауап<br>
+            B. Жауап<br>
+            C. *Дұрыс жауап<br>
+            D. Жауап<br><br>
 
-            Әр сұрақтың арасында бос жол болсын.
-            """
+            Әр сұрақтың арасында бос жол қалдырыңыз.
+
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         bulk_text = st.text_area(
@@ -1331,6 +2280,7 @@ def moderator_page():
             )
 
             if not parsed:
+
                 st.warning(
                     "Сұрақтар табылмады. Форматты тексеріңіз."
                 )
@@ -1340,9 +2290,13 @@ def moderator_page():
                 if subject not in questions:
                     questions[subject] = []
 
-                questions[subject].extend(parsed)
+                questions[subject].extend(
+                    parsed
+                )
 
-                save_questions(questions)
+                save_questions(
+                    questions
+                )
 
                 st.success(
                     f"✅ {len(parsed)} сұрақ қосылды!"
@@ -1350,9 +2304,9 @@ def moderator_page():
 
                 st.rerun()
 
-    # -----------------------------------------------------
+    # =====================================================
     # EXCEL
-    # -----------------------------------------------------
+    # =====================================================
 
     with tabs[1]:
 
@@ -1392,6 +2346,7 @@ def moderator_page():
                     parsed[:10],
                     start=1
                 ):
+
                     preview_rows.append(
                         {
                             "№": index,
@@ -1432,9 +2387,9 @@ def moderator_page():
 
                     st.rerun()
 
-    # -----------------------------------------------------
-    # DELETE QUESTIONS
-    # -----------------------------------------------------
+    # =====================================================
+    # DELETE
+    # =====================================================
 
     with tabs[2]:
 
@@ -1455,14 +2410,21 @@ def moderator_page():
 
         if not subject_questions:
 
-            st.info(
-                "Бұл пәнде сұрақ жоқ."
+            st.markdown(
+                """
+                <div class="card"
+                     style="text-align:center;">
+                    Бұл пәнде сұрақ жоқ.
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         else:
 
             question_options = [
-                f"{index + 1}. {item.get('question', '')[:100]}"
+                f"{index + 1}. "
+                f"{item.get('question', '')[:100]}"
                 for index, item in enumerate(
                     subject_questions
                 )
@@ -1474,8 +2436,10 @@ def moderator_page():
                 key="question_to_delete",
             )
 
-            selected_index = question_options.index(
-                selected_question
+            selected_index = (
+                question_options.index(
+                    selected_question
+                )
             )
 
             question = subject_questions[
@@ -1485,7 +2449,20 @@ def moderator_page():
             st.markdown(
                 f"""
                 <div class="question-box">
-                    <b>{question.get('question', '')}</b>
+
+                    <div style="
+                        color:#60A5FA;
+                        font-size:12px;
+                        font-weight:800;
+                        margin-bottom:10px;
+                    ">
+                        СҰРАҚ
+                    </div>
+
+                    <div class="question-text">
+                        {question.get('question', '')}
+                    </div>
+
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1549,7 +2526,6 @@ def moderator_page():
                 if st.button(
                     "🗑️ Жою",
                     key="delete_question_button",
-                    type="secondary",
                 ):
 
                     st.session_state.pending_delete_question = pending_key
@@ -1567,26 +2543,38 @@ def admin_page():
         not st.session_state.logged_in
         or st.session_state.role != "admin"
     ):
+
         st.error(
             "Бұл бөлімге кіруге рұқсат жоқ."
         )
+
         return
 
-    col1, col2 = st.columns(
-        [7, 1]
-    )
+    top1, top2 = st.columns([7, 1])
 
-    with col1:
+    with top1:
+
         st.markdown(
-            "## 👑 Админ панелі"
+            """
+            <div class="kasym-title"
+                 style="font-size:36px;">
+                KASYM EDU
+            </div>
+
+            <div class="kasym-subtitle">
+                👑 Әкімшілік басқару панелі
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with col2:
+    with top2:
 
         if st.button(
-            "Шығу",
+            "↪ Шығу",
             use_container_width=True,
         ):
+
             logout()
 
     tabs = st.tabs(
@@ -1617,8 +2605,10 @@ def admin_page():
 
         else:
 
-            pending_user_delete = st.session_state.get(
-                "pending_user_delete"
+            pending_user_delete = (
+                st.session_state.get(
+                    "pending_user_delete"
+                )
             )
 
             for index, user in enumerate(
@@ -1645,9 +2635,13 @@ def admin_page():
                 )
 
                 role_label = {
+
                     "admin": "👑 Админ",
+
                     "moderator": "🧑‍💼 Модератор",
+
                     "user": "👨‍🎓 Оқушы",
+
                 }.get(
                     u_role,
                     u_role
@@ -1706,7 +2700,10 @@ def admin_page():
                             f"delete_user_{u_username}"
                         )
 
-                        if pending_user_delete == u_username:
+                        if (
+                            pending_user_delete
+                            == u_username
+                        ):
 
                             st.warning(
                                 "Өшіру?"
@@ -1828,19 +2825,24 @@ def admin_page():
             type="primary",
         ):
 
-            username_clean = new_username.strip()
+            username_clean = (
+                new_username.strip()
+            )
 
             if not new_name.strip():
+
                 st.warning(
                     "Аты-жөнін енгізіңіз."
                 )
 
             elif not username_clean:
+
                 st.warning(
                     "Логин енгізіңіз."
                 )
 
             elif not new_password:
+
                 st.warning(
                     "Құпиясөз енгізіңіз."
                 )
@@ -1850,6 +2852,7 @@ def admin_page():
                 == username_clean
                 for user in users
             ):
+
                 st.error(
                     "Бұл логин бұрыннан бар."
                 )
@@ -1859,11 +2862,15 @@ def admin_page():
                 users.append(
                     {
                         "username": username_clean,
+
                         "password": hash_password(
                             new_password
                         ),
+
                         "name": new_name.strip(),
+
                         "role": new_role,
+
                         "combination": new_combination,
                     }
                 )
@@ -1912,69 +2919,61 @@ def admin_page():
 
         col1, col2, col3, col4 = st.columns(4)
 
-        with col1:
+        stats_data = [
+            (
+                total_users,
+                "👥",
+                "Қолданушы"
+            ),
+            (
+                total_students,
+                "🎓",
+                "Оқушы"
+            ),
+            (
+                total_moderators,
+                "🧑‍💼",
+                "Модератор"
+            ),
+            (
+                total_tests,
+                "📝",
+                "Тест саны"
+            ),
+        ]
 
-            st.markdown(
-                f"""
-                <div class="metric-box">
-                    <div class="metric-number">
-                        {total_users}
-                    </div>
-                    <div class="metric-label">
-                        Қолданушы
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        for column, data in zip(
+            [col1, col2, col3, col4],
+            stats_data
+        ):
 
-        with col2:
+            with column:
 
-            st.markdown(
-                f"""
-                <div class="metric-box">
-                    <div class="metric-number">
-                        {total_students}
-                    </div>
-                    <div class="metric-label">
-                        Оқушы
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                number, icon, label = data
 
-        with col3:
+                st.markdown(
+                    f"""
+                    <div class="metric-box">
 
-            st.markdown(
-                f"""
-                <div class="metric-box">
-                    <div class="metric-number">
-                        {total_moderators}
-                    </div>
-                    <div class="metric-label">
-                        Модератор
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                        <div style="
+                            font-size:23px;
+                            margin-bottom:6px;
+                        ">
+                            {icon}
+                        </div>
 
-        with col4:
+                        <div class="metric-number">
+                            {number}
+                        </div>
 
-            st.markdown(
-                f"""
-                <div class="metric-box">
-                    <div class="metric-number">
-                        {total_tests}
+                        <div class="metric-label">
+                            {label}
+                        </div>
+
                     </div>
-                    <div class="metric-label">
-                        Тест саны
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
 
         st.markdown(
             "### 👥 Қолданушылар"
@@ -1984,8 +2983,10 @@ def admin_page():
 
         for user in users:
 
-            user_stats = calculate_user_statistics(
-                user.get("username")
+            user_stats = (
+                calculate_user_statistics(
+                    user.get("username")
+                )
             )
 
             user_rows.append(
@@ -1994,20 +2995,25 @@ def admin_page():
                         "name",
                         "-"
                     ),
+
                     "Логин": user.get(
                         "username",
                         "-"
                     ),
+
                     "Рөл": user.get(
                         "role",
                         "-"
                     ),
+
                     "Тест саны": user_stats[
                         "attempts"
                     ],
+
                     "Үздік балл": user_stats[
                         "best"
                     ],
+
                     "Орташа": user_stats[
                         "average"
                     ],
@@ -2051,7 +3057,9 @@ def prepare_test_data(combination_name):
         )
 
         if not source_questions:
+
             test_data[subject] = []
+
             continue
 
         limit = QUESTION_LIMITS.get(
@@ -2099,7 +3107,9 @@ def prepare_test_data(combination_name):
                 old_index = pair[0]
 
                 if old_index == correct:
+
                     new_correct = new_index
+
                     break
 
             prepared.append(
@@ -2108,7 +3118,9 @@ def prepare_test_data(combination_name):
                         "question",
                         ""
                     ),
+
                     "options": new_options,
+
                     "answer": new_correct,
                 }
             )
@@ -2131,6 +3143,7 @@ def start_test(combination_name):
     )
 
     st.session_state.current_subject_idx = 0
+
     st.session_state.current_question_idx = 0
 
     st.session_state.test_answers = {}
@@ -2146,6 +3159,8 @@ def start_test(combination_name):
     )
 
     st.session_state.retry_mode = False
+
+    st.session_state.saved_result_id = None
 
     save_test_progress()
 
@@ -2185,7 +3200,7 @@ def user_page():
     username = st.session_state.username
 
     # =====================================================
-    # TEST SCREEN
+    # TEST
     # =====================================================
 
     if st.session_state.test_started:
@@ -2224,27 +3239,61 @@ def user_page():
 
         if st.button(
             "⬅️ Басты бетке",
+            use_container_width=True,
         ):
+
             st.session_state.page = "home"
+
             st.rerun()
 
         return
 
     # =====================================================
-    # HOME
+    # FIND USER
     # =====================================================
 
-    col1, col2 = st.columns(
-        [7, 1]
+    current_user = None
+
+    for user in users:
+
+        if user.get("username") == username:
+
+            current_user = user
+
+            break
+
+    if not current_user:
+
+        st.error(
+            "Қолданушы табылмады."
+        )
+
+        return
+
+    assigned_combination = current_user.get(
+        "combination"
     )
 
-    with col1:
+    # =====================================================
+    # TOP BAR
+    # =====================================================
+
+    top1, top2 = st.columns([7, 1])
+
+    with top1:
 
         st.markdown(
-            f"""
+            """
             <div class="kasym-title">
-                KASYM EDU 🎓
+                KASYM EDU
+                <span style="
+                    font-size:34px;
+                    color:#3B82F6;
+                ">
+                    ✦
+                </span>
             </div>
+
             <div class="kasym-subtitle">
                 Бүгінгі дайындық — ертеңгі грант
             </div>
@@ -2252,17 +3301,52 @@ def user_page():
             unsafe_allow_html=True,
         )
 
-        st.markdown(
-            f"### Сәлем, {st.session_state.full_name}! 👋"
-        )
-
-    with col2:
+    with top2:
 
         if st.button(
-            "Шығу",
+            "↪ Шығу",
             use_container_width=True,
         ):
+
             logout()
+
+    # =====================================================
+    # GREETING
+    # =====================================================
+
+    st.markdown(
+        f"""
+        <div class="hero">
+
+            <div style="
+                color:#60A5FA;
+                font-size:13px;
+                font-weight:800;
+                margin-bottom:8px;
+            ">
+                ОҚУШЫ КАБИНЕТІ
+            </div>
+
+            <h2 style="
+                font-size:34px;
+                margin-bottom:8px;
+            ">
+                Сәлем, {st.session_state.full_name}! 👋
+            </h2>
+
+            <p style="
+                font-size:16px;
+                max-width:700px;
+            ">
+                Бүгінгі тестіңді орындап,
+                өз нәтижеңді жақсарта бер.
+                Әрбір дұрыс жауап — грантқа тағы бір қадам.
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # =====================================================
     # RESUME
@@ -2272,19 +3356,34 @@ def user_page():
 
     if (
         progress
-        and progress.get("username")
-        == username
+        and progress.get("username") == username
         and progress.get("active_combination")
     ):
 
         st.markdown(
-            """
+            f"""
             <div class="resume-card">
-                <h3>🔄 Аяқталмаған тест бар</h3>
+
+                <div style="
+                    color:#4ADE80;
+                    font-size:12px;
+                    font-weight:850;
+                    margin-bottom:7px;
+                ">
+                    ● САҚТАЛҒАН ТЕСТ
+                </div>
+
+                <h3 style="margin:0;">
+                    🔄 Аяқталмаған тест бар
+                </h3>
+
                 <p>
-                    Алдыңғы тестіңіз автоматты түрде сақталған.
-                    Жалғастыра аласыз.
+                    <b>
+                        {progress.get("active_combination")}
+                    </b>
+                    бағыты бойынша тест сақталған.
                 </p>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -2342,12 +3441,14 @@ def user_page():
                     )
                 )
 
+                st.session_state.saved_result_id = None
+
                 st.rerun()
 
         with c2:
 
             if st.button(
-                "🗑️ Аяқталмаған тестті өшіру",
+                "🗑️ Тестті өшіру",
                 use_container_width=True,
             ):
 
@@ -2360,7 +3461,7 @@ def user_page():
                 st.rerun()
 
     # =====================================================
-    # CABINET
+    # STATISTICS
     # =====================================================
 
     stats = calculate_user_statistics(
@@ -2368,7 +3469,7 @@ def user_page():
     )
 
     st.markdown(
-        "## 👤 Жеке кабинет"
+        "### 📊 Сенің көрсеткіштерің"
     )
 
     col1, col2, col3 = st.columns(3)
@@ -2378,12 +3479,22 @@ def user_page():
         st.markdown(
             f"""
             <div class="metric-box">
+
+                <div style="
+                    font-size:22px;
+                    margin-bottom:8px;
+                ">
+                    📝
+                </div>
+
                 <div class="metric-number">
                     {stats["attempts"]}
                 </div>
+
                 <div class="metric-label">
-                    Тест саны
+                    Орындалған тест
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -2394,12 +3505,28 @@ def user_page():
         st.markdown(
             f"""
             <div class="metric-box">
+
+                <div style="
+                    font-size:22px;
+                    margin-bottom:8px;
+                ">
+                    🏆
+                </div>
+
                 <div class="metric-number">
                     {stats["best"]:.0f}
+                    <span style="
+                        font-size:15px;
+                        color:#64748B;
+                    ">
+                        / 140
+                    </span>
                 </div>
+
                 <div class="metric-label">
-                    Үздік нәтиже / 140
+                    Ең жоғары нәтиже
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -2410,49 +3537,42 @@ def user_page():
         st.markdown(
             f"""
             <div class="metric-box">
+
+                <div style="
+                    font-size:22px;
+                    margin-bottom:8px;
+                ">
+                    📈
+                </div>
+
                 <div class="metric-number">
                     {stats["average"]:.1f}
                 </div>
+
                 <div class="metric-label">
                     Орташа балл
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
         )
 
     if st.button(
-        "📊 Менің аналитикам",
+        "📊 Толық аналитиканы ашу",
         use_container_width=True,
     ):
 
         st.session_state.page = "analytics"
+
         st.rerun()
 
     # =====================================================
-    # NEW TEST
+    # DIRECTION
     # =====================================================
 
-    current_user = None
-
-    for user in users:
-
-        if user.get("username") == username:
-            current_user = user
-            break
-
-    if not current_user:
-        st.error(
-            "Қолданушы табылмады."
-        )
-        return
-
-    assigned_combination = current_user.get(
-        "combination"
-    )
-
     st.markdown(
-        "## 📝 Жаңа тест"
+        "### 🎯 Менің ҰБТ бағытым"
     )
 
     if not assigned_combination:
@@ -2463,74 +3583,177 @@ def user_page():
 
         return
 
+    combination_info = combinations.get(
+        assigned_combination
+    )
+
     st.markdown(
         f"""
         <div class="hero">
-            <h2>🎯 {assigned_combination}</h2>
+
+            <div style="
+                color:#60A5FA;
+                font-size:12px;
+                font-weight:850;
+                margin-bottom:10px;
+            ">
+                СІЗГЕ БЕКІТІЛГЕН БАҒЫТ
+            </div>
+
+            <h2>
+                🎯 {assigned_combination}
+            </h2>
+
             <p>
-                Бұл бағытта Қазақстан тарихы,
-                Оқу сауаттылығы,
-                Математикалық сауаттылық және
-                екі бейіндік пән бар.
+                Бұл бағыт бойынша барлық негізгі және
+                бейіндік пәндер бір тесттің ішінде беріледі.
             </p>
-            <p>
-                <b>Жалпы максимум: 140 балл</b>
-            </p>
+
+            <div style="
+                display:inline-block;
+                margin-top:8px;
+                padding:9px 15px;
+                border-radius:12px;
+                background:rgba(37,99,235,0.16);
+                border:1px solid rgba(59,130,246,0.20);
+                color:#93C5FD;
+                font-weight:800;
+            ">
+                Максимум — 140 балл
+            </div>
+
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    combination_info = combinations.get(
-        assigned_combination
-    )
+    # =====================================================
+    # SUBJECTS
+    # =====================================================
 
     if combination_info:
-
-        st.markdown(
-            "### 📚 Пәндер"
-        )
 
         subjects = (
             combination_info["common"]
             + combination_info["pair"]
         )
 
-        cols = st.columns(
-            len(subjects)
+        st.markdown(
+            "### 📚 Тест пәндері"
         )
+
+        cols = st.columns(3)
 
         for index, subject in enumerate(
             subjects
         ):
 
-            with cols[index]:
+            with cols[
+                index % 3
+            ]:
+
+                is_common = (
+                    subject
+                    in combination_info["common"]
+                )
+
+                badge = (
+                    "ЖАЛПЫ ПӘН"
+                    if is_common
+                    else "БЕЙІНДІК ПӘН"
+                )
+
+                badge_color = (
+                    "#60A5FA"
+                    if is_common
+                    else "#A78BFA"
+                )
 
                 st.markdown(
                     f"""
                     <div class="card">
-                        <h4>{subject}</h4>
-                        <p>
-                            {QUESTION_LIMITS.get(subject, 40)}
+
+                        <div style="
+                            color:{badge_color};
+                            font-size:11px;
+                            font-weight:850;
+                            letter-spacing:0.8px;
+                            margin-bottom:10px;
+                        ">
+                            {badge}
+                        </div>
+
+                        <h3 style="
+                            margin-bottom:8px;
+                        ">
+                            {subject}
+                        </h3>
+
+                        <div style="
+                            color:#94A3B8;
+                            font-size:14px;
+                        ">
+                            {QUESTION_LIMITS.get(
+                                subject,
+                                40
+                            )}
                             сұрақ
-                        </p>
-                        <p>
-                            Макс:
-                            {POINT_LIMITS.get(subject, 50)}
+                        </div>
+
+                        <div style="
+                            color:#CBD5E1;
+                            font-size:14px;
+                            margin-top:5px;
+                        ">
+                            Максимум:
+                            <b>
+                                {POINT_LIMITS.get(
+                                    subject,
+                                    50
+                                )}
+                            </b>
                             балл
-                        </p>
+                        </div>
+
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
+    # =====================================================
+    # START
+    # =====================================================
+
+    st.markdown(
+        """
+        <div style="
+            margin-top:15px;
+            margin-bottom:10px;
+        ">
+
+            <h3>
+                🚀 Дайынсың ба?
+            </h3>
+
+            <p style="color:#64748B;">
+                Тестті бастағаннан кейін сұрақтар
+                кездейсоқ ретпен беріледі.
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     if st.button(
-        "🚀 Тестті бастау",
+        "🚀 ҰБТ тестін бастау",
         type="primary",
         use_container_width=True,
     ):
 
         clear_test_progress()
+
+        st.session_state.saved_result_id = None
 
         start_test(
             assigned_combination
@@ -2587,11 +3810,14 @@ def render_test():
         )
 
         if st.button(
-            "⬅️ Басты бетке"
+            "⬅️ Басты бетке",
+            use_container_width=True,
         ):
 
             st.session_state.test_started = False
+
             clear_test_progress()
+
             st.rerun()
 
         return
@@ -2599,6 +3825,7 @@ def render_test():
     if question_index >= len(subject_questions):
 
         question_index = 0
+
         st.session_state.current_question_idx = 0
 
     question = subject_questions[
@@ -2613,22 +3840,36 @@ def render_test():
         f"{subject}_{question_index}"
     )
 
-    current_answer = st.session_state.test_answers.get(
-        answer_key
+    current_answer = (
+        st.session_state.test_answers.get(
+            answer_key
+        )
     )
 
     # =====================================================
     # TOP
     # =====================================================
 
-    col1, col2 = st.columns(
-        [6, 1]
-    )
+    col1, col2 = st.columns([6, 1])
 
     with col1:
 
         st.markdown(
-            f"## 📚 {subject}"
+            f"""
+            <div style="
+                color:#60A5FA;
+                font-size:12px;
+                font-weight:850;
+                letter-spacing:0.8px;
+            ">
+                ҰБТ ТЕСТІ
+            </div>
+
+            <h2 style="margin-top:5px;">
+                📚 {subject}
+            </h2>
+            """,
+            unsafe_allow_html=True,
         )
 
         st.caption(
@@ -2638,7 +3879,7 @@ def render_test():
     with col2:
 
         if st.button(
-            "Шығу",
+            "↪ Шығу",
             use_container_width=True,
         ):
 
@@ -2671,6 +3912,7 @@ def render_test():
             ):
 
                 st.session_state.current_subject_idx = index
+
                 st.session_state.current_question_idx = 0
 
                 save_test_progress()
@@ -2678,7 +3920,7 @@ def render_test():
                 st.rerun()
 
     # =====================================================
-    # QUESTION PALETTE
+    # PALETTE
     # =====================================================
 
     st.markdown(
@@ -2752,9 +3994,20 @@ def render_test():
     st.markdown(
         f"""
         <div class="question-box">
+
+            <div style="
+                color:#60A5FA;
+                font-size:12px;
+                font-weight:850;
+                margin-bottom:12px;
+            ">
+                СҰРАҚ {question_index + 1}
+            </div>
+
             <div class="question-text">
                 {question.get("question", "")}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -2778,6 +4031,9 @@ def render_test():
         options
     ):
 
+        if index >= len(option_labels):
+            break
+
         label = (
             f"{option_labels[index]}. {option}"
         )
@@ -2794,17 +4050,23 @@ def render_test():
             0 <= current_answer
             < len(radio_options)
         ):
+
             selected_index = current_answer
 
     radio_value = 0
 
     if selected_index is not None:
+
         radio_value = selected_index
 
     selected_label = st.radio(
         "Жауапты таңдаңыз:",
         radio_options,
-        index=radio_value if current_answer is not None else None,
+        index=(
+            radio_value
+            if current_answer is not None
+            else None
+        ),
         key=f"answer_radio_{subject}_{question_index}",
     )
 
@@ -2812,8 +4074,10 @@ def render_test():
 
         try:
 
-            selected_index = radio_options.index(
-                selected_label
+            selected_index = (
+                radio_options.index(
+                    selected_label
+                )
             )
 
             st.session_state.test_answers[
@@ -2823,6 +4087,7 @@ def render_test():
             save_test_progress()
 
         except ValueError:
+
             pass
 
     # =====================================================
@@ -2890,14 +4155,36 @@ def render_test():
             for sub in subjects
         )
 
+        percentage = 0
+
+        if total_all > 0:
+
+            percentage = round(
+                answered / total_all * 100
+            )
+
         st.markdown(
             f"""
             <div style="
                 text-align:center;
-                padding:10px;
-                font-weight:700;
+                padding:7px;
             ">
-                {answered} / {total_all} жауап
+
+                <div style="
+                    font-size:20px;
+                    font-weight:850;
+                    color:#F8FAFC;
+                ">
+                    {answered} / {total_all}
+                </div>
+
+                <div style="
+                    font-size:11px;
+                    color:#64748B;
+                ">
+                    жауап берілді · {percentage}%
+                </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -2930,13 +4217,17 @@ def render_test():
                 type="primary",
             ):
 
-                if question_index < total_questions - 1:
+                if (
+                    question_index
+                    < total_questions - 1
+                ):
 
                     st.session_state.current_question_idx += 1
 
                 else:
 
                     st.session_state.current_subject_idx += 1
+
                     st.session_state.current_question_idx = 0
 
                 save_test_progress()
@@ -2945,7 +4236,7 @@ def render_test():
 
 
 # =========================================================
-# FINISH TEST
+# FINISH
 # =========================================================
 
 def finish_test():
@@ -2960,7 +4251,7 @@ def finish_test():
 
 
 # =========================================================
-# RESULT
+# CALCULATE RESULTS
 # =========================================================
 
 def calculate_results():
@@ -2970,10 +4261,13 @@ def calculate_results():
     subject_results = {}
 
     total_score = 0
+
     total_possible = 0
 
     total_correct = 0
+
     total_wrong = 0
+
     total_unanswered = 0
 
     for subject in subjects:
@@ -2986,10 +4280,14 @@ def calculate_results():
         )
 
         correct = 0
+
         wrong = 0
+
         unanswered = 0
 
-        answers = st.session_state.test_answers
+        answers = (
+            st.session_state.test_answers
+        )
 
         for index, question in enumerate(
             subject_questions
@@ -3051,19 +4349,28 @@ def calculate_results():
                 score = 0
 
         subject_results[subject] = {
+
             "correct": correct,
+
             "wrong": wrong,
+
             "unanswered": unanswered,
+
             "total": total_questions,
+
             "score": score,
+
             "max_score": max_points,
         }
 
         total_score += score
+
         total_possible += max_points
 
         total_correct += correct
+
         total_wrong += wrong
+
         total_unanswered += unanswered
 
     percentage = 0
@@ -3078,15 +4385,22 @@ def calculate_results():
         )
 
     return {
+
         "subject_results": subject_results,
+
         "total_score": round(
             total_score,
             2
         ),
+
         "total_possible": total_possible,
+
         "percentage": percentage,
+
         "total_correct": total_correct,
+
         "total_wrong": total_wrong,
+
         "total_unanswered": total_unanswered,
     }
 
@@ -3099,11 +4413,14 @@ def save_normal_result(result_data):
 
     username = st.session_state.username
 
-    existing_result_id = st.session_state.get(
-        "saved_result_id"
+    existing_result_id = (
+        st.session_state.get(
+            "saved_result_id"
+        )
     )
 
     if existing_result_id:
+
         return
 
     now = datetime.datetime.now()
@@ -3114,19 +4431,29 @@ def save_normal_result(result_data):
     )
 
     result_record = {
+
         "id": result_id,
+
         "username": username,
+
         "name": st.session_state.full_name,
-        "combination": st.session_state.active_combination,
+
+        "combination": (
+            st.session_state.active_combination
+        ),
+
         "date": now.strftime(
             "%Y-%m-%d %H:%M"
         ),
+
         "total_score": result_data[
             "total_score"
         ],
+
         "percentage": result_data[
             "percentage"
         ],
+
         "subject_results": result_data[
             "subject_results"
         ],
@@ -3140,7 +4467,9 @@ def save_normal_result(result_data):
         results_history
     )
 
-    st.session_state.saved_result_id = result_id
+    st.session_state.saved_result_id = (
+        result_id
+    )
 
 
 # =========================================================
@@ -3163,24 +4492,43 @@ def render_result():
 
     st.markdown(
         f"""
-        <div class="hero" style="text-align:center;">
-            <div style="color:#94A3B8;">
-                Жалпы нәтиже
+        <div class="hero"
+             style="text-align:center;">
+
+            <div style="
+                color:#94A3B8;
+                font-size:13px;
+                font-weight:800;
+                letter-spacing:1px;
+            ">
+                ЖАЛПЫ НӘТИЖЕ
             </div>
 
-            <div class="score-big">
+            <div class="score-big"
+                 style="margin-top:15px;">
+
                 {result_data["total_score"]:.0f}
                 /
                 {result_data["total_possible"]}
+
             </div>
 
-            <div style="font-size:20px;margin-top:10px;">
+            <div style="
+                font-size:22px;
+                margin-top:12px;
+                color:#60A5FA;
+                font-weight:800;
+            ">
                 {result_data["percentage"]}%
             </div>
 
-            <div style="margin-top:15px;color:#CBD5E1;">
+            <div style="
+                margin-top:16px;
+                color:#CBD5E1;
+            ">
                 {st.session_state.active_combination}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -3193,12 +4541,21 @@ def render_result():
         st.markdown(
             f"""
             <div class="metric-box">
-                <div class="metric-number">
-                    🟢 {result_data["total_correct"]}
+
+                <div style="
+                    font-size:25px;
+                ">
+                    🟢
                 </div>
+
+                <div class="metric-number">
+                    {result_data["total_correct"]}
+                </div>
+
                 <div class="metric-label">
                     Дұрыс
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3209,12 +4566,21 @@ def render_result():
         st.markdown(
             f"""
             <div class="metric-box">
-                <div class="metric-number">
-                    🔴 {result_data["total_wrong"]}
+
+                <div style="
+                    font-size:25px;
+                ">
+                    🔴
                 </div>
+
+                <div class="metric-number">
+                    {result_data["total_wrong"]}
+                </div>
+
                 <div class="metric-label">
                     Қате
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3225,12 +4591,21 @@ def render_result():
         st.markdown(
             f"""
             <div class="metric-box">
-                <div class="metric-number">
-                    ⚪ {result_data["total_unanswered"]}
+
+                <div style="
+                    font-size:25px;
+                ">
+                    ⚪
                 </div>
+
+                <div class="metric-number">
+                    {result_data["total_unanswered"]}
+                </div>
+
                 <div class="metric-label">
                     Жауапсыз
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3280,20 +4655,60 @@ def render_result():
         st.markdown(
             f"""
             <div class="card">
-                <h3>{subject}</h3>
-                <p>
-                    🟢 Дұрыс: {data["correct"]}
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                ">
+
+                    <h3 style="margin:0;">
+                        {subject}
+                    </h3>
+
+                    <div style="
+                        color:#60A5FA;
+                        font-weight:850;
+                    ">
+                        {percentage}%
+                    </div>
+
+                </div>
+
+                <div style="
+                    margin-top:15px;
+                    color:#CBD5E1;
+                ">
+
+                    🟢 Дұрыс:
+                    <b>{data["correct"]}</b>
+
                     &nbsp;&nbsp;
-                    🔴 Қате: {data["wrong"]}
+
+                    🔴 Қате:
+                    <b>{data["wrong"]}</b>
+
                     &nbsp;&nbsp;
-                    ⚪ Жауапсыз: {data["unanswered"]}
-                </p>
-                <p>
-                    <b>
-                        Балл: {data["score"]:.0f}
-                        / {data["max_score"]}
+
+                    ⚪ Жауапсыз:
+                    <b>{data["unanswered"]}</b>
+
+                </div>
+
+                <div style="
+                    margin-top:10px;
+                    color:#94A3B8;
+                ">
+
+                    Балл:
+                    <b style="color:#F8FAFC;">
+                        {data["score"]:.0f}
                     </b>
-                </p>
+                    /
+                    {data["max_score"]}
+
+                </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3317,6 +4732,7 @@ def render_result():
         )
 
         if not subject_questions:
+
             continue
 
         with st.expander(
@@ -3346,7 +4762,20 @@ def render_result():
                 )
 
                 st.markdown(
-                    f"**{index + 1}. {question.get('question', '')}**"
+                    f"""
+                    <div style="
+                        font-weight:750;
+                        font-size:16px;
+                        margin-bottom:10px;
+                    ">
+                        {index + 1}.
+                        {question.get(
+                            'question',
+                            ''
+                        )}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
                 if selected is None:
@@ -3366,7 +4795,9 @@ def render_result():
                         f"""
                         <div class="correct-box">
                             🟢 Дұрыс жауап:<br>
-                            {options[correct]}
+                            <b>
+                                {options[correct]}
+                            </b>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -3377,11 +4808,19 @@ def render_result():
                     st.markdown(
                         f"""
                         <div class="wrong-box">
+
                             🔴 Сенің жауабың:
-                            {options[selected]}
+                            <b>
+                                {options[selected]}
+                            </b>
+
                             <br><br>
+
                             🟢 Дұрыс жауап:
-                            {options[correct]}
+                            <b>
+                                {options[correct]}
+                            </b>
+
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -3432,6 +4871,7 @@ def render_result():
                 ):
 
                     if subject not in retry_questions:
+
                         retry_questions[subject] = []
 
                     retry_questions[subject].append(
@@ -3449,6 +4889,7 @@ def render_result():
             st.session_state.retry_answers = {}
 
             st.session_state.retry_subject_idx = 0
+
             st.session_state.retry_question_idx = 0
 
             st.session_state.page = "retry_test"
@@ -3471,6 +4912,7 @@ def render_result():
         st.session_state.test_started = False
 
         st.session_state.test_data = {}
+
         st.session_state.test_answers = {}
 
         st.session_state.saved_result_id = None
@@ -3495,23 +4937,29 @@ def render_retry_test():
     if not subjects:
 
         st.session_state.page = "home"
+
         st.rerun()
 
         return
 
-    subject_index = st.session_state.get(
-        "retry_subject_idx",
-        0
+    subject_index = (
+        st.session_state.get(
+            "retry_subject_idx",
+            0
+        )
     )
 
-    question_index = st.session_state.get(
-        "retry_question_idx",
-        0
+    question_index = (
+        st.session_state.get(
+            "retry_question_idx",
+            0
+        )
     )
 
     if subject_index >= len(subjects):
 
         st.session_state.page = "retry_result"
+
         st.rerun()
 
         return
@@ -3538,22 +4986,77 @@ def render_retry_test():
         )
     )
 
-    st.markdown(
-        "## 🔄 Қате сұрақтарды қайталау"
-    )
+    top1, top2 = st.columns([7, 1])
 
-    st.caption(
-        f"{subject} — "
-        f"{question_index + 1} / "
-        f"{len(subject_questions)}"
+    with top1:
+
+        st.markdown(
+            """
+            <div class="kasym-title"
+                 style="font-size:32px;">
+                🔄 Қате сұрақтарды қайталау
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with top2:
+
+        if st.button(
+            "↪ Шығу",
+            use_container_width=True,
+        ):
+
+            st.session_state.page = "home"
+
+            st.session_state.retry_mode = False
+
+            st.session_state.retry_questions = {}
+
+            st.session_state.retry_answers = {}
+
+            st.rerun()
+
+    st.markdown(
+        f"""
+        <div style="
+            color:#A78BFA;
+            font-weight:800;
+            font-size:13px;
+            margin-top:15px;
+        ">
+            {subject}
+        </div>
+
+        <div style="
+            color:#64748B;
+            margin-top:5px;
+        ">
+            Сұрақ {question_index + 1}
+            /
+            {len(subject_questions)}
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.markdown(
         f"""
         <div class="question-box">
+
+            <div style="
+                color:#A78BFA;
+                font-size:12px;
+                font-weight:850;
+                margin-bottom:12px;
+            ">
+                ҚАЙТАЛАУ
+            </div>
+
             <div class="question-text">
                 {question.get("question", "")}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -3574,21 +5077,26 @@ def render_retry_test():
     radio_options = [
         f"{labels[i]}. {option}"
         for i, option in enumerate(options)
+        if i < 4
     ]
 
     selected = st.radio(
         "Жауап:",
         radio_options,
-        index=current_answer
-        if current_answer is not None
-        else None,
+        index=(
+            current_answer
+            if current_answer is not None
+            else None
+        ),
         key=f"retry_radio_{subject}_{question_index}",
     )
 
     if selected:
 
-        selected_index = radio_options.index(
-            selected
+        selected_index = (
+            radio_options.index(
+                selected
+            )
         )
 
         st.session_state.retry_answers[
@@ -3668,6 +5176,7 @@ def render_retry_test():
                 else:
 
                     st.session_state.retry_subject_idx += 1
+
                     st.session_state.retry_question_idx = 0
 
                 st.rerun()
@@ -3688,9 +5197,12 @@ def render_retry_result():
     )
 
     total = 0
+
     correct = 0
 
-    for subject, subject_questions in questions_data.items():
+    for subject, subject_questions in (
+        questions_data.items()
+    ):
 
         for index, question in enumerate(
             subject_questions
@@ -3726,14 +5238,31 @@ def render_retry_result():
 
     st.markdown(
         f"""
-        <div class="hero" style="text-align:center;">
-            <div class="score-big">
+        <div class="hero"
+             style="text-align:center;">
+
+            <div style="
+                color:#A78BFA;
+                font-size:13px;
+                font-weight:850;
+            ">
+                ҚАЙТА ТАПСЫРУ
+            </div>
+
+            <div class="score-big"
+                 style="margin-top:15px;">
                 {correct} / {total}
             </div>
 
-            <div style="font-size:22px;margin-top:10px;">
+            <div style="
+                font-size:22px;
+                margin-top:10px;
+                color:#A78BFA;
+                font-weight:850;
+            ">
                 {percentage}%
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -3746,12 +5275,19 @@ def render_retry_result():
         st.markdown(
             f"""
             <div class="metric-box">
-                <div class="metric-number">
-                    🟢 {correct}
+
+                <div style="font-size:25px;">
+                    🟢
                 </div>
+
+                <div class="metric-number">
+                    {correct}
+                </div>
+
                 <div class="metric-label">
                     Дұрыс
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3762,12 +5298,19 @@ def render_retry_result():
         st.markdown(
             f"""
             <div class="metric-box">
-                <div class="metric-number">
-                    🔴 {total - correct}
+
+                <div style="font-size:25px;">
+                    🔴
                 </div>
+
+                <div class="metric-number">
+                    {total - correct}
+                </div>
+
                 <div class="metric-label">
                     Қате
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3778,12 +5321,19 @@ def render_retry_result():
         st.markdown(
             f"""
             <div class="metric-box">
+
+                <div style="font-size:25px;">
+                    📈
+                </div>
+
                 <div class="metric-number">
                     {percentage}%
                 </div>
+
                 <div class="metric-label">
                     Нәтиже
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True,
@@ -3801,8 +5351,16 @@ def render_retry_result():
         st.session_state.page = "home"
 
         st.session_state.retry_mode = False
+
         st.session_state.retry_questions = {}
+
         st.session_state.retry_answers = {}
+
+        st.session_state.retry_subject_idx = 0
+
+        st.session_state.retry_question_idx = 0
+
+        st.session_state.saved_result_id = None
 
         st.rerun()
 
@@ -3823,10 +5381,7 @@ else:
 
     elif st.session_state.role == "moderator":
 
-        if st.session_state.page == "home":
-            moderator_page()
-        else:
-            moderator_page()
+        moderator_page()
 
     elif st.session_state.role == "user":
 
